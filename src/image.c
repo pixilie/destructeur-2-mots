@@ -38,7 +38,7 @@ static void on_activate (GtkApplication *app)
 
   // Construire le chemin complet vers l'image
   char image_path[PATH_MAX];
-  snprintf(image_path, sizeof(image_path), "%s/%s", dir, "level_1_image_1.png");
+  snprintf(image_path, sizeof(image_path), "%s/%s", dir, "../assets/level_1_image_1.png");
   g_print("Image path : %s\n", image_path);
 
 
