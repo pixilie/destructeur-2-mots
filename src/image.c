@@ -1,15 +1,33 @@
 // Include gtk
 #include <gtk/gtk.h>
-#include <libgen.h>  // pour dirname
+#include <libgen.h>  // dirname
 #include <limits.h>  // PATH_MAX
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>  // readlink
 
-static void get_image_path()
+char* get_image_path(const char* filename) //Return absolute path of image in assets
 {
-	//Copy image path code here
+	static char image_path[PATH_MAX];
+
+	//Read absolute path of binary
+	char exe_path[PATH_MAX];
+	ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
+	if (len == -1) 
+	{
+		g_printerr("ERROR: Failed to read binary path\n");
+		return NULL;
+	}
+	exe_path[len] = '\0';
+
+	// Get directory of binary
+	char *dir = dirname(exe_path);
+	
+	snprintf(image_path, sizeof(image_path), "%s/../assets/%s", dir, filename); //../assets/<filename>
+
+	g_print("Image path : %s\n", image_path);
+	return image_path;
 }
 
 static void on_activate (GtkApplication *app) 
@@ -21,12 +39,6 @@ static void on_activate (GtkApplication *app)
 	GtkWidget *image;
 	GtkWidget *scrolled;
 
-	char cwd[PATH_MAX];
-	if (getcwd(cwd, sizeof(cwd)) != NULL) 
-	{
-		g_print("Pwd: %s\n", cwd);
-	}
-
 	// Create a new window
 	window = gtk_application_window_new(app);
 	gtk_window_set_title(GTK_WINDOW(window), "Image");
@@ -35,29 +47,11 @@ static void on_activate (GtkApplication *app)
 	// Create a vertical box
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
-	// Get absolute path of binary
-	char exe_path[PATH_MAX];
-	ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
-	if (len == -1) 
-	{
-		g_print("ERROR: Failed to read binary path\n");
-		return;
-	}
-	exe_path[len] = '\0';
-
-	// Get directory of binary
-	char *dir = dirname(exe_path);
-
-	// Build absolute path of binary
-	char image_path[PATH_MAX];
-	snprintf(image_path, sizeof(image_path), "%s/%s", dir, "../assets/level_1_image_1.png");
-	g_print("Image path : %s\n", image_path);
-
-
+	const char* image_path = get_image_path("level_1_image_1.png");
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, NULL);
 	if (!pixbuf)
 	{
-		g_print("ERROR: Failed to load image\n");
+		g_printerr("ERROR: Failed to load image at %s\n", image_path);
 		return;
 	}
 
