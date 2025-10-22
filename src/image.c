@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>  // readlink
+#include <gdk-pixbuf/gdk-pixbuf.h> //access to image pixels
 
 char* get_image_path(const char* filename) //Return absolute path of image in assets
 {
@@ -28,6 +29,24 @@ char* get_image_path(const char* filename) //Return absolute path of image in as
 
 	g_print("Image path : %s\n", image_path);
 	return image_path;
+}
+
+void convert_to_greyscale(GdkPixbuf *pixbuf) //Convert colored image (RGB or RGBA) in grayscale
+{
+	//Formula for grayscale: Gray = 0.299 × R+ 0.587 × G + 0.114 × B
+	
+	//Get image dimensions
+	int width = gdk_pixbuf_get_width(pixbuf);
+	int height = gdk_pixbuf_get_height(pixbuf);
+	
+	//Get channels per pixel: (R, G, B) = 3, (R, G, B, A) = 4
+	int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+	
+	//Get array of pixeks
+	guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+	
+	//Get rowstride = bytes between 2 lines (can have unused bytes at the end of each row)
+	int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
 }
 
 static void on_activate (GtkApplication *app) 
