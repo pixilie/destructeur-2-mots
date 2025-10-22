@@ -32,10 +32,10 @@ static void on_activate (GtkApplication *app)
 	gtk_window_set_title(GTK_WINDOW(window), "Image");
 	gtk_window_set_default_size(GTK_WINDOW(window), 2000, 1000);
 
-	// Créer une box verticale (empile bouton + image)
+	// Create a vertical box
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
-	// Obtenir le chemin absolu du binaire
+	// Get absolute path of binary
 	char exe_path[PATH_MAX];
 	ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
 	if (len == -1) 
@@ -45,10 +45,10 @@ static void on_activate (GtkApplication *app)
 	}
 	exe_path[len] = '\0';
 
-	// Obtenir le dossier du binaire
+	// Get directory of binary
 	char *dir = dirname(exe_path);
 
-	// Construire le chemin complet vers l'image
+	// Build absolute path of binary
 	char image_path[PATH_MAX];
 	snprintf(image_path, sizeof(image_path), "%s/%s", dir, "../assets/level_1_image_1.png");
 	g_print("Image path : %s\n", image_path);
