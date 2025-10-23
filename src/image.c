@@ -58,7 +58,7 @@ void convert_to_greyscale(GdkPixbuf *pixbuf) //Convert colored image (RGB or RGB
 			guchar b = pixel[2]; //B
 			
 			//Calculate gray formula and make every R, G and B the same grayness
-			guchar gray = (guchar) 0.299 * r + 0.587 * g + 0.114 * b;
+			guchar gray = (guchar) (0.299 * r + 0.587 * g + 0.114 * b);
 			for(int i = 0; i < 3; i++)
 			{
 				pixel[i] = gray;
@@ -139,8 +139,8 @@ static void on_activate (GtkApplication *app)
 	convert_to_greyscale(pixbuf);
 	
 	//Convert image in black and white
-	binarize_image(pixbuf, 128);
-	
+	binarize_image(pixbuf, 180);
+
 	// Load image from file
 	GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
 
