@@ -67,6 +67,49 @@ void convert_to_greyscale(GdkPixbuf *pixbuf) //Convert colored image (RGB or RGB
 	}
 }
 
+void binarize_image(GdkPixbuf *pixbuf, int treshold)
+{
+	//Transform gray image into a black and white image
+	//For each pixel in image: 
+	// - if gray < treshold -> black pixel
+	// - if gray >= treshold -> white pixel
+	//Treshold is 128 by default
+
+	//Get image dimensions
+	int width = gdk_pixbuf_get_width(pixbuf);
+	int height = gdk_pixbuf_get_height(pixbuf);
+	
+	//Get channels per pixel: (R, G, B) = 3, (R, G, B, A) = 4
+	int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+	
+	//Get array of pixeks
+	guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+	
+	//Get rowstride = bytes between 2 lines (can have unused bytes at the end of each row)
+	int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+	for(int y = 0; y < height; y++)
+	{
+		guchar *rows = pixels + y * rowstride;
+		for(int x = 0; x < width; x++)
+		{
+			guchar *pixel = rows + x * n_channels;
+			guchar gray = pixel[0];
+			if(gray < treshold)
+			{
+				gray = 0; //Black pixel
+			}
+			else
+			{
+				gray = 255; //White pixel
+			}
+			for(int i = 0; i < 3; i++)
+			{
+				pixel[i] = gray;
+			}
+		}
+	}
+}
+
 static void on_activate (GtkApplication *app) 
 {
 	//UI Variables
@@ -94,7 +137,10 @@ static void on_activate (GtkApplication *app)
 
 	//Convert image in levels of gray
 	convert_to_greyscale(pixbuf);
-
+	
+	//Convert image in black and white
+	binarize_image(pixbuf, 128);
+	
 	// Load image from file
 	GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
 
