@@ -33,7 +33,7 @@ char* get_image_path(const char* filename) //Return absolute path of image in as
 
 void convert_to_greyscale(GdkPixbuf *pixbuf) //Convert colored image (RGB or RGBA) in grayscale
 {
-	//Formula for grayscale: Gray = 0.299 × R+ 0.587 × G + 0.114 × B
+	//Formula for grayscale: Gray = 0.299 × R + 0.587 × G + 0.114 × B
 	
 	//Get image dimensions
 	int width = gdk_pixbuf_get_width(pixbuf);
@@ -47,6 +47,24 @@ void convert_to_greyscale(GdkPixbuf *pixbuf) //Convert colored image (RGB or RGB
 	
 	//Get rowstride = bytes between 2 lines (can have unused bytes at the end of each row)
 	int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+	for(int y = 0; y < height; y++)
+	{
+		guchar *rows = pixels + y * rowstride;
+		for(int x = 0; x < width; x++)
+		{
+			guchar *pixel = rows + x * n_channels;
+			guchar r = pixel[0]; //R
+			guchar g = pixel[1]; //G
+			guchar b = pixel[2]; //B
+			
+			//Calculate gray formula and make every R, G and B the same grayness
+			guchar gray = (guchar) 0.299 * r + 0.587 * g + 0.114 * b;
+			for(int i = 0; i < 3; i++)
+			{
+				pixel[i] = gray;
+			}
+		}
+	}
 }
 
 static void on_activate (GtkApplication *app) 
@@ -74,8 +92,12 @@ static void on_activate (GtkApplication *app)
 		return;
 	}
 
+	//Convert image in levels of gray
+	convert_to_greyscale(pixbuf);
+
 	// Load image from file
 	GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
+
 	image = gtk_image_new_from_pixbuf(scaled);
 
 	if (!gtk_image_get_pixbuf(GTK_IMAGE(image))) 
