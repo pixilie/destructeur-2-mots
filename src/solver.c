@@ -1,6 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int len_word(char word[])
+{
+	int i = 0;
+	while(word[i] != '\0')
+	{
+		i ++;
+	}
+	return i;
+}
+
 
 
 void solve(char filename[], char word[],int* x1, int* y1, int* x2, int* y2)
@@ -50,7 +60,81 @@ void solve(char filename[], char word[],int* x1, int* y1, int* x2, int* y2)
 		i = 0;
 	}
 	fclose(f);
+	
+	int index_in_word = 1;
+	int is_found = 0;
+	int temp_is_found = 0;
+	int c = 0;
+	int l = 0;
+	//find first letter
+	while(isfound == 0)
+	{
+		if(is_found == 0)
+		{
+			while(l < nblines || is_found == 0)
+			{
+				while(c < nbcolls || is_found == 0)
+				{
+					if(tab[l][c] == word[0])
+					{
+						tempx1 = c;
+						tempy1 = l;
+						tempx2 = c;
+						tempy2 = l;
+						is_found = 1;
+					}
+					c ++;
+				}
+				l ++;
+			}
+		}
+		else
+		{
+			int len_w = len_word(word);
+			if(tempy1 - 1 >= 0)
+			{
+				tempy1 --;
+				while(index_in_word < len_w && tempy >= 0 && word[index_in_word] == tab[tempy1][tempx1])
+				{
+					index_in_word ++;
+					tempy1 --;
+				}
+				if(index_in_word == len_w)
+				{
+					is_found = 1;
+				}
+			}
+			else if(tempx1 + 1 < nbcolls && is_found == 0)
+			{
+			}
+			else if(tempy1 + 1 < nblines && is_found == 0)
+			{
+			}
+			else if(tempx1 - 1 >= 0 && is_found == 0)
+			{
+			}
+			else if(tempx1 + 1 < nbcolls && tempy1 + 1 < nblines && is_found == 0)
+			{
+			}
+			else if(tempx1 + 1 < nbcolls && tempy1 - 1 >= 0 && is_found == 0)
+			{
+			}
+			else if(tempx1 - 1 >= 0 && tempy1 + 1 < nblines && is_found == 0)
+			{
+			}
+			else if(tempx1 - 1 >= 0 && tempy1 - 1 >= 0 && is_found == 0)
+			{
+			}
 
+			if(is_found == 1)
+			{
+				*x2 = tempx1;
+				*y2 = tempy1;
+				*x1 = c;
+				*y1 = l;
+			}
+		}
+	}
 }
 
 
