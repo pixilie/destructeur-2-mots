@@ -21,6 +21,7 @@
             nativeBuildInputs = with pkgs; [ ];
             buildInputs = with pkgs; [
               gcc
+              clang-tools
               pkg-config
               gtk3.dev
               glib.dev
