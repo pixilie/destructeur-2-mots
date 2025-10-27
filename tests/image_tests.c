@@ -6,13 +6,18 @@ int test_load_image()
 {
 	printf("\n--- Load Image Tests ---\n");
 
-	const char *path = "assets/level_1_image_1.png";
 	GError *error = NULL;
+	const char *path = get_image_path("level_1_image_1.png");
+	if(!path)
+	{
+		printf("[FAIL] Failed to load image\n");
+		return 0;
+	}
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, &error);
 
 	if(pixbuf == NULL)
 	{
-		printf("Failed to load image : %s\n", error->message);
+		printf("[FAIL] Failed to load image : %s\n", error->message);
 		if(error)
 		{
 			g_error_free(error);
@@ -20,7 +25,7 @@ int test_load_image()
 		return 0;
 	}
 
-	printf("Successfully loaded image (%dx%d)\n",
+	printf("[SUCCESS] Successfully loaded image (%dx%d)\n",
 	   gdk_pixbuf_get_width(pixbuf), gdk_pixbuf_get_height(pixbuf));
 
 	g_object_unref(pixbuf);
@@ -31,18 +36,23 @@ int test_grayscale()
 {
 	printf("\n--- Grayscale Tests ---\n");
 
-	const char *path = "assets/level_1_image_1.png";
+	const char *path = get_image_path("level_1_image_1.png");
+	if(!path)
+	{
+		printf("[FAIL] Failed to load image\n");
+		return 0;
+	}
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, NULL);
 	if(!pixbuf)
 	{
-		printf("Failed to load image\n");
+		printf("[FAIL] Failed to load image\n");
 		return 0;
 	}
 
 	convert_to_grayscale(pixbuf);
 	if(!pixbuf)
 	{
-		printf("Grayscale failed\n");
+		printf("[FAIL] Grayscale failed\n");
 		g_object_unref(pixbuf);
 		return 0;
 	}
@@ -85,7 +95,12 @@ int test_black_and_white()
 {
 	printf("\n--- Binarize Tests ---\n");
 
-	const char *path = "assets/level_1_image_1.png";
+	const char *path = get_image_path("level_1_image_1.png");
+	if(!path)
+	{
+		printf("[FAIL] Failed to load image\n");
+		return 0;
+	}
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, NULL);
 	if(!pixbuf)
 	{
@@ -145,13 +160,19 @@ int test_black_and_white()
 
 int main()
 {
+	if (chdir("..") != 0) 
+	{
+        	perror("chdir failed");
+        	return 1;
+    	}
+
 	int passed = 1;
 
 	passed &= test_load_image();
 	passed &= test_grayscale();
 	passed &= test_black_and_white();
 
-	printf("\nImage Tests : %s\n", passed ? "ALl tests passed" : "Some tests did not pass");
+	printf("\nImage Tests : %s\n", passed ? "All tests passed" : "Some tests did not pass");
 
 	return passed ? 0 : 1;
 }

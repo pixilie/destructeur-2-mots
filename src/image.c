@@ -110,7 +110,9 @@ void binarize_image(GdkPixbuf *pixbuf, int treshold)
 	}
 }
 
-static void on_activate (GtkApplication *app) 
+static void on_activate(GtkApplication *app) __attribute__((unused));
+
+static void on_activate(GtkApplication *app) 
 {
 	//UI Variables
 	GtkWidget *window;
