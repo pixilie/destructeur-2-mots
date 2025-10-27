@@ -145,6 +145,10 @@ static void on_activate (GtkApplication *app)
 	GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
 
 	image = gtk_image_new_from_pixbuf(scaled);
+	
+	//For testing only: Save black and white image in new file output.png"
+	gdk_pixbuf_save(scaled, "output.png", "png", NULL, NULL);
+
 
 	if (!gtk_image_get_pixbuf(GTK_IMAGE(image))) 
 	{
