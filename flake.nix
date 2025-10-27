@@ -15,15 +15,18 @@
           overlays = [ ];
         }));
     in {
-      formatter = forAllPkgs (pkgs: pkgs.nixpkgs-fmt);
-
       devShells = forAllPkgs (pkgs:
-        with pkgs.lib;
-        let mkClangShell = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; };
-        in {
-          default = mkClangShell rec {
+        with pkgs.lib; {
+          default = pkgs.mkShell rec {
             nativeBuildInputs = with pkgs; [ ];
-            buildInputs = with pkgs; [ gtk3 ];
+            buildInputs = with pkgs; [
+              gcc
+              clang-tools
+              pkg-config
+              gtk3.dev
+              glib.dev
+              glibc.dev
+            ];
 
             LD_LIBRARY_PATH = makeLibraryPath buildInputs;
           };
