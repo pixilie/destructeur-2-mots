@@ -1,31 +1,44 @@
 CC = gcc
+CFLAGS = -Wall -Wextra -Iinclude
+LDFLAGS = -lm
 
-CFLAGS = -Wall -Wextra -Iinclude `pkg-config --cflags gtk+-3.0`
-
-LDFLAGS = `pkg-config --libs gtk+-3.0`
-
-SRC = $(wildcard src/*.c)
-OBJ = $(SRC:.c=.o)
-
+BUILD_DIR = build
 TARGET = main
-IMAGE_TARGET = image
+SOLVER_TARGET = solver
 TEST_TARGET = test
+
+SRC = $(filter-out src/solver.c, $(wildcard src/*.c))
+OBJ = $(SRC:.c=.o)
 
 TEST_SRC = $(wildcard tests/*.c)
 TEST_OBJ = $(TEST_SRC:.c=.o)
 
-all: $(TARGET)
+all: $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/$(SOLVER_TARGET) $(BUILD_DIR)/$(TEST_TARGET)
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o build/$@ $^ $(LDFLAGS)
+solver: $(BUILD_DIR)/$(SOLVER_TARGET)
+	@echo "Solver built successfully."
 
-$(IMAGE_TARGET):
-	$(CC) $(CFLAGS) `pkg-config --cflags gtk+-3.0` -o build/$@ src/image.c `pkg-config --libs gtk+-3.0`
-
-test: $(TEST_TARGET)
-	./build/$(TEST_TARGET)
+tests: $(BUILD_DIR)/$(TEST_TARGET)
+	@echo "Running tests..."
+	@./$(BUILD_DIR)/$(TEST_TARGET)
+	@echo "Tests completed."
 
 clean:
-	rm -f src/*.o tests/*.o build/$(TARGET) build/$(TEST_TARGET) build/$(IMAGE_TARGET)
+	@echo "Cleaning build files..."
+	@rm -rf $(BUILD_DIR) src/*.o tests/*.o
+	@echo "Clean complete."
 
-.PHONY: all clean test
+$(BUILD_DIR)/$(TARGET): $(OBJ)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	@echo "Main program built successfully."
+
+$(BUILD_DIR)/$(SOLVER_TARGET): src/solver.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+
+$(BUILD_DIR)/$(TEST_TARGET): $(OBJ) $(TEST_OBJ)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+.PHONY: all solver tests clean
