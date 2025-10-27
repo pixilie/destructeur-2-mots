@@ -23,9 +23,9 @@
               gcc
               clang-tools
               pkg-config
-              gtk3.dev
-              glib.dev
-              glibc.dev
+              gtk3
+              glib
+              glibc
             ];
 
             LD_LIBRARY_PATH = makeLibraryPath buildInputs;

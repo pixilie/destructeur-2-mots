@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude
-LDFLAGS = -lm
+CFLAGS = -Wall -Wextra -Iinclude $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0)
+LDFLAGS = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0)
 
 BUILD_DIR = build
 TARGET = main
@@ -35,10 +35,4 @@ $(BUILD_DIR)/$(TARGET): $(OBJ)
 
 $(BUILD_DIR)/$(SOLVER_TARGET): src/solver.c
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
-
-$(BUILD_DIR)/$(TEST_TARGET): $(OBJ) $(TEST_OBJ)
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-.PHONY: all solver tests clean
+	$(CC) $(CFLAGS) -o $@ $< $(LDF
