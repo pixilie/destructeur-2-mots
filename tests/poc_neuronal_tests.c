@@ -47,7 +47,7 @@ int test_and()
     NeuralNetwork *nn_and = create_network(2, 2, 1);
 
     double inputs[4][2] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
-    double targets[4] = {0, 0, 0, 1}; // A.B
+    double targets[4] = {0, 0, 0, 1};
 
     train(nn_and, inputs, targets, 0.5, 10000);
 
@@ -85,7 +85,7 @@ int test_or()
     NeuralNetwork *nn_or = create_network(2, 2, 1);
 
     double inputs[4][2] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
-    double targets[4] = {0, 1, 1, 1}; // A+B
+    double targets[4] = {0, 1, 1, 1};
 
     train(nn_or, inputs, targets, 0.5, 10000);
 
@@ -123,7 +123,7 @@ int test_xnor()
     NeuralNetwork *nn_xnor = create_network(2, 2, 1);
 
     double inputs[4][2] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
-    double targets[4] = {1, 0, 0, 1}; // !A.!B + A.B
+    double targets[4] = {1, 0, 0, 1};
 
     train(nn_xnor, inputs, targets, 0.5, 10000);
 
