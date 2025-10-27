@@ -31,10 +31,16 @@ $(BUILD_DIR)/$(SOLVER_TARGET): src/solver.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 	@echo "Solver built successfully."
 
-$(BUILD_DIR)/$(IMAGE_TARGET): src/image.c
+image: $(BUILD_DIR)/$(IMAGE_TARGET)
+	@echo "Image built successfully."
+
+$(BUILD_DIR)/$(IMAGE_TARGET): $(BUILD_DIR)/image.o
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $@ $^ $(LDFLAGS) $(GTK_LIBS)
-	@echo "Image built successfully."
+
+$(BUILD_DIR)/image.o: src/image.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $< -o $@
 
 # ===================== Test builds =====================
 
