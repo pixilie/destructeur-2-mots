@@ -31,10 +31,10 @@ void solve(char filename[], char word[],int* x1, int* y1, int* x2, int* y2)
     		exit(EXIT_FAILURE);
 	}
 
-	char c = fgetc(f);
-	while(c != '\r' && c != '\n' && c != '\0')
+	char ch = fgetc(f);
+	while(ch != '\r' && ch != '\n' && ch != '\0')
 	{
-		c = fgetc(f);
+		ch = fgetc(f);
 		nbcolls ++;
 	}
 	rewind(f);
@@ -63,17 +63,17 @@ void solve(char filename[], char word[],int* x1, int* y1, int* x2, int* y2)
 	
 	int index_in_word = 1;
 	int is_found = 0;
+	int t_is_found = 0;
 	int temp_is_found = 0;
 	int c = 0;
 	int l = 0;
-	//find first letter
-	while(isfound == 0)
+	while(t_is_found == 0)
 	{
 		if(is_found == 0)
 		{
-			while(l < nblines || is_found == 0)
+			while(l < nblines && is_found == 0)
 			{
-				while(c < nbcolls || is_found == 0)
+				while(c < nbcolls && is_found == 0)
 				{
 					if(tab[l][c] == word[0])
 					{
@@ -87,53 +87,209 @@ void solve(char filename[], char word[],int* x1, int* y1, int* x2, int* y2)
 				}
 				l ++;
 			}
+			if(c == nbcolls && l == nblines)
+			{
+				t_is_found = 1;
+			}
 		}
 		else
 		{
 			int len_w = len_word(word);
-			if(tempy1 - 1 >= 0)
+			is_found = 0;
+			if(tempy2 - 1 >= 0)
 			{
-				tempy1 --;
-				while(index_in_word < len_w && tempy >= 0 && word[index_in_word] == tab[tempy1][tempx1])
+				tempy2 --;
+				while(index_in_word < len_w && tempy2 >= 0 && word[index_in_word] == tab[tempy2][tempx2])
 				{
 					index_in_word ++;
-					tempy1 --;
+					tempy2 --;
 				}
 				if(index_in_word == len_w)
 				{
+					tempy2 ++;
 					is_found = 1;
 				}
+				else
+				{
+					tempx2 = tempx1;
+					tempy2 = tempy1;
+					index_in_word = 1;
+					is_found = 0;
+				}
 			}
-			else if(tempx1 + 1 < nbcolls && is_found == 0)
+			if(tempx2 + 1 < nbcolls && is_found == 0)
 			{
+				tempx2 ++;
+                                while(index_in_word < len_w && tempx2 < nbcolls && word[index_in_word] == tab[tempy2][tempx2])
+                                {
+                                        index_in_word ++;
+                                        tempx2 ++;
+                                }
+                                if(index_in_word == len_w)
+                                {
+					tempx2 --;
+                                        is_found = 1;
+                                }
+				else
+                                {
+                                        tempx2 = tempx1;
+                                        tempy2 = tempy1;
+					index_in_word = 1;
+					is_found = 0;
+                                }
 			}
-			else if(tempy1 + 1 < nblines && is_found == 0)
+			if(tempy2 + 1 < nblines && is_found == 0)
 			{
+				tempy2 ++;
+                                while(index_in_word < len_w && tempy2 < nblines && word[index_in_word] == tab[tempy2][tempx2])
+                                {
+                                        index_in_word ++;
+                                        tempy2 ++;
+                                }
+                                if(index_in_word == len_w)
+                                {
+					tempy2 --;
+                                        is_found = 1;
+                                }
+				else
+                                {
+                                        tempx2 = tempx1;
+                                        tempy2 = tempy1;
+					index_in_word = 1;
+					is_found = 0;
+                                }
 			}
-			else if(tempx1 - 1 >= 0 && is_found == 0)
+			if(tempx2 - 1 >= 0 && is_found == 0)
 			{
+				tempx2 --;
+                                while(index_in_word < len_w && tempx2 >= 0 && word[index_in_word] == tab[tempy2][tempx2])
+                                {
+                                        index_in_word ++;
+                                        tempx2 --;
+                                }
+                                if(index_in_word == len_w)
+                                {
+					tempx2 ++;
+                                        is_found = 1;
+                                }
+				else
+                                {
+                                        tempx2 = tempx1;
+                                        tempy2 = tempy1;
+					index_in_word = 1;
+					is_found = 0;
+                                }
 			}
-			else if(tempx1 + 1 < nbcolls && tempy1 + 1 < nblines && is_found == 0)
+			if(tempx2 + 1 < nbcolls && tempy2 + 1 < nblines && is_found == 0)
 			{
+				tempx2 ++;
+				tempy2 ++;
+                                while(index_in_word < len_w && tempy2 < nblines && tempx2 < nbcolls && word[index_in_word] == tab[tempy2][tempx2])
+                                {
+                                        index_in_word ++;
+                                        tempy2 ++;
+					tempx2 ++;
+                                }
+                                if(index_in_word == len_w)
+                                {
+					tempx2 --;
+					tempy2 --;
+                                        is_found = 1;
+                                }
+				else
+                                {
+                                        tempx2 = tempx1;
+                                        tempy2 = tempy1;
+					index_in_word = 1;
+					is_found = 0;
+                                }
 			}
-			else if(tempx1 + 1 < nbcolls && tempy1 - 1 >= 0 && is_found == 0)
+			if(tempx2 + 1 < nbcolls && tempy2 - 1 >= 0 && is_found == 0)
 			{
+				tempx2 ++;
+                                tempy2 --;
+                                while(index_in_word < len_w && tempy2 >= 0 && tempx2 < nbcolls && word[index_in_word] == tab[tempy2][tempx2])
+                                {
+                                        index_in_word ++;
+                                        tempy2 --;
+                                        tempx2 ++;
+                                }
+                                if(index_in_word == len_w)
+                                {
+					tempx2 --;
+					tempy2 ++;
+                                        is_found = 1;
+                                }
+                                else
+                                {
+                                        tempx2 = tempx1;
+                                        tempy2 = tempy1;
+					index_in_word = 1;
+					is_found = 0;
+                                }
 			}
-			else if(tempx1 - 1 >= 0 && tempy1 + 1 < nblines && is_found == 0)
+			if(tempx2 - 1 >= 0 && tempy2 + 1 < nblines && is_found == 0)
 			{
+				tempx2 --;
+                                tempy2 ++;
+                                while(index_in_word < len_w && tempy2 < nblines && tempx2 >= 0 && word[index_in_word] == tab[tempy2][tempx2])
+                                {
+                                        index_in_word ++;
+                                        tempy2 ++;
+                                        tempx2 --;
+                                }
+                                if(index_in_word == len_w)
+                                {
+					tempy2 --;
+					tempx2 ++;
+                                        is_found = 1;
+                                }
+                                else
+                                {
+                                        tempx2 = tempx1;
+                                        tempy2 = tempy1;
+					index_in_word = 1;
+					is_found = 0;
+                                }
 			}
-			else if(tempx1 - 1 >= 0 && tempy1 - 1 >= 0 && is_found == 0)
+			if(tempx2 - 1 >= 0 && tempy2 - 1 >= 0 && is_found == 0)
 			{
+				tempx2 --;
+                                tempy2 --;
+                                while(index_in_word < len_w && tempy2 >= 0 && tempx2 >= 0 && word[index_in_word] == tab[tempy2][tempx2])
+                                {
+                                        index_in_word ++;
+                                        tempy2 --;
+                                        tempx2 --;
+                                }
+                                if(index_in_word == len_w)
+                                {
+					tempx2 ++;
+					tempy2 ++;
+                                        is_found = 1;
+                                }
+                                else
+                                {
+                                        tempx2 = tempx1;
+                                        tempy2 = tempy1;
+					index_in_word = 1;
+					is_found = 0;
+                                }
 			}
 
 			if(is_found == 1)
 			{
-				*x2 = tempx1;
-				*y2 = tempy1;
-				*x1 = c;
-				*y1 = l;
+				*x2 = tempx2;
+				*y2 = tempy2;
+				*x1 = tempx1;
+				*y1 = tempy1;
+				t_is_found = 1;
 			}
 		}
+	}
+	if(is_found == 0)
+	{
+		*x1 = *x2 = *y1 = *y2 = -1;
 	}
 }
 
@@ -176,8 +332,6 @@ int main(int argc, char* argv[])
 	int* y2 = malloc(sizeof(int));
 
 	solve(argv[1], argv[2], x1, y1, x2, y2);
-	
-	*x1 = *y1 = *x2 = *y2 = 0; // to remove
 
 	printf("( %i %i )( %i %i )", *x1, *y1, *x2, *y2);
 	
