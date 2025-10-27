@@ -39,8 +39,8 @@ int test_grayscale()
 		return 0;
 	}
 
-	GdkPixbuf *gray = convert_to_grayscale(pixbuf);
-	if(!gray)
+	convert_to_grayscale(pixbuf);
+	if(!pixbuf)
 	{
 		printf("Grayscale failed\n");
 		g_object_unref(pixbuf);
@@ -48,11 +48,11 @@ int test_grayscale()
 	}
 
 	//Check that R = G = B for each pixel (levels of gray)
-	int width = gdk_pixbuf_get_width(gray);
-	int height = gdk_pixbuf_get_height(gray);
-	int n_channels = gdk_pixbuf_get_n_channels(gray);
-	int rowstride = gdk_pixbuf_get_rowstride(gray);
-	guchar *pixels = gdk_pixbuf_get_pixels(gray);
+	int width = gdk_pixbuf_get_width(pixbuf);
+	int height = gdk_pixbuf_get_height(pixbuf);
+	int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+	int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+	guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
 	int ok = 1;
 	for(int y = 0; y < height && ok; y++)
@@ -63,8 +63,8 @@ int test_grayscale()
 			guchar *p = row + x * n_channels;
 			if(!(p[0] == p[1] && p[1] == p[2]))
 			{
-			ok = 0;
-			break;
+				ok = 0;
+				break;
 			}
 		}
 	}
@@ -78,7 +78,6 @@ int test_grayscale()
 		printf("[FAIL] Grayscale failed\n");
 	}
 	g_object_unref(pixbuf);
-	g_object_unref(gray);
 	return ok;
 }
 
@@ -94,28 +93,27 @@ int test_black_and_white()
 		return 0;
 	}
 
-	GdkPixbuf *gray = convert_to_grayscale(pixbuf);
-	if(!gray)
+	convert_to_grayscale(pixbuf);
+	if(!pixbuf)
 	{
 		printf("[FAIL] Grayscale failed\n");
 		g_object_unref(pixbuf);
 		return 0;
 	}
 
-	GdkPixbuf *black_and_white = convert_to_black_and_white(gray, 128);
-	if(!black_and_white)
+	binarize_image(pixbuf, 128);
+	if(!pixbuf)
 	{
 		printf("[FAIL] Binarize failed");
 		g_object_unref(pixbuf);
-		g_object_unref(gray);
 		return 0;
 	}
 
-	int width = gdk_pixbuf_get_width(black_and_white);
-	int height = gdk_pixbuf_get_height(black_and_white);
-	int n_channels = gdk_pixbuf_get_n_channels(black_and_white);
-	int rowstride = gdk_pixbuf_get_rowstride(black_and_white);
-	guchar *pixels = gdk_pixbuf_get_pixels(black_and_white);
+	int width = gdk_pixbuf_get_width(pixbuf);
+	int height = gdk_pixbuf_get_height(pixbuf);
+	int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+	int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+	guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
 	int ok = 1;
 	for(int y = 0; y < height && ok; y++)
@@ -142,8 +140,6 @@ int test_black_and_white()
 		printf("[FAIL] Binarize failed\n");
 	}
 	g_object_unref(pixbuf);
-	g_object_unref(gray);
-	g_object_unref(black_and_white);
 	return ok;
 }
 
@@ -159,4 +155,3 @@ int main()
 
 	return passed ? 0 : 1;
 }
-
