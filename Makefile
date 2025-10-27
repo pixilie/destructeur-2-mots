@@ -2,37 +2,43 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Iinclude
 LDFLAGS = -lm
 
-SRC = $(wildcard src/*.c)
-OBJ = $(SRC:.c=.o)
-TARGET = main
 BUILD_DIR = build
+TARGET = main
+SOLVER_TARGET = solver
+TEST_TARGET = test
+
+SRC = $(filter-out src/solver.c, $(wildcard src/*.c))
+OBJ = $(SRC:.c=.o)
 
 TEST_SRC = $(wildcard tests/*.c)
 TEST_OBJ = $(TEST_SRC:.c=.o)
-TEST_TARGET = test
 
-all: run
+all: $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/$(SOLVER_TARGET) $(BUILD_DIR)/$(TEST_TARGET)
+
+solver: $(BUILD_DIR)/$(SOLVER_TARGET)
+	@echo "Solver built successfully."
+
+tests: $(BUILD_DIR)/$(TEST_TARGET)
+	@echo "Running tests..."
+	@./$(BUILD_DIR)/$(TEST_TARGET)
+	@echo "Tests completed."
+
+clean:
+	@echo "Cleaning build files..."
+	@rm -rf $(BUILD_DIR) src/*.o tests/*.o
+	@echo "Clean complete."
 
 $(BUILD_DIR)/$(TARGET): $(OBJ)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	@echo "Main program built successfully."
 
-run: $(BUILD_DIR)/$(TARGET)
-	@echo "Running $(TARGET)..."
-	@./$(BUILD_DIR)/$(TARGET)
+$(BUILD_DIR)/$(SOLVER_TARGET): src/solver.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 $(BUILD_DIR)/$(TEST_TARGET): $(OBJ) $(TEST_OBJ)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-test: $(BUILD_DIR)/$(TEST_TARGET)
-	@echo "Running tests..."
-	@./$(BUILD_DIR)/$(TEST_TARGET)
-	@echo "Tests ran."
-
-clean:
-	@echo "Cleaning build files..."
-	@rm -f src/*.o tests/*.o $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/$(TEST_TARGET)
-	@echo "Build files cleaned."
-
-.PHONY: all clean test run
+.PHONY: all solver tests clean
