@@ -6,7 +6,7 @@ int test_load_image()
 {
 	printf("\n--- Load Image Tests ---\n");
 
-	const char *path = "../assets/level_1_image_1.png";
+	const char *path = "assets/level_1_image_1.png";
 	GError *error = NULL;
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, &error);
 
@@ -31,7 +31,7 @@ int test_grayscale()
 {
 	printf("\n--- Grayscale Tests ---\n");
 
-	const char *path = "../assets/level_1_image_1.png";
+	const char *path = "assets/level_1_image_1.png";
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, NULL);
 	if(!pixbuf)
 	{
@@ -85,7 +85,7 @@ int test_black_and_white()
 {
 	printf("\n--- Binarize Tests ---\n");
 
-	const char *path = "../assets/level_1_image_1.png";
+	const char *path = "assets/level_1_image_1.png";
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, NULL);
 	if(!pixbuf)
 	{
