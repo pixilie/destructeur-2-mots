@@ -64,3 +64,6 @@ dkms.conf
 # Tests results
 tests/results/*
 !tests/results/.gitkeep
+
+compile_commands.json
+.cache
