@@ -19,7 +19,7 @@ static int count_generated_slices(int n_slice)
     {
         for (int j = 0; j < n_slice; j++)
         {
-            snprintf(filename, sizeof(filename), "slice_%d_%d.png", i, j);
+            snprintf(filename, sizeof(filename), "tests/results/slice_%d_%d.png", i, j);
             if (file_exists(filename))
                 count++;
         }
@@ -31,13 +31,13 @@ int main(void)
 {
     gtk_init(NULL, NULL);
 
-    const char *test_image = "../assets/level_1_image_1.png";
+    const char *test_image = "square.jpg";
     const int n_slice = 3;
     const int expected_slices = n_slice * n_slice;
 
     printf("=== TEST: slice_in_n() ===\n");
 
-    if (!file_exists(test_image))
+    if (!file_exists(get_image_path(test_image)))
     {
         fprintf(stderr, "FAIL: Test image not found at path '%s'.\n",
                 test_image);

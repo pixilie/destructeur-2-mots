@@ -184,25 +184,8 @@ static void on_activate (GtkApplication *app)
 
 void slice_from(const char *image_path, int x, int y, int direction)
 {
-    /*
-        sliceFrom
-
-        Splits an image into two parts, either horizontally or vertically,
-        and saves the resulting images as PNG files in the current directory.
-
-        Parameters:
-            - image_path: path to the input image file
-            - x, y: coordinates where the image should be cut
-            - direction:
-                1 = horizontal cut (top/bottom)
-                0 = vertical cut (left/right)
-
-        The function will save:
-            - For horizontal cuts: "High_img.png" and "Low_img.png"
-            - For vertical cuts: "Left_img.png" and "Right_img.png"
-    */
-
     GError *error = NULL;
+    image_path = get_image_path(image_path);
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
     if (!pixbuf)
     {
@@ -226,22 +209,22 @@ void slice_from(const char *image_path, int x, int y, int direction)
         }
 
         int new_height = height - y;
-        GdkPixbuf *high = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, width, y);
-        GdkPixbuf *low = gdk_pixbuf_new_subpixbuf(pixbuf, 0, y, width, new_height);
+        GdkPixbuf *top = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, width, y);
+        GdkPixbuf *bottom = gdk_pixbuf_new_subpixbuf(pixbuf, 0, y, width, new_height);
 
-        if (!gdk_pixbuf_save(high, "top_img.png", "png", &error, NULL))
+        if (!gdk_pixbuf_save(top, "tests/results/top_img.png", "png", &error, NULL))
         {
-            fprintf(stderr, "Error: failed to save High_img.png: %s\n", error->message);
+            fprintf(stderr, "Error: failed to save top_img.png: %s\n", error->message);
             g_error_free(error);
         }
-        if (!gdk_pixbuf_save(low, "bottom_img.png", "png", &error, NULL))
+        if (!gdk_pixbuf_save(bottom, "tests/results/bottom_img.png", "png", &error, NULL))
         {
-            fprintf(stderr, "Error: failed to save Low_img.png: %s\n", error->message);
+            fprintf(stderr, "Error: failed to save bottom_img.png: %s\n", error->message);
             g_error_free(error);
         }
 
-        g_object_unref(high);
-        g_object_unref(low);
+        g_object_unref(top);
+        g_object_unref(bottom);
     }
     else // vertical cut
     {
@@ -256,14 +239,14 @@ void slice_from(const char *image_path, int x, int y, int direction)
         GdkPixbuf *left = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, x, height);
         GdkPixbuf *right = gdk_pixbuf_new_subpixbuf(pixbuf, x, 0, new_width, height);
 
-        if (!gdk_pixbuf_save(left, "left_img.png", "png", &error, NULL))
+        if (!gdk_pixbuf_save(left, "tests/results/left_img.png", "png", &error, NULL))
         {
-            fprintf(stderr, "Error: failed to save Left_img.png: %s\n", error->message);
+            fprintf(stderr, "Error: failed to save left_img.png: %s\n", error->message);
             g_error_free(error);
         }
-        if (!gdk_pixbuf_save(right, "right_img.png", "png", &error, NULL))
+        if (!gdk_pixbuf_save(right, "tests/results/right_img.png", "png", &error, NULL))
         {
-            fprintf(stderr, "Error: failed to save Right_img.png: %s\n", error->message);
+            fprintf(stderr, "Error: failed to save right_img.png: %s\n", error->message);
             g_error_free(error);
         }
 
@@ -277,6 +260,7 @@ void slice_from(const char *image_path, int x, int y, int direction)
 void slice_in_n(const char *image_path, int n_slice)
 {
     GError *error = NULL;
+    image_path = get_image_path(image_path);
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
 
     if (!pixbuf) {
@@ -308,7 +292,7 @@ void slice_in_n(const char *image_path, int n_slice)
             }
 
             char filename[256];
-            snprintf(filename, sizeof(filename), "slice_%d_%d.png", i, j);
+            snprintf(filename, sizeof(filename), "tests/results/slice_%d_%d.png", i, j);
 
             if (!gdk_pixbuf_save(tile, filename, "png", &error, NULL)) {
                 g_printerr("Error saving file '%s': %s\n", filename, error->message);

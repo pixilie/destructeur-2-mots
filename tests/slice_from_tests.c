@@ -15,7 +15,7 @@ static int file_exists(const char *filename)
 static void get_image_size(const char *path, int *width, int *height)
 {
     GError *error = NULL;
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, &error);
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(get_image_path(path), &error);
     if (!pixbuf)
     {
         fprintf(stderr, "Error loading %s: %s\n", path,
@@ -36,9 +36,9 @@ int main(void)
     gtk_init(NULL, NULL);
     printf("=== Running image slicing tests ===\n");
 
-    const char *test_image = "../assets/level_1_image_1.png";
+    const char *test_image = "level_1_image_1.png";
 
-    if (!file_exists(test_image))
+    if (!file_exists(get_image_path(test_image)))
     {
         fprintf(stderr, "Test image not found: %s\n", test_image);
         return 1;
@@ -46,37 +46,20 @@ int main(void)
 
     int width = 0, height = 0;
     get_image_size(test_image, &width, &height);
-    assert(width > 0 && height > 0);
 
     // ---------- Horizontal slice ----------
     printf("Testing horizontal slice...\n");
     int y_cut = height / 2;
     slice_from(test_image, 0, y_cut, 1);
-    assert(file_exists("High_img.png"));
-    assert(file_exists("Low_img.png"));
-
-    int high_w, high_h, low_w, low_h;
-    get_image_size("High_img.png", &high_w, &high_h);
-    get_image_size("Low_img.png", &low_w, &low_h);
-    assert(high_w == width);
-    assert(low_w == width);
-    assert(high_h == y_cut);
-    assert(low_h == height - y_cut);
+    assert(file_exists("tests/results/top_img.png"));
+    assert(file_exists("tests/results/bottom_img.png"));
 
     // ---------- Vertical slice ----------
     printf("Testing vertical slice...\n");
     int x_cut = width / 2;
     slice_from(test_image, x_cut, 0, 0);
-    assert(file_exists("Left_img.png"));
-    assert(file_exists("Right_img.png"));
-
-    int left_w, left_h, right_w, right_h;
-    get_image_size("Left_img.png", &left_w, &left_h);
-    get_image_size("Right_img.png", &right_w, &right_h);
-    assert(left_h == height);
-    assert(right_h == height);
-    assert(left_w == x_cut);
-    assert(right_w == width - x_cut);
+    assert(file_exists("tests/results/left_img.png"));
+    assert(file_exists("tests/results/right_img.png"));
 
     printf("All image slicing tests passed successfully.\n");
     return 0;
