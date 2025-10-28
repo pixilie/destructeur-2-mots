@@ -31,7 +31,7 @@ char* get_image_path(const char* filename) //Return absolute path of image in as
 	return image_path;
 }
 
-void convert_to_greyscale(GdkPixbuf *pixbuf) //Convert colored image (RGB or RGBA) in grayscale
+void convert_to_grayscale(GdkPixbuf *pixbuf) //Convert colored image (RGB or RGBA) in grayscale
 {
 	//Formula for grayscale: Gray = 0.299 × R + 0.587 × G + 0.114 × B
 	
