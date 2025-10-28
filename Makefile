@@ -34,11 +34,15 @@ $(BUILD_DIR)/$(SOLVER_TARGET): src/solver.c
 image: $(BUILD_DIR)/$(IMAGE_TARGET)
 	@echo "Image built successfully."
 
-$(BUILD_DIR)/$(IMAGE_TARGET): $(BUILD_DIR)/image.o
+$(BUILD_DIR)/$(IMAGE_TARGET): $(BUILD_DIR)/image.o $(BUILD_DIR)/image_rotation.o
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $@ $^ $(LDFLAGS) $(GTK_LIBS)
 
 $(BUILD_DIR)/image.o: src/image.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/image_rotation.o: src/image_rotation.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $< -o $@
 
