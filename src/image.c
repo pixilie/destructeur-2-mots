@@ -182,99 +182,145 @@ static void on_activate (GtkApplication *app)
 	g_object_unref(scaled);
 }
 
-void sliceFrom(int x, int y, int direction)
+void slice_from(const char *image_path, int x, int y, int direction)
 {
-    //Slice an image int two parts at the coords X,Y
-    //and can slice horizontally (direction == 1) or vertically
-    //Save the 2 parts sliced : left / right or high / low
+    /*
+        sliceFrom
 
-    //Obtain path of img and pixbuf of the img
-    const char* image_path = get_image_path("level_1_image_1.png");
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, NULL);
+        Splits an image into two parts, either horizontally or vertically,
+        and saves the resulting images as PNG files in the current directory.
+
+        Parameters:
+            - image_path: path to the input image file
+            - x, y: coordinates where the image should be cut
+            - direction:
+                1 = horizontal cut (top/bottom)
+                0 = vertical cut (left/right)
+
+        The function will save:
+            - For horizontal cuts: "High_img.png" and "Low_img.png"
+            - For vertical cuts: "Left_img.png" and "Right_img.png"
+    */
+
+    GError *error = NULL;
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
     if (!pixbuf)
     {
-            g_printerr("ERROR: Failed to load image at %s\n", image_path);
-            return;
+        fprintf(stderr, "Error: failed to load image %s: %s\n", image_path,
+                error ? error->message : "unknown error");
+        if (error)
+            g_error_free(error);
+        return;
     }
 
-    //Get image dimensions
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
 
-    if(direction == 1) //we want to cut horizontally --> x useless
+    if (direction == 1) // horizontal cut
     {
+        if (y <= 0 || y >= height)
+        {
+            fprintf(stderr, "Error: invalid Y coordinate (%d) for image height %d\n", y, height);
+            g_object_unref(pixbuf);
+            return;
+        }
+
         int new_height = height - y;
-        GdkPixbuf * high = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, width, y);
-        GdkPixbuf * low = gdk_pixbuf_new_subpixbuf(pixbuf, 0, y, width, new_height);
+        GdkPixbuf *high = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, width, y);
+        GdkPixbuf *low = gdk_pixbuf_new_subpixbuf(pixbuf, 0, y, width, new_height);
 
-        //save the new img
-        if(!gdk_pixbuf_save(high, "High_img", "png", NULL, NULL))
+        if (!gdk_pixbuf_save(high, "top_img.png", "png", &error, NULL))
         {
-            g_print("ERROR : error occured in saving High_img as png\n");
-            return;
+            fprintf(stderr, "Error: failed to save High_img.png: %s\n", error->message);
+            g_error_free(error);
         }
-		if(!gdk_pixbuf_save(low, "Low_img", "png", NULL, NULL))
-	    {
-            {
-                g_print("ERROR : error occured in saving Low_img as png\n");
-                return;
-            }
+        if (!gdk_pixbuf_save(low, "bottom_img.png", "png", &error, NULL))
+        {
+            fprintf(stderr, "Error: failed to save Low_img.png: %s\n", error->message);
+            g_error_free(error);
         }
-	}
-    
-    else //we want to cut vertically --> y useless
-    {
-        int new_width = width - x;
-        GdkPixbuf * left = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, x, height);
-        GdkPixbuf * right = gdk_pixbuf_new_subpixbuf(pixbuf, x, 0, new_width, height);
 
-
-        //save the new img
-        if(!gdk_pixbuf_save(left, "Left_img", "png", NULL, NULL))
-        {
-            g_print("ERROR : error occured in saving left img as png\n");
-            return;
-        }
-        if(!gdk_pixbuf_save(right, "Right_img", "png", NULL, NULL))
-        {
-            g_print("ERROR : error occured in saving right img as png\n");
-            return;
-        }
+        g_object_unref(high);
+        g_object_unref(low);
     }
+    else // vertical cut
+    {
+        if (x <= 0 || x >= width)
+        {
+            fprintf(stderr, "Error: invalid X coordinate (%d) for image width %d\n", x, width);
+            g_object_unref(pixbuf);
+            return;
+        }
+
+        int new_width = width - x;
+        GdkPixbuf *left = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, x, height);
+        GdkPixbuf *right = gdk_pixbuf_new_subpixbuf(pixbuf, x, 0, new_width, height);
+
+        if (!gdk_pixbuf_save(left, "left_img.png", "png", &error, NULL))
+        {
+            fprintf(stderr, "Error: failed to save Left_img.png: %s\n", error->message);
+            g_error_free(error);
+        }
+        if (!gdk_pixbuf_save(right, "right_img.png", "png", &error, NULL))
+        {
+            fprintf(stderr, "Error: failed to save Right_img.png: %s\n", error->message);
+            g_error_free(error);
+        }
+
+        g_object_unref(left);
+        g_object_unref(right);
+    }
+
+    g_object_unref(pixbuf);
 }
 
-
-void slice_in_n(GdkPixbuf * pixbuf, int n_slice)
+void slice_in_n(const char *image_path, int n_slice)
 {
-    //Slice a SQUARE image in n_slice square, which
-    //are saved as img.png
+    GError *error = NULL;
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
 
+    if (!pixbuf) {
+        g_printerr("Error loading image '%s': %s\n", image_path, error->message);
+        g_error_free(error);
+        return;
+    }
 
-    //Get image dimensions, width = height because square
     int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
 
-    //Get the size of each char we will save as file
-    int sizeEach = width / n_slice;
+    if (width != height) {
+        g_printerr("Error: image must be square (got %dx%d)\n", width, height);
+        g_object_unref(pixbuf);
+        return;
+    }
 
-    //Loop to slice n_slice times
-    for(int i = 0; i < n_slice; i++)
-    {
-        GdkPixbuf * col = gdk_pixbuf_new_subpixbuf(pixbuf, sizeEach * i, 0,
-                        sizeEach * (i + 1), width); //we get columns
+    int size_each = width / n_slice;
 
-        for(int j = 0; j < n_slice; j++)
-        {
-            int x_coord = sizeEach * i;
-            GdkPixbuf * square = gdk_pixbuf_new_subpixbuf(col, x_coord,
-                            sizeEach * i, x_coord, sizeEach * (i + 1));
+    for (int i = 0; i < n_slice; i++) {
+        for (int j = 0; j < n_slice; j++) {
+            int x = j * size_each;
+            int y = i * size_each;
 
-            if(!gdk_pixbuf_save(square, "char%i", "png", NULL))
-            {
-                g_print("ERROR : error occured in saving char as png\n");
-                return;
+            GdkPixbuf *tile = gdk_pixbuf_new_subpixbuf(pixbuf, x, y, size_each, size_each);
+            if (!tile) {
+                g_printerr("Error: could not create subpixbuf at (%d, %d)\n", x, y);
+                continue;
             }
+
+            char filename[256];
+            snprintf(filename, sizeof(filename), "slice_%d_%d.png", i, j);
+
+            if (!gdk_pixbuf_save(tile, filename, "png", &error, NULL)) {
+                g_printerr("Error saving file '%s': %s\n", filename, error->message);
+                g_error_free(error);
+                error = NULL;
+            }
+
+            g_object_unref(tile);
         }
     }
+
+    g_object_unref(pixbuf);
 }
 
 //Exclure main des tests
