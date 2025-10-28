@@ -188,6 +188,131 @@ static void on_activate(GtkApplication *app)
 	g_object_unref(scaled);
 }
 
+void slice_from(const char *image_path, int x, int y, int direction)
+{
+    GError *error = NULL;
+    image_path = get_image_path(image_path);
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
+    if (!pixbuf)
+    {
+        fprintf(stderr, "Error: failed to load image %s: %s\n", image_path,
+                error ? error->message : "unknown error");
+        if (error)
+            g_error_free(error);
+        return;
+    }
+
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+
+    if (direction == 1) // horizontal cut
+    {
+        if (y <= 0 || y >= height)
+        {
+            fprintf(stderr, "Error: invalid Y coordinate (%d) for image height %d\n", y, height);
+            g_object_unref(pixbuf);
+            return;
+        }
+
+        int new_height = height - y;
+        GdkPixbuf *top = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, width, y);
+        GdkPixbuf *bottom = gdk_pixbuf_new_subpixbuf(pixbuf, 0, y, width, new_height);
+
+        if (!gdk_pixbuf_save(top, "tests/results/top_img.png", "png", &error, NULL))
+        {
+            fprintf(stderr, "Error: failed to save top_img.png: %s\n", error->message);
+            g_error_free(error);
+        }
+        if (!gdk_pixbuf_save(bottom, "tests/results/bottom_img.png", "png", &error, NULL))
+        {
+            fprintf(stderr, "Error: failed to save bottom_img.png: %s\n", error->message);
+            g_error_free(error);
+        }
+
+        g_object_unref(top);
+        g_object_unref(bottom);
+    }
+    else // vertical cut
+    {
+        if (x <= 0 || x >= width)
+        {
+            fprintf(stderr, "Error: invalid X coordinate (%d) for image width %d\n", x, width);
+            g_object_unref(pixbuf);
+            return;
+        }
+
+        int new_width = width - x;
+        GdkPixbuf *left = gdk_pixbuf_new_subpixbuf(pixbuf, 0, 0, x, height);
+        GdkPixbuf *right = gdk_pixbuf_new_subpixbuf(pixbuf, x, 0, new_width, height);
+
+        if (!gdk_pixbuf_save(left, "tests/results/left_img.png", "png", &error, NULL))
+        {
+            fprintf(stderr, "Error: failed to save left_img.png: %s\n", error->message);
+            g_error_free(error);
+        }
+        if (!gdk_pixbuf_save(right, "tests/results/right_img.png", "png", &error, NULL))
+        {
+            fprintf(stderr, "Error: failed to save right_img.png: %s\n", error->message);
+            g_error_free(error);
+        }
+
+        g_object_unref(left);
+        g_object_unref(right);
+    }
+
+    g_object_unref(pixbuf);
+}
+
+void slice_in_n(const char *image_path, int n_slice)
+{
+    GError *error = NULL;
+    image_path = get_image_path(image_path);
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
+
+    if (!pixbuf) {
+        g_printerr("Error loading image '%s': %s\n", image_path, error->message);
+        g_error_free(error);
+        return;
+    }
+
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+
+    if (width != height) {
+        g_printerr("Error: image must be square (got %dx%d)\n", width, height);
+        g_object_unref(pixbuf);
+        return;
+    }
+
+    int size_each = width / n_slice;
+
+    for (int i = 0; i < n_slice; i++) {
+        for (int j = 0; j < n_slice; j++) {
+            int x = j * size_each;
+            int y = i * size_each;
+
+            GdkPixbuf *tile = gdk_pixbuf_new_subpixbuf(pixbuf, x, y, size_each, size_each);
+            if (!tile) {
+                g_printerr("Error: could not create subpixbuf at (%d, %d)\n", x, y);
+                continue;
+            }
+
+            char filename[256];
+            snprintf(filename, sizeof(filename), "tests/results/slice_%d_%d.png", i, j);
+
+            if (!gdk_pixbuf_save(tile, filename, "png", &error, NULL)) {
+                g_printerr("Error saving file '%s': %s\n", filename, error->message);
+                g_error_free(error);
+                error = NULL;
+            }
+
+            g_object_unref(tile);
+        }
+    }
+
+    g_object_unref(pixbuf);
+}
+
 //Exclure main des tests
 #ifndef TESTING
 int main (int argc, char *argv[]) 
