@@ -60,3 +60,7 @@ dkms.conf
 .vscode/
 *.swp
 *.log
+
+# Tests results
+tests/results/*
+!tests/results/.gitkeep
