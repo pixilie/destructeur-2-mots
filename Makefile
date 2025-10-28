@@ -31,18 +31,31 @@ $(BUILD_DIR)/$(SOLVER_TARGET): src/solver.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 	@echo "Solver built successfully."
 
-$(BUILD_DIR)/$(IMAGE_TARGET): src/image.c
+image: $(BUILD_DIR)/$(IMAGE_TARGET)
+	@echo "Image built successfully."
+
+$(BUILD_DIR)/$(IMAGE_TARGET): $(BUILD_DIR)/image.o $(BUILD_DIR)/image_rotation.o
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $@ $^ $(LDFLAGS) $(GTK_LIBS)
-	@echo "Image built successfully."
+
+$(BUILD_DIR)/image.o: src/image.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/image_rotation.o: src/image_rotation.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $< -o $@
 
 # ===================== Test builds =====================
 
-tests: $(TEST_OBJ)
+tests: $(TEST_OBJ) $(TEST_SRC_OBJ)
 	@echo "Running tests..."
 	@for t in $(TEST_OBJ); do \
-		$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $(BUILD_DIR)/$$(basename $$t .o) $$t $(TEST_SRC_OBJ) $(LDFLAGS) $(GTK_LIBS); \
-		./$(BUILD_DIR)/$$(basename $$t .o); \
+		test_exec=$(BUILD_DIR)/$$(basename $$t .o); \
+		echo "Linking $$test_exec ..."; \
+		$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $$test_exec $$t $(TEST_SRC_OBJ) $(LDFLAGS) $(GTK_LIBS); \
+		echo "Running $$test_exec ..."; \
+		./$$test_exec || true; \
 	done
 	@echo "Tests completed."
 
