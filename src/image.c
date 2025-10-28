@@ -136,7 +136,7 @@ static void on_activate (GtkApplication *app)
 	}
 
 	//Convert image in levels of gray
-	convert_to_greyscale(pixbuf);
+	convert_to_grayscale(pixbuf);
 	
 	//Convert image in black and white
 	binarize_image(pixbuf, 180);
@@ -277,6 +277,8 @@ void slice_in_n(GdkPixbuf * pixbuf, int n_slice)
     }
 }
 
+//Exclure main des tests
+#ifndef TESTING
 int main (int argc, char *argv[]) 
 {
 	GtkApplication *app;
@@ -291,4 +293,4 @@ int main (int argc, char *argv[])
 
 	return status;
 }
-
+#endif
