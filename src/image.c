@@ -213,14 +213,15 @@ void sliceFrom(int x, int y, int direction)
             g_print("ERROR : error occured in saving High_img as png\n");
             return;
         }
-	}
-    if(!gdk_pixbuf_save(low, "Low_img", "png", NULL, NULL))
-	{
-        {
-            g_print("ERROR : error occured in saving Low_img as png\n");
-            return;
+		if(!gdk_pixbuf_save(low, "Low_img", "png", NULL, NULL))
+	    {
+            {
+                g_print("ERROR : error occured in saving Low_img as png\n");
+                return;
+            }
         }
-    }
+	}
+    
     else //we want to cut vertically --> y useless
     {
         int new_width = width - x;
