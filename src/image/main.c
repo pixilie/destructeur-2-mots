@@ -56,8 +56,7 @@ int main(int argc, char **argv)
         strcmp(function_name, "binarize_image") &&
         strcmp(function_name, "rotate_image") &&
         strcmp(function_name, "slice_from") &&
-        strcmp(function_name, "slice_in_n") &&
-	strcmp(function_name, "crop"))
+        strcmp(function_name, "slice_in_n") && strcmp(function_name, "crop"))
     {
         printf(COLOR_RED "[FAIL]" COLOR_RESET
                          " Incorrect function name, got: " COLOR_RED
@@ -397,19 +396,20 @@ int main(int argc, char **argv)
             }
 
             char filename[256];
-	    int index = 0;
+            int index = 0;
             for (int i = 0; i < n_slice; i++)
             {
-                for(int j = 0; j < n_slice; j++)
-           	{	
-		    snprintf(filename, sizeof(filename), "%s_%i_%i.png", prefix, i, j);
-	       	    save_pixbuf_as_png(tiles[index], filename);
-		    printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
-			   " Tile [%i, %i] has been saved as %s\n",
-			       i, j, filename);
-		    g_object_unref(tiles[index]);
-		    index++;
-		}
+                for (int j = 0; j < n_slice; j++)
+                {
+                    snprintf(filename, sizeof(filename), "%s_%i_%i.png", prefix,
+                             i, j);
+                    save_pixbuf_as_png(tiles[index], filename);
+                    printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                                       " Tile [%i, %i] has been saved as %s\n",
+                           i, j, filename);
+                    g_object_unref(tiles[index]);
+                    index++;
+                }
             }
 
             free(tiles);
@@ -417,56 +417,60 @@ int main(int argc, char **argv)
             return EXIT_SUCCESS;
         }
 
-	//crop
-	if(strcmp(function_name, "crop") == 0)
-	{
-	    if (argc < 7)
+        // crop
+        if (strcmp(function_name, "crop") == 0)
+        {
+            if (argc < 7)
             {
-		printf(COLOR_RED "[FAIL]" COLOR_RESET
-					 " Not enough arguments for crop\n");
-			printf("Usage: ./image crop <image_path> <x1> <y1> <x2> <y2> "
-			       "<optional:output_prefix>\n");
-			return EXIT_FAILURE;
-	    }
+                printf(COLOR_RED "[FAIL]" COLOR_RESET
+                                 " Not enough arguments for crop\n");
+                printf("Usage: ./image crop <image_path> <x1> <y1> <x2> <y2> "
+                       "<optional:output_prefix>\n");
+                return EXIT_FAILURE;
+            }
 
-	    // Load image
-	    GdkPixbuf *pixbuf = load_image(argv[2]);
-	    if (!pixbuf)
-	    {
-		printf(COLOR_RED "[FAIL]" COLOR_RESET
-				 " Image could not be loaded\n");
-		return EXIT_FAILURE;
-	    }
+            // Load image
+            GdkPixbuf *pixbuf = load_image(argv[2]);
+            if (!pixbuf)
+            {
+                printf(COLOR_RED "[FAIL]" COLOR_RESET
+                                 " Image could not be loaded\n");
+                return EXIT_FAILURE;
+            }
 
-	    int x1 = (int)strtol(argv[3], NULL, 10);
-	    int y1 = (int)strtol(argv[4], NULL, 10);
-	    int x2 = (int)strtol(argv[5], NULL, 10);
-	    int y2 = (int)strtol(argv[6], NULL, 10);
-	    GdkPixbuf *cropped = crop(pixbuf, x1, y1, x2, y2);
-	    if (!cropped)
-	    {
-		printf(COLOR_RED "[FAIL]" COLOR_RESET " Crop failed\n");
-		g_object_unref(pixbuf);
-		return EXIT_FAILURE;
-	    }
-	    if(argc > 7)
-	    {
-		save_pixbuf_as_png(cropped, argv[7]);
-		printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
-			       " Image %s cropped into a smaller image of rectangle (x1:%i, y1:%i) -> (x2:%i, y2:%i) and saved as %s\n",
-		   argv[2], x1, y1, x2, y2, argv[7]);
-	    }
-	    else
-	    {
-		save_pixbuf_as_png(cropped, "cropped.png");
-		printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
-			       " Image %s cropped into a smaller image of rectangle (x1:%i, y1:%i) -> (x2:%i, y2:%i) and saved as cropped.png\n",
-		   argv[2], x1, y1, x2, y2);
-	    }
-	    g_object_unref(pixbuf);
-	    g_object_unref(cropped);
-	    return EXIT_SUCCESS;
-	}
+            int x1 = (int)strtol(argv[3], NULL, 10);
+            int y1 = (int)strtol(argv[4], NULL, 10);
+            int x2 = (int)strtol(argv[5], NULL, 10);
+            int y2 = (int)strtol(argv[6], NULL, 10);
+            GdkPixbuf *cropped = crop(pixbuf, x1, y1, x2, y2);
+            if (!cropped)
+            {
+                printf(COLOR_RED "[FAIL]" COLOR_RESET " Crop failed\n");
+                g_object_unref(pixbuf);
+                return EXIT_FAILURE;
+            }
+            if (argc > 7)
+            {
+                save_pixbuf_as_png(cropped, argv[7]);
+                printf(COLOR_GREEN
+                       "[SUCCESS]" COLOR_RESET
+                       " Image %s cropped into a smaller image of rectangle "
+                       "(x1:%i, y1:%i) -> (x2:%i, y2:%i) and saved as %s\n",
+                       argv[2], x1, y1, x2, y2, argv[7]);
+            }
+            else
+            {
+                save_pixbuf_as_png(cropped, "cropped.png");
+                printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                                   " Image %s cropped into a smaller image of "
+                                   "rectangle (x1:%i, y1:%i) -> (x2:%i, y2:%i) "
+                                   "and saved as cropped.png\n",
+                       argv[2], x1, y1, x2, y2);
+            }
+            g_object_unref(pixbuf);
+            g_object_unref(cropped);
+            return EXIT_SUCCESS;
+        }
     }
 }
 #endif
