@@ -91,10 +91,49 @@ double find_good_rotation(GdkPixbuf *pixbuf)
 	return 0.0;
 }
 
-int remove_lines(GdkPixbuf *pixbuf)
+void remove_lines(GdkPixbuf *pixbuf)
 {
-	//need to be dev
-	return 0;
+	int width = gdk_pixbuf_get_width(pixbuf);
+        int height = gdk_pixbuf_get_height(pixbuf);
+        int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+        int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+        guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+	for (int y = 0; y < height; y ++)
+        {
+		int sum = 0;
+                for (int x = 0; x < width; x ++)
+                {
+                        guchar *p = pixels + y * rowstride + x * n_channels;
+                        sum += p[0];
+                }
+		if(sum >= width * 255 * 0.70)
+		{
+			for(int x = 0; x < width; x ++)
+			{
+				guchar *p = pixels + y * rowstride + x * n_channels;
+				p[0] = p[1] = p[2] = 0;
+			}
+		}
+        }
+
+	for (int x = 0; x < width; x ++)
+	{
+		 int sum = 0;
+                for (int y = 0; y < height; y ++)
+                {
+                        guchar *p = pixels + y * rowstride + x * n_channels;
+                        sum += p[0];
+                }
+                if(sum >= height * 255 * 0.70)
+                {
+                        for(int y = 0; y < height; y ++)
+                        {
+                                guchar *p = pixels + y * rowstride + x * n_channels;
+                                p[0] = p[1] = p[2] = 0;
+                        }
+                }
+	}
 }
 
 static void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y, int *is_visited, int index_coo, int **coo)
@@ -106,19 +145,26 @@ static void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y, int *is_vi
         guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 	guchar *p = pixels + y * rowstride + x * n_channels;
 	
-	if(p[0] < 100 && is_visited[y * width + x] == 0)
+	if(p[0] == 255 && is_visited[y * width + x] == 0)
 	{
+		is_visited[y * width + x] = 1;
 		int direction[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
 
 		for(int i = 0; i < 8; i ++)
 		{
-			is_visited[y * width + x] = 1;
-			if(x >= coo[index_coo][2] && y >= coo[index_coo][3])
-			{
+			if (x < coo[index_coo][0])
+				coo[index_coo][0] = x;
+    			if (y < coo[index_coo][1])
+				coo[index_coo][1] = y;
+    			if (x > coo[index_coo][2])
 				coo[index_coo][2] = x;
+    			if (y > coo[index_coo][3])
 				coo[index_coo][3] = y;
+
+			if((x + direction[i][0]) >= 0 && (y + direction[i][1]) >= 0 && (x + direction[i][0]) < width && (y + direction[i][1]) < height)
+			{
+				find_black_pixels_around(pixbuf, x + direction[i][0], y + direction[i][1], is_visited, index_coo, coo);
 			}
-			find_black_pixels_around(pixbuf, x + direction[i][0], y + direction[i][1], is_visited, index_coo, coo);
 		}
 	}
 }
@@ -141,15 +187,15 @@ void find_letter(GdkPixbuf *pixbuf, int **coo)
 		for(int x = 0; x < width; x ++)
 		{
 			if(is_visited[y * width + x] == 0)
-			{
-				is_visited[y * width + x] = 1;
+			{	
 				guchar *p = pixels + y * rowstride + x * n_channels;
 				
-				if(p[0] < 100)
+				if(p[0] == 255)
 				{
 					coo[index_coo][0] = coo[index_coo][2] = x;
 					coo[index_coo][1] = coo[index_coo][3] = y;
 					find_black_pixels_around(pixbuf, x, y, is_visited, index_coo, coo);
+					is_visited[y * width + x] = 1;
 					index_coo ++;
 				}
 			}
@@ -159,19 +205,22 @@ void find_letter(GdkPixbuf *pixbuf, int **coo)
 	free(is_visited);
 }
 
-void generate_letter(GdkPixbuf *pixbuf, int **coo, char *output_file)
+void generate_letter(GdkPixbuf *pixbuf, GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
 {
 	int index_coo = 0;
 	
 	char* full_path = malloc(strlen(output_file) + 21 * sizeof(char));
 	
-	while(coo[index_coo][0] != -1)
+	while(coo[index_coo][0] != 0)
 	{
-		GdkPixbuf letter = crop(pixbuf, coo[index_coo][0], coo[index_coo][1], coo[index_coo][2], coo[index_coo][3]);
-		sprintf(full_path, "%s%d_%d", output_file, coo[index_coo][0], coo[index_coo][1]);
-		save_pixbuf_as_png(letter, full_path);
+		if(coo[index_coo][0] < coo[index_coo][2] && coo[index_coo][1] < coo[index_coo][3])
+		{
+			GdkPixbuf *letter = crop(pixbuf_to_crop, coo[index_coo][0], coo[index_coo][1], coo[index_coo][2], coo[index_coo][3]);
+			sprintf(full_path, "%s/%s%d_%d.png",output_file , output_file, coo[index_coo][0], coo[index_coo][1]);
+			save_pixbuf_as_png(letter, full_path);
+			g_object_unref(letter);
+		}
 		index_coo ++;
-		g_object_unref(letter);
 	}
 	free(full_path);
 }
@@ -183,26 +232,25 @@ void pipeline(char *filename, char *output_file)
 	int width = gdk_pixbuf_get_width(pixbuf);
     	int height = gdk_pixbuf_get_height(pixbuf);
 	int **coo = malloc(width * height * sizeof(int*));
-	for(int i = 0; i < width * height)
+	for(int i = 0; i < width * height; i ++)
 	{
 		coo[i] = malloc(4 * sizeof(int)); // coo[i][0] = x1 coo[i][1] = y1 coo[i][2] = x2 coo[i][3] = y2
-		memset(coo[i], -1, 4 * sizeof(int));
+		coo[i][0] = coo[i][1] = coo[i][2] = coo[i][3] = 0;
 	}
 
 	convert_to_grayscale(pixbuf);
 	sobel_filter(pixbuf);
 	binarize_image(pixbuf, 180);
-	invert_color(pixbuf);
-
+	
 	double angle = find_good_rotation(pixbuf);
 	pixbuf = rotate_image(pixbuf, angle);
 	pixbuf_to_slice = rotate_image(pixbuf_to_slice, angle);
-	
+
 	remove_lines(pixbuf);
 
 	find_letter(pixbuf, coo);
 	
-	generate_letter(pixbuf, coo, output_file);
+	generate_letter(pixbuf, pixbuf_to_slice, coo, output_file);
 	
 	for(int i = 0; i < width * height; i ++)
 	{
@@ -215,6 +263,12 @@ void pipeline(char *filename, char *output_file)
 
 void main(int argc, char *argv[])
 {
-	pipeline(argv[1], argv[2]);
+	//pipeline(argv[1], argv[2]);
+	GdkPixbuf *pixbuf = load_image(argv[1]);
+	convert_to_grayscale(pixbuf);
+	sobel_filter(pixbuf);
+	binarize_image(pixbuf, 180);
+	remove_lines(pixbuf);
+	save_pixbuf_as_png(pixbuf, "testtt.png");
 }
 

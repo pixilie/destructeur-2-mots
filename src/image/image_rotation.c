@@ -1,6 +1,5 @@
 #define _GNU_SOURCE
 
-#include "../include/image_rotation.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
 #include <string.h>
