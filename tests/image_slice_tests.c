@@ -19,7 +19,7 @@ int main(void)
     const char *test_image1 = "square.jpg";
     const char *test_image2 = "level_1_image_1.png";
 
-    printf("--- TEST: slice_in_n_pixbuf() ---\n");
+    printf("\n--- TEST: slice_in_n() ---\n");
 
     GError *error = NULL;
     GdkPixbuf *pixbuf1 = gdk_pixbuf_new_from_file(get_image_path(test_image1), &error);
@@ -52,7 +52,7 @@ int main(void)
     free(tiles);
     g_object_unref(pixbuf1);
 
-    printf("--- TEST: slice_from() ---\n");
+    printf("\n--- TEST: slice_from() ---\n");
 
     GdkPixbuf *pixbuf2 = gdk_pixbuf_new_from_file(get_image_path(test_image2), &error);
     if (!pixbuf2)
@@ -70,7 +70,7 @@ int main(void)
     GdkPixbuf **horizontal = slice_from(pixbuf2, 0, y_cut, 1);
     if (!horizontal)
     {
-        fprintf(stderr, "FAIL: slice_from_pixbuf horizontal returned NULL\n");
+        fprintf(stderr, "FAIL: slice_from horizontal returned NULL\n");
         g_object_unref(pixbuf2);
         return 1;
     }

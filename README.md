@@ -3,22 +3,41 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 
 ## Project structure
 `destructeur-2-mots`  
-- `src`: Source code  
+- `src`: Source code
+  - `image`
+    - `image_helpers.c`
+    - `image_rotation.c`
+    - `image_slice.c`
+    - `image_treatment.c`
+    - `main.c`  
   - `solver.c`
-  - `neural_network.c`  
+  - `neural_network.c`
+  - `ui.c`
+  - `main.c`
 - `include`: Header files  
-  - `neural_network.h`  
+  - `neural_network.h`
+  - `ui.h`
+  - `image_helpers.h`
+  - `image_rotation.h`
+  - `image_slice.h`
+  - `image_treatment.h`
 - `build`: Compiled objects & executables  
-- `tests`: Unit tests  
-	- `neural_network_tests.c`  
-	- `solver_grid_sample.txt`  
+- `tests`: Unit tests
+  - `results`
+	- `poc_neural_tests.c`  
+  - `image_rotation_tests.c`
+  - `image_slice_tests.c`
+  - `image_treatment_tests.c`
+	- `solver_grid_sample.txt`
 - `docs`: Documentation (reports, documents...)
   - `ocr_word_search_solver_fr.pdf`
 
 ## Build
-- make → builds the main program.
+- make → builds everything except the tests.
 - make test → builds build/test from src/*.c + tests/*.c, then runs it.
 - make solver → builds src/solver.c
+- make ui → builds src/ui.c
+- make image → builds src/image/*.c
 - make clean → cleans everything.
 
 ## Commit convention
