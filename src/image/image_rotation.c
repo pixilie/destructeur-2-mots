@@ -5,6 +5,31 @@
 #include <math.h>
 #include <string.h>
 
+/**
+ * rotate_image:
+ * Rotate a GdkPixbuf by a given angle (degrees) and return a newly allocated
+ * GdkPixbuf containing the rotated image.
+ *
+ * Parameters:
+ *  - src          : pointer to the source GdkPixbuf to rotate (not modified).
+ *  - angle_degrees: rotation angle in degrees (positive = clockwise).
+ *
+ * Returns:
+ *  - A newly-allocated GdkPixbuf* containing the rotated image. The caller
+ *    owns the returned pixbuf and must call g_object_unref() when done.
+ *  - The function does not return NULL on error in the current implementation;
+ *    callers should still validate the return value.
+ *
+ * Behavior / Notes:
+ *  - The returned image is sized to fit the full rotated source (no cropping).
+ *  - Rotation uses nearest-neighbor sampling by mapping each destination pixel
+ *    back to the source and copying the nearest source pixel (no
+ * interpolation).
+ *  - The background is filled with black (all channels = 0) where no source
+ *    pixel maps to the destination.
+ *  - Alpha channel (if present) is copied alongside RGB channels.
+ *  - Uses the source image center as the rotation pivot.
+ */
 GdkPixbuf *rotate_image(GdkPixbuf *src, double angle_degrees)
 {
     int width = gdk_pixbuf_get_width(src);

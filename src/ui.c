@@ -1,8 +1,8 @@
 #include "../include/image_helpers.h"
 #include "../include/image_rotation.h"
 #include "../include/image_treatment.h"
-#include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <gtk/gtk.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
@@ -12,6 +12,30 @@
 
 static void on_activate(GtkApplication *app) __attribute__((unused));
 
+/**
+ * on_activate:
+ * Signal handler for the GtkApplication "activate" event.
+ *
+ * Parameters:
+ *  - app: pointer to the GtkApplication that emitted the activate signal.
+ *
+ * Behavior / Side effects:
+ *  - Creates the main application window and its child widgets (a scrolled
+ *    container with an image and a button).
+ *  - Loads an image path via get_image_path(), reads the image into a
+ * GdkPixbuf, converts it to grayscale, binarizes it and scales it for display.
+ *  - Saves intermediate results to "output.png" (binarized scaled image) and
+ *    "rotated.png" (rotated copy) for debugging/testing.
+ *  - Connects the button to close the window when clicked.
+ *  - Frees created GdkPixbuf objects and shows all widgets.
+ *
+ * Notes / Constraints:
+ *  - Uses hard-coded scale dimensions (1000x700) and binarization threshold
+ * (180).
+ *  - Prints errors with g_printerr/g_print and returns early on failures.
+ *  - The function owns and releases local GdkPixbuf references via
+ * g_object_unref().
+ */
 static void on_activate(GtkApplication *app)
 {
     // UI Variables
@@ -88,6 +112,25 @@ static void on_activate(GtkApplication *app)
     g_object_unref(scaled);
 }
 
+/**
+ * main:
+ * Program entry point. Initializes and runs the GTK application.
+ *
+ * Parameters:
+ *  - argc: argument count from the command line.
+ *  - argv: argument vector from the command line.
+ *
+ * Returns:
+ *  - int: application exit status returned by g_application_run().
+ *
+ * Behavior / Side effects:
+ *  - Creates a new GtkApplication, connects the "activate" signal to
+ *    on_activate, runs the application main loop, then releases the application
+ *    object before returning the status code.
+ *
+ * Notes:
+ *  - Command-line arguments (argc, argv) are forwarded to g_application_run().
+ */
 int main(int argc, char *argv[])
 {
     GtkApplication *app;

@@ -4,6 +4,25 @@
 #include <limits.h>
 #include <unistd.h>
 
+/**
+ * convert_to_grayscale:
+ * Convert an RGB(A) GdkPixbuf to grayscale in-place.
+ *
+ * Parameters:
+ *  - pixbuf: pointer to a writable GdkPixbuf containing RGB or RGBA pixels.
+ *
+ * Returns:
+ *  - void
+ *
+ * Side effects:
+ *  - Modifies the pixbuf pixel data in-place: for each pixel the R, G and B
+ *    channels are replaced by the computed luminance value.
+ *
+ * Details:
+ *  - Uses the standard luminance formula: Gray = 0.299*R + 0.587*G + 0.114*B.
+ *  - Preserves the alpha channel if present (alpha is not modified).
+ *  - Assumes 8-bit channels and that the pixbuf provided is writable.
+ */
 void convert_to_grayscale(GdkPixbuf *pixbuf)
 {
     // Formula for grayscale: Gray = 0.299 × R + 0.587 × G + 0.114 × B
@@ -42,6 +61,28 @@ void convert_to_grayscale(GdkPixbuf *pixbuf)
     }
 }
 
+/**
+ * binarize_image:
+ * Binarize a grayscale GdkPixbuf in-place using a threshold.
+ *
+ * Parameters:
+ *  - pixbuf   : pointer to a writable GdkPixbuf expected to be grayscale
+ *               (R==G==B for each pixel) or at least RGB/RGBA.
+ *  - threshold: integer threshold in [0,255]. Pixels with gray < threshold
+ *               become black (0), others become white (255).
+ *
+ * Returns:
+ *  - void
+ *
+ * Side effects:
+ *  - Modifies the pixbuf pixel data in-place, setting R,G,B to 0 or 255.
+ *  - Alpha channel, if present, is left unchanged.
+ *
+ * Notes:
+ *  - Typical threshold value is 128. The function does not clamp the
+ *    threshold argument; values outside 0..255 behave accordingly due to
+ *    comparison with the channel byte.
+ */
 void binarize_image(GdkPixbuf *pixbuf, int treshold)
 {
     // Transform gray image into a black and white image
