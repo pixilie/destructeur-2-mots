@@ -48,6 +48,7 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
     - ./image rotate_image `<image_path>` `<angle_degrees>` `<optional:output>`
     - ./image slice_from `<image_path>` `<x>` `<y>` `<direction>` `<optional:output1>` `<optional:output2>`
     - ./image slice_in_n `<image_path>` `<n_slice>` `<optional:output_prefix>`
+    - ./image crop `<image_path>` `<x1>` `<y1>` `<x2>` `<y2>` `<optional:output>`
 - ./solver `<grid_path>` `<word>`
 - ./ui
 
