@@ -52,10 +52,11 @@ GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
 
-    if (width != height)
-        return NULL;
+    //if (width != height)
+    //    return NULL;
 
-    int size_each = width / n_slice;
+    int tile_width = width / n_slice;
+    int tile_height = height / n_slice;
     int total = n_slice * n_slice;
 
     GdkPixbuf **tiles = malloc(total * sizeof(GdkPixbuf *));
@@ -67,11 +68,11 @@ GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
     {
         for (int j = 0; j < n_slice; j++)
         {
-            int x = j * size_each;
-            int y = i * size_each;
+            int x = j * tile_width;
+            int y = i * tile_height;
 
             tiles[index++] =
-                gdk_pixbuf_new_subpixbuf(pixbuf, x, y, size_each, size_each);
+                gdk_pixbuf_new_subpixbuf(pixbuf, x, y, tile_width, tile_height);
         }
     }
 
@@ -101,11 +102,9 @@ GdkPixbuf *crop(GdkPixbuf *src, int x1, int y1, int x2, int y2)
 
     if (x1 < 0 || y1 < 0 || x2 > src_width || y2 > src_height)
     {
-        g_warning("Coordinates outside of source pixbuf.");
+        printf("[FAIL] Coordinates are outside of source pixbuf\n");
         return NULL;
     }
 
-    GdkPixbuf *sub = gdk_pixbuf_new_subpixbuf(src, x1, y1, width, height);
-
-    return gdk_pixbuf_copy(sub);
+    return gdk_pixbuf_new_subpixbuf(src, x1, y1, width, height);
 }
