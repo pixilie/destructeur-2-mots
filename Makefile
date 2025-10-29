@@ -89,7 +89,7 @@ $(BUILD_DIR)/test_%: $(TEST_DIR)/%.c \
                      $(filter-out $(BUILD_DIR)/neural-network.o $(BUILD_DIR)/image_main.o,$(MAIN_OBJ)) \
                      $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 	@mkdir -p $(BUILD_DIR)
-	if echo $@ | grep -q "poc_neuronal"; then \
+	@if echo $@ | grep -q "poc_neuronal"; then \
 		$(MAKE) $(BUILD_DIR)/neural-network.o; \
 		$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(BUILD_DIR)/neural-network.o $(LDFLAGS); \
 	else \
