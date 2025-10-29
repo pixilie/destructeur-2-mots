@@ -73,6 +73,10 @@ $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/neural-network.o: $(SRC_DIR)/neural-network.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DTESTING -c $< -o $@
+
 # ===================== Tests Compilation =====================
 TEST_BINS = $(TEST_FILES:$(TEST_DIR)/%.c=$(BUILD_DIR)/test_%)
 
@@ -81,9 +85,16 @@ tests: $(TEST_BINS)
 	@echo "Running tests..."
 	@for t in $(TEST_BINS); do ./$$t; done
 
-$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(MAIN_OBJ) $(IMG_OBJ)
+$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c \
+                     $(filter-out $(BUILD_DIR)/neural-network.o $(BUILD_DIR)/image_main.o,$(MAIN_OBJ)) \
+                     $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
+	if echo $@ | grep -q "poc_neuronal"; then \
+		$(MAKE) $(BUILD_DIR)/neural-network.o; \
+		$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(BUILD_DIR)/neural-network.o $(LDFLAGS); \
+	else \
+		$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS); \
+	fi
 
 # ===================== Clean =====================
 clean:
