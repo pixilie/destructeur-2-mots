@@ -22,17 +22,18 @@ SRC_FILES    = $(wildcard $(SRC_DIR)/*.c)
 IMG_FILES    = $(wildcard $(IMG_DIR)/*.c)
 TEST_FILES   = $(wildcard $(TEST_DIR)/*.c)
 
-MAIN_SRC     = $(filter-out $(SRC_DIR)/solver.c $(SRC_DIR)/ui.c, $(SRC_FILES))
-IMG_UI_SRC   = $(filter-out $(IMG_DIR)/main.c, $(IMG_FILES))
+MAIN_SRC     = $(filter-out $(SRC_DIR)/solver.c $(SRC_DIR)/ui.c,$(SRC_FILES))
+IMG_UI_SRC   = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
 
 # ===================== Object Files =====================
 MAIN_OBJ     = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 SOLVER_OBJ   = $(BUILD_DIR)/solver.o
 UI_OBJ       = $(BUILD_DIR)/ui.o $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 IMG_OBJ      = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
+NN_OBJ       = $(BUILD_DIR)/neural-network.o
 
 # ===================== Main Rules =====================
-all: $(TARGET) $(SOLVER_BIN) $(UI_BIN) $(IMAGE_BIN) tests
+all: $(TARGET) $(SOLVER_BIN) $(UI_BIN) $(IMAGE_BIN)
 
 # ---------- Main Program ----------
 $(TARGET): $(MAIN_OBJ)
@@ -47,8 +48,6 @@ $(SOLVER_BIN): $(SOLVER_OBJ)
 	@echo "Solver built successfully."
 
 # ---------- UI ----------
-UI_SRC      = $(SRC_DIR)/ui.c
-
 $(UI_BIN): $(UI_OBJ)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -73,11 +72,13 @@ $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/neural-network.o: $(SRC_DIR)/neural-network.c
+$(NN_OBJ): $(SRC_DIR)/neural-network.c
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -DTESTING -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # ===================== Tests Compilation =====================
+TEST_OBJ = $(filter-out $(BUILD_DIR)/main.o,$(MAIN_OBJ))
+
 TEST_BINS = $(TEST_FILES:$(TEST_DIR)/%.c=$(BUILD_DIR)/test_%)
 
 tests: $(TEST_BINS)
@@ -85,16 +86,9 @@ tests: $(TEST_BINS)
 	@echo "Running tests..."
 	@for t in $(TEST_BINS); do ./$$t; done
 
-$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c \
-                     $(filter-out $(BUILD_DIR)/neural-network.o $(BUILD_DIR)/image_main.o,$(MAIN_OBJ)) \
-                     $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
+$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(TEST_OBJ) $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o) $(NN_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	@if echo $@ | grep -q "poc_neuronal"; then \
-		$(MAKE) $(BUILD_DIR)/neural-network.o; \
-		$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(BUILD_DIR)/neural-network.o $(LDFLAGS); \
-	else \
-		$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS); \
-	fi
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # ===================== Clean =====================
 clean:

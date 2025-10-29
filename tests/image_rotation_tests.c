@@ -1,9 +1,7 @@
-// tests/image_rotation_tests.c
 #include "../include/image_helpers.h"
 #include "../include/image_rotation.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <stdio.h>
-#include <math.h>
 #include <unistd.h>
 
 int test_rotate_90()
@@ -52,7 +50,7 @@ int test_rotate_90()
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
-    guchar *top_left = pixels; // original top-left
+    guchar *top_left = pixels;
     guchar *rot_pixels = gdk_pixbuf_get_pixels(rotated);
     int rot_rowstride = gdk_pixbuf_get_rowstride(rotated);
 

@@ -26,7 +26,6 @@ char *get_image_path(const char *filename)
 
     snprintf(image_path, sizeof(image_path), "%s/../assets/%s", dir, filename);
 
-    g_print("Image path : %s\n", image_path);
     return image_path;
 }
 
