@@ -1,88 +1,96 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude
-LDFLAGS = -lm
-GTK_CFLAGS = $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0)
-GTK_LIBS = $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0)
+# ===================== Compiler & Flags =====================
+CC       = gcc
+CFLAGS   = -Wall -Wextra -std=c99 -Iinclude $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0)
+LDFLAGS  = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0)
 
-BUILD_DIR = build
-TARGET = main
-SOLVER_TARGET = solver
-IMAGE_TARGET = image
-TEST_TARGET = test_exec
+# ===================== Directories =====================
+SRC_DIR      = src
+IMG_DIR      = $(SRC_DIR)/image
+INCLUDE_DIR  = include
+TEST_DIR     = tests
+BUILD_DIR    = build
+RESULTS_DIR  = $(TEST_DIR)/results
 
-SRC = $(filter-out src/solver.c, $(wildcard src/*.c))
-OBJ = $(SRC:src/%.c=$(BUILD_DIR)/%.o)
+# ===================== Target Binaries =====================
+TARGET       = $(BUILD_DIR)/main
+SOLVER_BIN   = $(BUILD_DIR)/solver
+UI_BIN       = $(BUILD_DIR)/ui
+IMAGE_BIN    = $(BUILD_DIR)/image
 
-TEST_SRC = $(wildcard tests/*.c)
-TEST_OBJ = $(TEST_SRC:tests/%.c=$(BUILD_DIR)/%.o)
-TEST_SRC_OBJ = $(SRC:src/%.c=$(BUILD_DIR)/%.test.o) 
+# ===================== Source Files =====================
+SRC_FILES    = $(wildcard $(SRC_DIR)/*.c)
+IMG_FILES    = $(wildcard $(IMG_DIR)/*.c)
+TEST_FILES   = $(wildcard $(TEST_DIR)/*.c)
 
-all: $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/$(SOLVER_TARGET) $(BUILD_DIR)/$(TEST_TARGET)
+MAIN_SRC     = $(filter-out $(SRC_DIR)/solver.c $(SRC_DIR)/ui.c, $(SRC_FILES))
+IMG_UI_SRC   = $(filter-out $(IMG_DIR)/main.c, $(IMG_FILES))
 
-# ===================== Program builds =====================
+# ===================== Object Files =====================
+MAIN_OBJ     = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+SOLVER_OBJ   = $(BUILD_DIR)/solver.o
+UI_OBJ       = $(BUILD_DIR)/ui.o $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
+IMG_OBJ      = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 
-$(BUILD_DIR)/$(TARGET): $(OBJ)
+# ===================== Main Rules =====================
+all: $(TARGET) $(SOLVER_BIN) $(UI_BIN) $(IMAGE_BIN) tests
+
+# ---------- Main Program ----------
+$(TARGET): $(MAIN_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $@ $^ $(LDFLAGS) $(GTK_LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 	@echo "Main program built successfully."
 
-$(BUILD_DIR)/$(SOLVER_TARGET): src/solver.c
+# ---------- Solver ----------
+$(SOLVER_BIN): $(SOLVER_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 	@echo "Solver built successfully."
 
-image: $(BUILD_DIR)/$(IMAGE_TARGET)
-	@echo "Image built successfully."
+# ---------- UI ----------
+UI_SRC      = $(SRC_DIR)/ui.c
 
-$(BUILD_DIR)/$(IMAGE_TARGET): $(BUILD_DIR)/image.o $(BUILD_DIR)/image_rotation.o
+$(UI_BIN): $(UI_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $@ $^ $(LDFLAGS) $(GTK_LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+	@echo "UI built successfully."
 
-$(BUILD_DIR)/image.o: src/image.c
+$(BUILD_DIR)/ui.o: $(SRC_DIR)/ui.c
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/image_rotation.o: src/image_rotation.c
+# ---------- Image Program ----------
+$(IMAGE_BIN): $(IMG_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $< -o $@
+	$(CC) -o $@ $^ $(LDFLAGS)
+	@echo "Image program built successfully."
 
-# ===================== Test builds =====================
+# ===================== Generic Compilation =====================
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-tests: $(TEST_OBJ) $(TEST_SRC_OBJ)
+$(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# ===================== Tests Compilation =====================
+TEST_BINS = $(TEST_FILES:$(TEST_DIR)/%.c=$(BUILD_DIR)/test_%)
+
+tests: $(TEST_BINS)
+	@echo "All tests built successfully."
 	@echo "Running tests..."
-	@for t in $(TEST_OBJ); do \
-		test_exec=$(BUILD_DIR)/$$(basename $$t .o); \
-		echo "Linking $$test_exec ..."; \
-		$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $$test_exec $$t $(TEST_SRC_OBJ) $(LDFLAGS) $(GTK_LIBS); \
-		echo "Running $$test_exec ..."; \
-		./$$test_exec || true; \
-	done
-	@echo "Tests completed."
+	@for t in $(TEST_BINS); do ./$$t; done
 
-$(BUILD_DIR)/$(TEST_TARGET): $(TEST_OBJ) $(TEST_SRC_OBJ)
+$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(MAIN_OBJ) $(IMG_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $@ $^ $(LDFLAGS) $(GTK_LIBS)
-
-# ===================== Object compilation =====================
-
-$(BUILD_DIR)/%.o: src/%.c
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/%.test.o: src/%.c
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -DTESTING -c $< -o $@
-
-$(BUILD_DIR)/%.o: tests/%.c
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -DTESTING -c $< -o $@
+	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
 
 # ===================== Clean =====================
-
 clean:
 	@echo "Cleaning build files..."
-	@rm -rf $(BUILD_DIR) src/*.o tests/*.o
+	@rm -rf $(BUILD_DIR)
+	@rm -f $(TARGET) $(SOLVER_BIN) $(UI_BIN) $(IMAGE_BIN)
+	@rm -rf $(RESULTS_DIR)/*
 	@echo "Clean complete."
 
-.PHONY: all solver tests image clean
-
+.PHONY: all clean tests

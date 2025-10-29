@@ -125,3 +125,7 @@ void train(NeuralNetwork *nn, double inputs[4][2], double targets[4],
         }
     }
 }
+
+int main() {
+    return EXIT_SUCCESS;
+}
