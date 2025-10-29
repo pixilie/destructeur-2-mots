@@ -41,15 +41,19 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 - `make clean`  → cleans everything.
 
 ## Usage
-- ./image `<function_name>` `<image_path>` `<function_params>` `<optional:output>`
+- `./image <function_name> <image_path> <function_params> <optional:output>`
   - Available functions:
-    - ./image convert_to_grayscale `<image_path>` `<optional:output>`
-    - ./image binarize_image `<image_path>` `<threshold>` `<optional:output>`
-    - ./image rotate_image `<image_path>` `<angle_degrees>` `<optional:output>`
-    - ./image slice_from `<image_path>` `<x>` `<y>` `<direction>` `<optional:output1>` `<optional:output2>`
-    - ./image slice_in_n `<image_path>` `<n_slice>` `<optional:output_prefix>`
-- ./solver `<grid_path>` `<word>`
-- ./ui
+    - `./image convert_to_grayscale <image_path> <optional:output>`
+    - `./image binarize_image <image_path> <threshold> <optional:output>`
+    - `./image rotate_image <image_path> <angle_degrees> <optional:output>`
+    - `./image slice_from <image_path> <x> <y> <direction> <optional:output1> <optional:output2>`
+    - `./image slice_in_n <image_path> <n_slice> <optional:output_prefix>`
+    - `./image crop <image_path> <x1> <y1> <x2> <y2> <optional:output>`
+    - `./image crop <image_path> <x1> <y1> <x2> <y2> <optional:output>`
+
+- `./solver <grid_path> <word>`
+
+- `./ui`
 
 ## Commit convention
 - git commit -m "feat: new features"  
