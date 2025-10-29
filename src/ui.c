@@ -1,9 +1,8 @@
 #include "../include/image_helpers.h"
 #include "../include/image_rotation.h"
 #include "../include/image_treatment.h"
-#include "gio/gio.h"
-#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
@@ -95,8 +94,7 @@ int main(int argc, char *argv[])
     int status;
 
     // Create a new application
-    app = gtk_application_new("com.example.GtkApplication",
-                              G_APPLICATION_DEFAULT_FLAGS);
+    app = gtk_application_new("com.example.GtkApplication", 0);
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
     status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
