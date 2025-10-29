@@ -92,16 +92,42 @@ int main(void)
 
     printf("PASS: slice_from() horizontal and vertical slices correct\n");
 
+    printf("\n--- TEST: crop() ---\n");
+
+    int x1 = 100;
+    int y1 = 100;
+    int x2 = 300;
+    int y2 = 300;
+    
+    GdkPixbuf *pixbuf3 = gdk_pixbuf_new_from_file(get_image_path(test_image1), &error);
+    if (!pixbuf3)
+    {
+        fprintf(stderr, "FAIL: Could not load image '%s': %s\n", test_image1,
+                error ? error->message : "unknown error");
+        if (error) g_error_free(error);
+        return 1;
+    }
+
+    GdkPixbuf *crop_result = crop(pixbuf3, x1, y1, x2, y2);
+    if (!crop_result)
+    {
+        fprintf(stderr, "FAIL: slice_in_n returned NULL\n");
+        g_object_unref(pixbuf1);
+        return 1;
+    }
+
+    check_pixbuf_dimensions(crop_result, x2 - x1, y2 - y1);
+
+    printf("PASS: crop() produced a new slice of %dx%d\n", x2 - x1, y2 - y1);
+
+    g_object_unref(pixbuf3);
     g_object_unref(horizontal[0]);
     g_object_unref(horizontal[1]);
     free(horizontal);
-
     g_object_unref(vertical[0]);
     g_object_unref(vertical[1]);
     free(vertical);
-
     g_object_unref(pixbuf2);
 
-    printf("All pixbuf slicing tests passed successfully.\n");
     return 0;
 }
