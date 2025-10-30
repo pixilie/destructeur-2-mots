@@ -10,9 +10,9 @@
 #include <string.h>
 #include <unistd.h>
 
-static void on_activate(GtkApplication *app) __attribute__((unused));
+static void on_activate(GtkApplication *app, gpointer user_data) __attribute__((unused));
 
-static void on_activate(GtkApplication *app)
+static void on_activate(GtkApplication *app, gpointer user_data)
 {
     // UI Variables
     GtkWidget *window;
@@ -28,8 +28,12 @@ static void on_activate(GtkApplication *app)
 
     // Create a vertical box
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-
-    const char *image_path = get_image_path("level_1_image_1.png");
+    char *filename = (char *) user_data;
+    if(!filename)
+    {
+        filename = "level_1_image_1.png";
+    }
+    const char *image_path = get_image_path(filename);
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, NULL);
     if (!pixbuf)
     {
@@ -92,11 +96,20 @@ int main(int argc, char *argv[])
 {
     GtkApplication *app;
     int status;
-
+    char *filename;
+    if(argc > 1)
+    {
+        filename = argv[1];
+    }
+    else
+    {
+        filename = "level_1_image_1.png";
+    }
+   
     // Create a new application
     app = gtk_application_new("com.example.GtkApplication", 0);
-    g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
-    status = g_application_run(G_APPLICATION(app), argc, argv);
+    g_signal_connect(app, "activate", G_CALLBACK(on_activate), filename);
+    status = g_application_run(G_APPLICATION(app), 1, argv);
     g_object_unref(app);
 
     return status;
