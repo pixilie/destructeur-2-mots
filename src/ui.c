@@ -14,6 +14,7 @@ struct AppData
 {
     GtkWidget *image;
     GdkPixbuf *original;
+    GdkPixbuf *transformed; //all non-rotation transformations
     GdkPixbuf *current;
     double rotation_angle;
 };
@@ -29,20 +30,27 @@ void on_grayscale_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->current)
+    if(!data->transformed)
     {
         return;
     }
 
-    GdkPixbuf *copy = gdk_pixbuf_copy(data->current);
-    convert_to_grayscale(copy);
+    convert_to_grayscale(data->transformed);
 
     if(data->current)
     {
         g_object_unref(data->current);
     }
 
-    data->current = copy;
+    data->current = gdk_pixbuf_copy(data->transformed);
+
+    if(data->rotation_angle != 0.0) 
+    {
+        GdkPixbuf *rotated = rotate_image(data->transformed, data->rotation_angle);
+        g_object_unref(data->current);
+        data->current = rotated;
+    }
+
     update_image(data);
 }
 
@@ -51,21 +59,27 @@ void on_binarize_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->current)
+    if(!data->transformed)
     {
         return;
     }
-
-    GdkPixbuf *copy = gdk_pixbuf_copy(data->current);
-    convert_to_grayscale(copy);
-    binarize_image(copy, 180);
+    
+    convert_to_grayscale(data->transformed);
+    binarize_image(data->transformed, 180);
 
     if(data->current)
     {
         g_object_unref(data->current);
     }
 
-    data->current = copy;
+    data->current = gdk_pixbuf_copy(data->transformed);
+
+    if(data->rotation_angle != 0.0) 
+    {
+        GdkPixbuf *rotated = rotate_image(data->transformed, data->rotation_angle);
+        g_object_unref(data->current);
+        data->current = rotated;
+    }
     update_image(data);
 }
 
@@ -74,18 +88,16 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->original)
+    if(!data->transformed)
     {
         return;
     }
-
     data->rotation_angle += 45.0;
     if(data->rotation_angle >= 360.0)
     {
         data->rotation_angle -= 360.0;
     }
-
-    GdkPixbuf *rotated = rotate_image(data->original, data->rotation_angle);
+    GdkPixbuf *rotated = rotate_image(data->transformed, data->rotation_angle);
 
     if(data->current)
     {
@@ -93,6 +105,7 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
     }
 
     data->current = rotated;
+
     update_image(data);
 }
 
@@ -101,14 +114,23 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if (!data->original)
+    if(!data->original)
+    {    
         return;
+    }
 
-    if (data->current)
+    if(data->current)
     {
         g_object_unref(data->current);
     }
+    if(data->transformed)
+    {
+        g_object_unref(data->transformed);
+    }
 
+    data->rotation_angle = 0.0;
+
+    data->transformed = gdk_pixbuf_copy(data->original);
     data->current = gdk_pixbuf_copy(data->original);
     update_image(data);
 }
@@ -126,6 +148,10 @@ void free_app_data(GtkWidget *widget __attribute__((unused)), gpointer user_data
         if(data->original)
         {
             g_object_unref(data->original);
+        }
+        if(data->transformed)
+        {
+            g_object_unref(data->transformed);
         }
         g_free(data);
     }
@@ -211,14 +237,15 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     gtk_box_pack_start(GTK_BOX(horizontal_box), grayscale_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), binarize_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), rotate_button, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(horizontal_box), close_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), close_button, TRUE, TRUE, 5);
     
     //Initialize AppData
     struct AppData *data = g_new(struct AppData, 1);
     data->image = image;
     data->original = pixbuf;
     data->current = gdk_pixbuf_copy(pixbuf);
+    data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     
     g_signal_connect(grayscale_button, "clicked", G_CALLBACK(on_grayscale_clicked), data);
