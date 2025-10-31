@@ -13,15 +13,6 @@
  *
  * Returns:
  *  - void
- *
- * Side effects:
- *  - Modifies the pixbuf pixel data in-place: for each pixel the R, G and B
- *    channels are replaced by the computed luminance value.
- *
- * Details:
- *  - Uses the standard luminance formula: Gray = 0.299*R + 0.587*G + 0.114*B.
- *  - Preserves the alpha channel if present (alpha is not modified).
- *  - Assumes 8-bit channels and that the pixbuf provided is writable.
  */
 void convert_to_grayscale(GdkPixbuf *pixbuf)
 {
@@ -73,15 +64,6 @@ void convert_to_grayscale(GdkPixbuf *pixbuf)
  *
  * Returns:
  *  - void
- *
- * Side effects:
- *  - Modifies the pixbuf pixel data in-place, setting R,G,B to 0 or 255.
- *  - Alpha channel, if present, is left unchanged.
- *
- * Notes:
- *  - Typical threshold value is 128. The function does not clamp the
- *    threshold argument; values outside 0..255 behave accordingly due to
- *    comparison with the channel byte.
  */
 void binarize_image(GdkPixbuf *pixbuf, int treshold)
 {

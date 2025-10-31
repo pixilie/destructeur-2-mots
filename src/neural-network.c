@@ -31,9 +31,6 @@ double sigmoid_derivative(double x) { return x * (1.0 - x); }
  *
  * Returns:
  *  - random double uniformly distributed between -1 and 1
- *
- * Notes:
- *  - Uses rand(); the RNG is seeded in create_network().
  */
 double rand_weight() { return ((double)rand() / RAND_MAX) * 2.0 - 1.0; }
 
@@ -48,10 +45,6 @@ double rand_weight() { return ((double)rand() / RAND_MAX) * 2.0 - 1.0; }
  * Returns:
  *  - pointer to an allocated NeuralNetwork with randomly initialized weights
  * and biases
- *
- * Side effects:
- *  - Allocates memory (must be freed with free_network).
- *  - Calls srand(time(NULL)) to seed the RNG.
  */
 NeuralNetwork *create_network(int input_size, int hidden_size, int output_size)
 {
@@ -104,9 +97,6 @@ void free_network(NeuralNetwork *nn)
  * Parameters:
  *  - nn    : pointer to an initialized NeuralNetwork
  *  - inputs: array of input values (length must be nn->input_size)
- *
- * Side effects:
- *  - Writes computed activations into nn->hidden and nn->output
  */
 void forward(NeuralNetwork *nn, double *inputs)
 {
@@ -138,15 +128,6 @@ void forward(NeuralNetwork *nn, double *inputs)
  *  - targets      : array of 4 target values (one target per example)
  *  - learning_rate: learning rate for weight updates
  *  - epochs       : number of training iterations (epochs)
- *
- * Side effects:
- *  - Updates nn->hidden_weights, nn->output_weights, nn->hidden_bias and
- * nn->output_bias
- *  - Prints total squared error every 1000 epochs
- *
- * Assumptions / limitations:
- *  - Assumes nn->output_size == 1 (uses nn->output[0])
- *  - Dataset size and input dimension are hard-coded (4 examples of size 2)
  */
 void train(NeuralNetwork *nn, double inputs[4][2], double targets[4],
            double learning_rate, int epochs)

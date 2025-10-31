@@ -20,11 +20,6 @@
  * array).
  *  - Returns NULL on error (invalid arguments, allocation failure or cut out of
  * bounds).
- *
- * Notes:
- *  - Uses gdk_pixbuf_new_subpixbuf which creates pixbuf views referencing the
- *    same pixel data as the source. The source must remain alive while the
- *    subpixbufs are used.
  */
 GdkPixbuf **slice_from(GdkPixbuf *pixbuf, int x, int y, int direction)
 {
@@ -81,14 +76,6 @@ GdkPixbuf **slice_from(GdkPixbuf *pixbuf, int x, int y, int direction)
  *    tiles in row-major order. Caller must g_object_unref() each tile and
  * free() the array.
  *  - Returns NULL on error (invalid arguments or allocation failure).
- *
- * Notes:
- *  - Tiles are created with gdk_pixbuf_new_subpixbuf and therefore reference
- *    the original pixbuf's data; the source must remain alive while tiles are
- * used.
- *  - If the source dimensions are not exactly divisible by n_slice the last
- *    partial column/row is truncated because integer division is used.
- *  - The function does not validate that tiles exactly cover the full image.
  */
 GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
 {
@@ -97,9 +84,6 @@ GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
 
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
-
-    // if (width != height)
-    //     return NULL;
 
     int tile_width = width / n_slice;
     int tile_height = height / n_slice;
@@ -139,12 +123,6 @@ GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
  *  - A GdkPixbuf* representing the cropped area (caller must g_object_unref()
  * it).
  *  - NULL on error (coordinates out of bounds).
- *
- * Behavior:
- *  - The function normalizes coordinates (swaps them if needed) so the order of
- *    corners does not matter.
- *  - Uses gdk_pixbuf_new_subpixbuf which references the original pixel data;
- *    keep the source alive while using the returned pixbuf.
  */
 GdkPixbuf *crop(GdkPixbuf *src, int x1, int y1, int x2, int y2)
 {

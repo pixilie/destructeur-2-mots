@@ -10,6 +10,19 @@
 #include <string.h>
 #include <unistd.h>
 
+/**
+ * AppData:
+ * Small container for application state passed to callbacks.
+ *
+ * Fields:
+ *  - image         : GTK image widget showing the current pixbuf.
+ *  - original      : original loaded GdkPixbuf (keep to allow reset).
+ *  - transformed   : working copy that receives in-place treatments.
+ *  - current       : pixbuf currently shown (may be rotated view of
+ * transformed).
+ *  - rotation_angle: accumulated rotation angle in degrees.
+ *  - save_index    : counter used to generate unique filenames when saving.
+ */
 struct AppData
 {
     GtkWidget *image;
@@ -20,12 +33,27 @@ struct AppData
     int save_index;
 };
 
+/**
+ * update_image:
+ * Update the GTK image widget to display data->current and request redraw.
+ *
+ * Parameters:
+ *  - data: pointer to application state (must have data->image and
+ * data->current).
+ */
 void update_image(struct AppData *data)
 {
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
     gtk_widget_queue_draw(data->image);
 }
 
+/**
+ * apply_transformations:
+ * Recompute data->current from data->transformed applying the current rotation.
+ *
+ * Parameters:
+ *  - data: pointer to application state.
+ */
 void apply_transformations(struct AppData *data)
 {
     if (data->current)
@@ -43,6 +71,14 @@ void apply_transformations(struct AppData *data)
     update_image(data);
 }
 
+/**
+ * on_grayscale_clicked:
+ * GTK callback invoked when the "Grayscale" button is clicked.
+ *
+ * Parameters:
+ *  - button   : the clicked GtkButton (unused).
+ *  - user_data: pointer to struct AppData.
+ */
 void on_grayscale_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -60,6 +96,14 @@ void on_grayscale_clicked(GtkButton *button, gpointer user_data)
     printf("Image converted to grayscale\n");
 }
 
+/**
+ * on_binarize_clicked:
+ * GTK callback for the "Black & White" button.
+ *
+ * Parameters:
+ *  - button   : the clicked GtkButton (unused).
+ *  - user_data: pointer to struct AppData.
+ */
 void on_binarize_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -78,6 +122,14 @@ void on_binarize_clicked(GtkButton *button, gpointer user_data)
     printf("Image converted to black and white\n");
 }
 
+/**
+ * on_rotate_clicked:
+ * GTK callback for the "Rotate" button.
+ *
+ * Parameters:
+ *  - button   : the clicked GtkButton (unused).
+ *  - user_data: pointer to struct AppData.
+ */
 void on_rotate_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -99,6 +151,14 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
     printf("Image rotated by 45 degrees\n");
 }
 
+/**
+ * on_reset_clicked:
+ * GTK callback for the "Reset" button.
+ *
+ * Parameters:
+ *  - button   : the clicked GtkButton (unused).
+ *  - user_data: pointer to struct AppData.
+ */
 void on_reset_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -126,6 +186,14 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
     printf("Image reset to original\n");
 }
 
+/**
+ * on_save_clicked:
+ * GTK callback for the "Save" button.
+ *
+ * Parameters:
+ *  - button   : the clicked GtkButton (unused).
+ *  - user_data: pointer to struct AppData.
+ */
 void on_save_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -151,6 +219,14 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
     printf("Image saved as %s\n", filename);
 }
 
+/**
+ * free_app_data:
+ * Cleanup handler called when the main window is destroyed.
+ *
+ * Parameters:
+ *  - widget   : the widget that emitted the destroy signal (unused).
+ *  - user_data: pointer to struct AppData to free.
+ */
 void free_app_data(GtkWidget *widget __attribute__((unused)),
                    gpointer user_data)
 {
@@ -176,6 +252,15 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
 static void on_activate(GtkApplication *app, gpointer user_data)
     __attribute__((unused));
 
+/**
+ * on_activate:
+ * GTK "activate" signal handler that builds the application UI and loads the
+ * image.
+ *
+ * Parameters:
+ *  - app      : the GtkApplication instance.
+ *  - user_data: optional filename string (const char*) or NULL to use default.
+ */
 static void on_activate(GtkApplication *app, gpointer user_data)
 {
     // UI Variables
@@ -290,6 +375,19 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     g_object_unref(scaled);
 }
 
+/**
+ * on_command_line:
+ * GApplication "command-line" handler that extracts the filename argument and
+ * forwards it to the activate handler.
+ *
+ * Parameters:
+ *  - app      : GApplication instance.
+ *  - cmdline  : GApplicationCommandLine containing argc/argv.
+ *  - user_data: unused.
+ *
+ * Returns:
+ *  - int: status code (0).
+ */
 int on_command_line(GApplication *app, GApplicationCommandLine *cmdline,
                     gpointer user_data __attribute__((unused)))
 {
@@ -311,6 +409,18 @@ int on_command_line(GApplication *app, GApplicationCommandLine *cmdline,
     return 0;
 }
 
+/**
+ * main:
+ * Program entry point. Creates a GtkApplication that handles command-line
+ * arguments and runs the main loop.
+ *
+ * Parameters:
+ *  - argc, argv: standard program arguments. Optional first argument is the
+ *                image filename to load at startup.
+ *
+ * Returns:
+ *  - int: application exit status.
+ */
 int main(int argc, char *argv[])
 {
     GtkApplication *app;

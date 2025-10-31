@@ -20,32 +20,24 @@
  * Returns:
  *  - Pointer to a static buffer containing the constructed path on success.
  *  - NULL on failure (for example if /proc/self/exe cannot be read).
- *
- * Notes:
- *  - The returned pointer points to a static buffer; do not free it.
- *  - Uses readlink("/proc/self/exe") and dirname() to locate the executable.
- *  - PATH_MAX is used to size the buffer.
  */
 char *get_image_path(const char *filename)
 {
     static char image_path[PATH_MAX];
     char resolved_path[PATH_MAX];
 
-    // Absolute path
     if (g_path_is_absolute(filename))
     {
         snprintf(image_path, sizeof(image_path), "%s", filename);
         return image_path;
     }
 
-    // assets/<filename>
     if (realpath(filename, resolved_path))
     {
         snprintf(image_path, sizeof(image_path), "%s", resolved_path);
         return image_path;
     }
 
-    //../assets/<filename>
     char exe_path[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
     if (len == -1)
@@ -78,13 +70,6 @@ char *get_image_path(const char *filename)
  * Returns:
  *  - Newly-allocated GdkPixbuf* on success (caller must unref when done).
  *  - NULL on failure.
- *
- * Side effects:
- *  - Prints a failure message to stdout/stderr on error.
- *  - Frees any GError allocated by gdk_pixbuf_new_from_file.
- *
- * Notes:
- *  - This function delegates path construction to get_image_path().
  */
 GdkPixbuf *load_image(char *filename)
 {
@@ -123,10 +108,6 @@ GdkPixbuf *load_image(char *filename)
  * Returns:
  *  - 1 on success.
  *  - 0 on failure (invalid arguments or save error).
- *
- * Side effects:
- *  - Prints an error message to stderr if saving fails.
- *  - Frees any GError allocated by gdk_pixbuf_save.
  */
 int save_pixbuf_as_png(GdkPixbuf *pixbuf, const char *filename)
 {

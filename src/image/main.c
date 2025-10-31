@@ -31,18 +31,6 @@
  *      ./image slice_from <image_path> <x> <y> <direction> [out1] [out2]
  *      ./image slice_in_n <image_path> <n_slice> [output_prefix]
  *      ./image crop <image_path> <x1> <y1> <x2> <y2> [output]
- *
- * Behavior / Side effects:
- *  - Validates arguments and prints usage on error.
- *  - Loads images via load_image() and frees them with g_object_unref().
- *  - Calls the corresponding image helper functions and saves results using
- *    save_pixbuf_as_png().
- *  - Returns EXIT_SUCCESS on success, EXIT_FAILURE on error.
- *
- * Notes:
- *  - Uses colored output for status messages.
- *  - This function is intended as a simple CLI test harness and performs
- *    minimal argument validation beyond count/type conversions.
  */
 int main(int argc, char **argv)
 {
