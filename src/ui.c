@@ -1,8 +1,8 @@
 #include "../include/image_helpers.h"
 #include "../include/image_rotation.h"
 #include "../include/image_treatment.h"
-#include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <gtk/gtk.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
@@ -14,7 +14,7 @@ struct AppData
 {
     GtkWidget *image;
     GdkPixbuf *original;
-    GdkPixbuf *transformed; //all non-rotation transformations
+    GdkPixbuf *transformed;
     GdkPixbuf *current;
     double rotation_angle;
     int save_index;
@@ -28,11 +28,11 @@ void update_image(struct AppData *data)
 
 void apply_transformations(struct AppData *data)
 {
-    if(data->current)
+    if (data->current)
     {
         g_object_unref(data->current);
     }
-    if(data->rotation_angle != 0.0)
+    if (data->rotation_angle != 0.0)
     {
         data->current = rotate_image(data->transformed, data->rotation_angle);
     }
@@ -43,19 +43,18 @@ void apply_transformations(struct AppData *data)
     update_image(data);
 }
 
-
 void on_grayscale_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->transformed)
+    if (!data->transformed)
     {
         return;
     }
 
     convert_to_grayscale(data->transformed);
-    
+
     apply_transformations(data);
 
     printf("Image converted to grayscale\n");
@@ -66,11 +65,11 @@ void on_binarize_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->transformed)
+    if (!data->transformed)
     {
         return;
     }
-    
+
     convert_to_grayscale(data->transformed);
     binarize_image(data->transformed, 180);
 
@@ -84,13 +83,13 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->transformed)
+    if (!data->transformed)
     {
         return;
     }
 
     data->rotation_angle += 45.0;
-    if(data->rotation_angle >= 360.0)
+    if (data->rotation_angle >= 360.0)
     {
         data->rotation_angle -= 360.0;
     }
@@ -105,16 +104,16 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->original)
-    {    
+    if (!data->original)
+    {
         return;
     }
 
-    if(data->current)
+    if (data->current)
     {
         g_object_unref(data->current);
     }
-    if(data->transformed)
+    if (data->transformed)
     {
         g_object_unref(data->transformed);
     }
@@ -132,7 +131,7 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->current)
+    if (!data->current)
     {
         return;
     }
@@ -142,7 +141,7 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
     data->save_index++;
 
     GError *error = NULL;
-    if(!gdk_pixbuf_save(data->current, filename, "png", &error, NULL))
+    if (!gdk_pixbuf_save(data->current, filename, "png", &error, NULL))
     {
         g_printerr("Failed to save image: %s\n", error->message);
         g_error_free(error);
@@ -152,20 +151,21 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
     printf("Image saved as %s\n", filename);
 }
 
-void free_app_data(GtkWidget *widget __attribute__((unused)), gpointer user_data)
+void free_app_data(GtkWidget *widget __attribute__((unused)),
+                   gpointer user_data)
 {
     struct AppData *data = user_data;
-    if(data)
+    if (data)
     {
-        if(data->current)
+        if (data->current)
         {
             g_object_unref(data->current);
         }
-        if(data->original)
+        if (data->original)
         {
             g_object_unref(data->original);
         }
-        if(data->transformed)
+        if (data->transformed)
         {
             g_object_unref(data->transformed);
         }
@@ -173,7 +173,8 @@ void free_app_data(GtkWidget *widget __attribute__((unused)), gpointer user_data
     }
 }
 
-static void on_activate(GtkApplication *app, gpointer user_data) __attribute__((unused));
+static void on_activate(GtkApplication *app, gpointer user_data)
+    __attribute__((unused));
 
 static void on_activate(GtkApplication *app, gpointer user_data)
 {
@@ -190,9 +191,9 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *image;
     GtkWidget *scrolled;
 
-    //Load image
-    char *filename = (char *) user_data;
-    if(!filename)
+    // Load image
+    char *filename = (char *)user_data;
+    if (!filename)
     {
         filename = "level_1_image_1.png";
     }
@@ -208,9 +209,10 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
     if (!pixbuf)
     {
-	g_printerr("Failed to load image '%s': %s\n", image_path, error->message);
+        g_printerr("Failed to load image '%s': %s\n", image_path,
+                   error->message);
         g_error_free(error);
-	return;
+        return;
     }
 
     // Create a new window
@@ -229,7 +231,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_box_pack_start(GTK_BOX(vertical_box), scrolled, TRUE, TRUE, 5);
-    
+
     image = gtk_image_new_from_pixbuf(scaled);
     if (!gtk_image_get_pixbuf(GTK_IMAGE(image)))
     {
@@ -243,8 +245,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     // Create new buttons
     close_button = gtk_button_new_with_label("Fermer la fenêtre");
-    g_signal_connect_swapped(close_button, "clicked", G_CALLBACK(gtk_window_close),
-                             window);
+    g_signal_connect_swapped(close_button, "clicked",
+                             G_CALLBACK(gtk_window_close), window);
 
     grayscale_button = gtk_button_new_with_label("Grayscale");
     binarize_button = gtk_button_new_with_label("Black & White");
@@ -252,14 +254,15 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     save_button = gtk_button_new_with_label("Sauvegarder l'image");
     reset_button = gtk_button_new_with_label("Réinitialiser l'image");
 
-    gtk_box_pack_start(GTK_BOX(horizontal_box), grayscale_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), grayscale_button, TRUE, TRUE,
+                       5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), binarize_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), rotate_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), close_button, TRUE, TRUE, 5);
-    
-    //Initialize AppData
+
+    // Initialize AppData
     struct AppData *data = g_new(struct AppData, 1);
     data->image = image;
     data->original = pixbuf;
@@ -267,12 +270,16 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
-    
-    g_signal_connect(grayscale_button, "clicked", G_CALLBACK(on_grayscale_clicked), data);
-    g_signal_connect(binarize_button, "clicked", G_CALLBACK(on_binarize_clicked), data);
-    g_signal_connect(rotate_button, "clicked", G_CALLBACK(on_rotate_clicked), data);
+
+    g_signal_connect(grayscale_button, "clicked",
+                     G_CALLBACK(on_grayscale_clicked), data);
+    g_signal_connect(binarize_button, "clicked",
+                     G_CALLBACK(on_binarize_clicked), data);
+    g_signal_connect(rotate_button, "clicked", G_CALLBACK(on_rotate_clicked),
+                     data);
     g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
-    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked), data);
+    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked),
+                     data);
 
     g_signal_connect(window, "destroy", G_CALLBACK(free_app_data), data);
 
@@ -283,12 +290,13 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     g_object_unref(scaled);
 }
 
-int on_command_line(GApplication *app, GApplicationCommandLine *cmdline, gpointer user_data __attribute__((unused)))
+int on_command_line(GApplication *app, GApplicationCommandLine *cmdline,
+                    gpointer user_data __attribute__((unused)))
 {
     int argc;
     char **argv = g_application_command_line_get_arguments(cmdline, &argc);
     const char *filename;
-    if(argc > 1)
+    if (argc > 1)
     {
         filename = argv[1];
     }
@@ -303,13 +311,12 @@ int on_command_line(GApplication *app, GApplicationCommandLine *cmdline, gpointe
     return 0;
 }
 
-
 int main(int argc, char *argv[])
 {
     GtkApplication *app;
     int status;
     char *filename;
-    if(argc > 1)
+    if (argc > 1)
     {
         filename = argv[1];
     }
@@ -317,9 +324,10 @@ int main(int argc, char *argv[])
     {
         filename = "level_1_image_1.png";
     }
-   
+
     // Create a new application
-    app = gtk_application_new("com.example.GtkApplication", G_APPLICATION_HANDLES_COMMAND_LINE);
+    app = gtk_application_new("com.example.GtkApplication",
+                              G_APPLICATION_HANDLES_COMMAND_LINE);
     g_signal_connect(app, "command-line", G_CALLBACK(on_command_line), NULL);
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), filename);
     status = g_application_run(G_APPLICATION(app), argc, argv);
