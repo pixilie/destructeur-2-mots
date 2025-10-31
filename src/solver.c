@@ -330,7 +330,9 @@ int main(int argc, char *argv[])
     int *y2 = malloc(sizeof(int));
 
     solve(argv[1], argv[2], x1, y1, x2, y2);
-
+	
+    if(*x1 == -1 && *x2 == -1)
+	    printf("Not Found");
     printf("(%i, %i)(%i, %i)\n", *x1, *y1, *x2, *y2);
 
     free(x1);
