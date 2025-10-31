@@ -7,6 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * sobel_filter:
+ * Apply a Sobel edge-detection filter to a grayscale GdkPixbuf in-place.
+ *
+ * Parameters:
+ *  - pixbuf: pointer to a GdkPixbuf expected to be grayscale (R==G==B).
+ */
 void sobel_filter(GdkPixbuf *pixbuf)
 {
     int Gx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
@@ -62,6 +69,13 @@ void sobel_filter(GdkPixbuf *pixbuf)
     free(temp_p);
 }
 
+/**
+ * invert_color:
+ * Invert the grayscale color values of a pixbuf in-place (black↔white).
+ *
+ * Parameters:
+ *  - pixbuf: pointer to a GdkPixbuf expected to be grayscale (R==G==B).
+ */
 void invert_color(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -80,12 +94,33 @@ void invert_color(GdkPixbuf *pixbuf)
     }
 }
 
+/**
+ * find_good_rotation:
+ * Placeholder for an algorithm to detect the optimal rotation angle for the
+ * image.
+ *
+ * Parameters:
+ *  - pixbuf: pointer to a GdkPixbuf to analyze (typically binarized).
+ *
+ * Returns:
+ *  - A rotation angle in degrees to be applied to deskew the image. Current
+ *    implementation returns 0.0 (no rotation).
+ */
 double find_good_rotation(GdkPixbuf *pixbuf)
 {
     // need to be dev
     return 0.0;
 }
 
+/**
+ * remove_lines:
+ * Detect and remove strong horizontal and vertical lines from a binarized
+ * image.
+ *
+ * Parameters:
+ *  - pixbuf: pointer to a binarized GdkPixbuf (white text on black background
+ *           or inverted accordingly).
+ */
 void remove_lines(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -131,6 +166,19 @@ void remove_lines(GdkPixbuf *pixbuf)
     }
 }
 
+/**
+ * find_black_pixels_around:
+ * Recursive flood-fill helper that expands a connected component of white
+ * pixels (considered foreground) and updates a bounding box.
+ *
+ * Parameters:
+ *  - pixbuf     : binarized GdkPixbuf where foreground pixels have value 255.
+ *  - x, y       : starting coordinates for the search.
+ *  - is_visited : int array of size width*height marking visited pixels (0/1).
+ *  - index_coo  : index into coo array for storing bounding box values.
+ *  - coo        : array of integer arrays; coo[index_coo] holds
+ * [xmin,ymin,xmax,ymax].
+ */
 static void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y,
                                      int *is_visited, int index_coo, int **coo)
 {
@@ -172,6 +220,20 @@ static void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y,
     }
 }
 
+/**
+ * find_letter:
+ * Find connected components representing letters in a binarized image.
+ *
+ * Parameters:
+ *  - pixbuf: pointer to a binarized GdkPixbuf (foreground pixels = 255).
+ *  - coo   : preallocated array of int* pointers; each coo[i] must point to
+ *            an int[4] array where bounding boxes [xmin,ymin,xmax,ymax] are
+ * stored.
+ *
+ * Returns:
+ *  - The number of connected components (letters) discovered and written into
+ * coo.
+ */
 int find_letter(GdkPixbuf *pixbuf, int **coo)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -214,8 +276,18 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     return nb_letter;
 }
 
-void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo,
-                     char *output_file)
+/**
+ * generate_letter:
+ * Crop and save individual letter images using bounding boxes computed earlier.
+ *
+ * Parameters:
+ *  - pixbuf_to_crop: source GdkPixbuf (original image) used for cropping.
+ *  - coo            : array of bounding boxes; each coo[i] is
+ * [xmin,ymin,xmax,ymax].
+ *  - output_file    : directory path where letter images will be saved (created
+ * if necessary).
+ */
+void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
 {
     g_mkdir_with_parents(output_file, 0777);
 
@@ -244,6 +316,18 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo,
     }
 }
 
+/**
+ * find_grid_and_words:
+ * Heuristically group detected letter bounding boxes into two clusters:
+ * the grid region and the word-list region.
+ *
+ * Parameters:
+ *  - grid_coo : int[4] output array to receive the grid bounding box.
+ *  - word_coo : int[4] output array to receive the word list bounding box.
+ *  - coo      : array of letter bounding boxes (coo[i] =
+ * [xmin,ymin,xmax,ymax]).
+ *  - nb_letter: number of entries in coo.
+ */
 void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
 {
 
@@ -321,6 +405,20 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
     free(box2_coo);
 }
 
+/**
+ * find_word_by_word:
+ * Aggregate nearby letter bounding boxes into word boxes within the word-list
+ * region.
+ *
+ * Parameters:
+ *  - coo       : array of letter bounding boxes [xmin,ymin,xmax,ymax].
+ *  - word_list : preallocated array of int* with room for nb_words entries;
+ *                each entry is an int[4] that will receive grouped word boxes.
+ *  - words_coo : bounding box [xmin,ymin,xmax,ymax] that defines the word-list
+ * area.
+ *  - nb_letter : number of letter boxes in coo.
+ *  - nb_words  : capacity of word_list (maximum number of words to group).
+ */
 void find_word_by_word(int **coo, int **word_list, int *words_coo,
                        int nb_letter, int nb_words)
 {
@@ -380,6 +478,16 @@ void find_word_by_word(int **coo, int **word_list, int *words_coo,
     }
 }
 
+/**
+ * pipeline:
+ * High-level OCR pipeline that processes a puzzle image to extract grid, words,
+ * and letters.
+ *
+ * Parameters:
+ *  - filename         : input image filename (asset name passed to load_image).
+ *  - output_gw_file   : output directory for grid and word crops.
+ *  - output_letter_file: output directory for individual letter images.
+ */
 void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 {
     g_mkdir_with_parents(output_gw_file, 0777);
