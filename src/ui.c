@@ -333,9 +333,9 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     g_signal_connect_swapped(close_button, "clicked",
                              G_CALLBACK(gtk_window_close), window);
 
-    grayscale_button = gtk_button_new_with_label("Grayscale");
-    binarize_button = gtk_button_new_with_label("Black & White");
-    rotate_button = gtk_button_new_with_label("Rotate");
+    grayscale_button = gtk_button_new_with_label("Conversion en niveaux de gris");
+    binarize_button = gtk_button_new_with_label("Conversion en noir et blanc");
+    rotate_button = gtk_button_new_with_label("Rotation de 45 degrés");
     save_button = gtk_button_new_with_label("Sauvegarder l'image");
     reset_button = gtk_button_new_with_label("Réinitialiser l'image");
 
