@@ -1,17 +1,18 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-int len_word(char word[])
-{
-    int i = 0;
-    while (word[i] != '\0')
-    {
-        i++;
-    }
-    return i;
-}
-
+/**
+ * Search for a word in a rectangular letter grid stored in a text file.
+ *
+ * Parameters:
+ *  - filename: path to the input file containing the grid (each row on a line).
+ *  - word    : null-terminated string to search for.
+ *  - x1, y1  : output pointers to store coordinates of the first letter
+ * (start).
+ *  - x2, y2  : output pointers to store coordinates of the last letter (end).
+ */
 void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
 {
     int nbcolls = 0;
@@ -92,7 +93,7 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
         }
         else
         {
-            int len_w = len_word(word);
+            int len_w = strlen(word);
             is_found = 0;
             if (tempy2 - 1 >= 0)
             {
@@ -310,6 +311,12 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
     }
 }
 
+/**
+ * Program entry point: parse arguments, invoke solve and print coordinates.
+ *
+ * Usage:
+ *  ./solver filename word
+ */
 int main(int argc, char *argv[])
 {
     if (argc < 3)

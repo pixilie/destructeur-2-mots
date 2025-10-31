@@ -4,6 +4,16 @@
 #include <limits.h>
 #include <unistd.h>
 
+/**
+ * convert_to_grayscale:
+ * Convert an RGB(A) GdkPixbuf to grayscale in-place.
+ *
+ * Parameters:
+ *  - pixbuf: pointer to a writable GdkPixbuf containing RGB or RGBA pixels.
+ *
+ * Returns:
+ *  - void
+ */
 void convert_to_grayscale(GdkPixbuf *pixbuf)
 {
     // Formula for grayscale: Gray = 0.299 × R + 0.587 × G + 0.114 × B
@@ -42,6 +52,19 @@ void convert_to_grayscale(GdkPixbuf *pixbuf)
     }
 }
 
+/**
+ * binarize_image:
+ * Binarize a grayscale GdkPixbuf in-place using a threshold.
+ *
+ * Parameters:
+ *  - pixbuf   : pointer to a writable GdkPixbuf expected to be grayscale
+ *               (R==G==B for each pixel) or at least RGB/RGBA.
+ *  - threshold: integer threshold in [0,255]. Pixels with gray < threshold
+ *               become black (0), others become white (255).
+ *
+ * Returns:
+ *  - void
+ */
 void binarize_image(GdkPixbuf *pixbuf, int treshold)
 {
     // Transform gray image into a black and white image

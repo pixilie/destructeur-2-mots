@@ -14,17 +14,24 @@
 
 #ifndef TESTING
 
-// Executes image transformations based on command-line arguments
-// Supported functions:
-//   - convert_to_grayscale: Converts an image to grayscale.
-//   - binarize_image: Converts an image to black and white with a threshold.
-//   - rotate_image: Rotates an image by a given angle.
-//   - slice_from: Slices an image horizontally or vertically at given
-//   coordinates.
-//   - slice_in_n: Divides an image into N smaller tiles.
-//   - crop: Slices an image into a rectangle of given coordinates.
-// Usage:
-//   ./image <function_name> <image_path> <function_params> <optional:output>
+/**
+ * main:
+ * Command-line driver for image utility functions. Parses arguments, loads the
+ * requested image from the assets directory and dispatches to the requested
+ * image operation (convert_to_grayscale, binarize_image, rotate_image,
+ * slice_from, slice_in_n, crop). Saves outputs when requested and prints
+ * status messages to stdout.
+ *
+ * Parameters:
+ *  - argc: number of command-line arguments.
+ *  - argv: argument vector. Expected forms:
+ *      ./image convert_to_grayscale <image_path> [output]
+ *      ./image binarize_image <image_path> <threshold> [output]
+ *      ./image rotate_image <image_path> <angle_degrees> [output]
+ *      ./image slice_from <image_path> <x> <y> <direction> [out1] [out2]
+ *      ./image slice_in_n <image_path> <n_slice> [output_prefix]
+ *      ./image crop <image_path> <x1> <y1> <x2> <y2> [output]
+ */
 int main(int argc, char **argv)
 {
     if (argc < 2)

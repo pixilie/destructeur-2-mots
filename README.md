@@ -31,6 +31,7 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 	- `solver_grid_sample.txt`
 - `docs`: Documentation (reports, documents...)
   - `ocr_word_search_solver_fr.pdf`
+  - `destructeur_2_mots_rapport_n1.pdf`
 
 ## Build
 - `make`          → builds everything except the tests.
@@ -57,6 +58,10 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 - `./ui <optional:image_path>`: launch ui and load `<image_path>` (default: level_1_image_1.png)
 
 - `./pipeline <input_image> <output_grid_words_dir>`
+
+## Documents
+- `docs/destructeur_2_mots_rapport_n1` : First presentation report
+- `docs/ocr_word_search_solver_fr.pdf` : Specifications
 
 ## Commit convention
 - git commit -m "feat: new features"  
