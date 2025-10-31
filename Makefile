@@ -73,7 +73,7 @@ $(PIPELINE_BIN): $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 	@echo "Pipeline built successfully."
 
-$(BUILD_DIR)/pipeline.o: $(SRC_DIR)/pipeline.c
+$(BUILD_DIR)/pipeline.o: $(SRC_DIR)/line_detection.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -86,7 +86,7 @@ $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(NN_OBJ): $(SRC_DIR)/neural-network.c
+$(NN_OBJ): $(SRC_DIR)/neural_network.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -101,7 +101,7 @@ tests: $(TEST_BINS)
 
 $(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(TEST_OBJ) $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o) $(NN_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line-detection.c -o $(BUILD_DIR)/line-detection.o
+	$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line_detection.c -o $(BUILD_DIR)/line_detection.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # ===================== Clean =====================

@@ -214,7 +214,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     return nb_letter;
 }
 
-void generate_letter(GdkPixbuf *pixbuf, GdkPixbuf *pixbuf_to_crop, int **coo,
+void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo,
                      char *output_file)
 {
     g_mkdir_with_parents(output_file, 0777);
@@ -413,7 +413,7 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 
     nb_letter = find_letter(pixbuf, coo);
 
-    generate_letter(pixbuf, pixbuf_to_slice, coo, output_letter_file);
+    generate_letter(pixbuf_to_slice, coo, output_letter_file);
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
 
