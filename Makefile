@@ -88,6 +88,7 @@ tests: $(TEST_BINS)
 
 $(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(TEST_OBJ) $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o) $(NN_OBJ)
 	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line-detection.c -o $(BUILD_DIR)/line-detection.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # ===================== Clean =====================

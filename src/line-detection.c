@@ -212,9 +212,11 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
 
 void generate_letter(GdkPixbuf *pixbuf, GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
 {
+	g_mkdir_with_parents(output_file, 0777);
+
 	int index_coo = 0;
 	
-	char* full_path = malloc(strlen(output_file) + 40 * sizeof(char));
+	char full_path[512];
 	
 	while(coo[index_coo][0] != 0)
 	{
@@ -223,13 +225,12 @@ void generate_letter(GdkPixbuf *pixbuf, GdkPixbuf *pixbuf_to_crop, int **coo, ch
 				coo[index_coo][2] - coo[index_coo][0] >= 5 && coo[index_coo][3] - coo[index_coo][1] >= 5)
 		{
 			GdkPixbuf *letter = crop(pixbuf_to_crop, coo[index_coo][0], coo[index_coo][1], coo[index_coo][2], coo[index_coo][3]);
-			sprintf(full_path, "%s/%s%d_%d.png",output_file , output_file, coo[index_coo][0], coo[index_coo][1]);
+			snprintf(full_path, sizeof(full_path), "%s/letter_%d_%d.png", output_file, coo[index_coo][0], coo[index_coo][1]);
 			save_pixbuf_as_png(letter, full_path);
 			g_object_unref(letter);
 		}
 		index_coo ++;
 	}
-	free(full_path);
 }
 
 void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
@@ -348,6 +349,9 @@ void find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter
 
 void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 {
+	g_mkdir_with_parents(output_gw_file, 0777);
+        g_mkdir_with_parents(output_letter_file, 0777);
+
 	int nb_letter = 0;
 	int nb_words = 50; // we state that there will not be more than 50 words in an exercise
 	GdkPixbuf *pixbuf = load_image(filename);
@@ -439,8 +443,9 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 	g_object_unref(pixbuf_to_slice);
 }
 
-void main(int argc, char *argv[])
+#ifndef TESTING
+int main(int argc, char *argv[])
 {
 	pipeline(argv[1], argv[2], argv[3]);
 }
-
+#endif
