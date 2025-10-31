@@ -220,7 +220,7 @@ void generate_letter(GdkPixbuf *pixbuf, GdkPixbuf *pixbuf_to_crop, int **coo,
     g_mkdir_with_parents(output_file, 0777);
 
     int index_coo = 0;
-	
+
     char full_path[512];
 
     while (coo[index_coo][0] != 0)
@@ -235,8 +235,8 @@ void generate_letter(GdkPixbuf *pixbuf, GdkPixbuf *pixbuf_to_crop, int **coo,
             GdkPixbuf *letter =
                 crop(pixbuf_to_crop, coo[index_coo][0], coo[index_coo][1],
                      coo[index_coo][2], coo[index_coo][3]);
-            snprintf(full_path, sizeof(full_path), "%s/letter_%d_%d.png", 
-		output_file, coo[index_coo][0], coo[index_coo][1]);
+            snprintf(full_path, sizeof(full_path), "%s/letter_%d_%d.png",
+                     output_file, coo[index_coo][0], coo[index_coo][1]);
             save_pixbuf_as_png(letter, full_path);
             g_object_unref(letter);
         }
@@ -480,9 +480,48 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     g_object_unref(pixbuf_to_slice);
 }
 
+// Terminal colors
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[31m"
+#define COLOR_GREEN "\033[32m"
+#define COLOR_YELLOW "\033[33m"
+
 #ifndef TESTING
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-	pipeline(argv[1], argv[2], argv[3]);
+    if (argc < 4)
+    {
+        printf(COLOR_RED "[FAIL]" COLOR_RESET " Not enough arguments\n");
+        printf("Usage: ./pipeline <input_image> <output_grid_words_dir> "
+               "<output_letters_dir>\n");
+        printf("\nExample:\n");
+        printf("  ./pipeline input.png gw_output letters_output\n");
+        printf("\nDescription:\n");
+        printf("  This program processes a word search puzzle image through "
+               "the OCR pipeline:\n");
+        printf("   - Converts to grayscale and binarizes the image\n");
+        printf("   - Finds letters and words\n");
+        printf("   - Crops and saves grid, words, and individual letters\n");
+        return EXIT_FAILURE;
+    }
+
+    char *input_image = argv[1];
+    char *output_gw_dir = argv[2];
+    char *output_letters_dir = argv[3];
+
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Starting OCR pipeline...\n");
+    printf("Input image: %s\n", input_image);
+    printf("Output (grid/words): %s\n", output_gw_dir);
+    printf("Output (letters): %s\n\n", output_letters_dir);
+
+    pipeline(input_image, output_gw_dir, output_letters_dir);
+
+    printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                       "Pipeline completed successfully!\n");
+    printf("  Processed image saved in:\n");
+    printf("   - %s (grid and word crops)\n", output_gw_dir);
+    printf("   - %s (letters)\n", output_letters_dir);
+
+    return EXIT_SUCCESS;
 }
 #endif
