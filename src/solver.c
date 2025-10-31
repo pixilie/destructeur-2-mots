@@ -339,7 +339,10 @@ int main(int argc, char *argv[])
     solve(argv[1], argv[2], x1, y1, x2, y2);
 	
     if(*x1 == -1 && *x2 == -1)
-	    printf("Not Found");
+    {
+         printf("Not Found\n");
+         exit(EXIT_FAILURE);
+    }
     printf("(%i, %i)(%i, %i)\n", *x1, *y1, *x2, *y2);
 
     free(x1);
