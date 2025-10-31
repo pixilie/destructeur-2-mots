@@ -53,7 +53,7 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 
 - `./solver <grid_path> <word>`
 
-- `./ui`
+- `./ui <optional:image_path>`: launch ui and load `<image_path>` (default: level_1_image_1.png)
 
 ## Commit convention
 - git commit -m "feat: new features"  
