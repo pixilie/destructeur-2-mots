@@ -17,6 +17,7 @@ struct AppData
     GdkPixbuf *transformed; //all non-rotation transformations
     GdkPixbuf *current;
     double rotation_angle;
+    int save_index;
 };
 
 void update_image(struct AppData *data)
@@ -24,6 +25,24 @@ void update_image(struct AppData *data)
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
     gtk_widget_queue_draw(data->image);
 }
+
+void apply_transformations(struct AppData *data)
+{
+    if(data->current)
+    {
+        g_object_unref(data->current);
+    }
+    if(data->rotation_angle != 0.0)
+    {
+        data->current = rotate_image(data->transformed, data->rotation_angle);
+    }
+    else
+    {
+        data->current = gdk_pixbuf_copy(data->transformed);
+    }
+    update_image(data);
+}
+
 
 void on_grayscale_clicked(GtkButton *button, gpointer user_data)
 {
@@ -36,22 +55,10 @@ void on_grayscale_clicked(GtkButton *button, gpointer user_data)
     }
 
     convert_to_grayscale(data->transformed);
+    
+    apply_transformations(data);
 
-    if(data->current)
-    {
-        g_object_unref(data->current);
-    }
-
-    data->current = gdk_pixbuf_copy(data->transformed);
-
-    if(data->rotation_angle != 0.0) 
-    {
-        GdkPixbuf *rotated = rotate_image(data->transformed, data->rotation_angle);
-        g_object_unref(data->current);
-        data->current = rotated;
-    }
-
-    update_image(data);
+    printf("Image converted to grayscale\n");
 }
 
 void on_binarize_clicked(GtkButton *button, gpointer user_data)
@@ -67,20 +74,9 @@ void on_binarize_clicked(GtkButton *button, gpointer user_data)
     convert_to_grayscale(data->transformed);
     binarize_image(data->transformed, 180);
 
-    if(data->current)
-    {
-        g_object_unref(data->current);
-    }
+    apply_transformations(data);
 
-    data->current = gdk_pixbuf_copy(data->transformed);
-
-    if(data->rotation_angle != 0.0) 
-    {
-        GdkPixbuf *rotated = rotate_image(data->transformed, data->rotation_angle);
-        g_object_unref(data->current);
-        data->current = rotated;
-    }
-    update_image(data);
+    printf("Image converted to black and white\n");
 }
 
 void on_rotate_clicked(GtkButton *button, gpointer user_data)
@@ -92,21 +88,16 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
     {
         return;
     }
+
     data->rotation_angle += 45.0;
     if(data->rotation_angle >= 360.0)
     {
         data->rotation_angle -= 360.0;
     }
-    GdkPixbuf *rotated = rotate_image(data->transformed, data->rotation_angle);
 
-    if(data->current)
-    {
-        g_object_unref(data->current);
-    }
+    apply_transformations(data);
 
-    data->current = rotated;
-
-    update_image(data);
+    printf("Image rotated by 45 degrees\n");
 }
 
 void on_reset_clicked(GtkButton *button, gpointer user_data)
@@ -133,8 +124,33 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(data->original);
     data->current = gdk_pixbuf_copy(data->original);
     update_image(data);
+    printf("Image reset to original\n");
 }
 
+void on_save_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    struct AppData *data = user_data;
+
+    if(!data->current)
+    {
+        return;
+    }
+
+    char filename[256];
+    snprintf(filename, sizeof(filename), "output%i.png", data->save_index);
+    data->save_index++;
+
+    GError *error = NULL;
+    if(!gdk_pixbuf_save(data->current, filename, "png", &error, NULL))
+    {
+        g_printerr("Failed to save image: %s\n", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    printf("Image saved as %s\n", filename);
+}
 
 void free_app_data(GtkWidget *widget __attribute__((unused)), gpointer user_data)
 {
@@ -165,11 +181,12 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *window;
     GtkWidget *vertical_box;
     GtkWidget *horizontal_box;
-    GtkWidget *close_button;
     GtkWidget *grayscale_button;
     GtkWidget *binarize_button;
     GtkWidget *rotate_button;
     GtkWidget *reset_button;
+    GtkWidget *save_button;
+    GtkWidget *close_button;
     GtkWidget *image;
     GtkWidget *scrolled;
 
@@ -232,12 +249,14 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     grayscale_button = gtk_button_new_with_label("Grayscale");
     binarize_button = gtk_button_new_with_label("Black & White");
     rotate_button = gtk_button_new_with_label("Rotate");
+    save_button = gtk_button_new_with_label("Sauvegarder l'image");
     reset_button = gtk_button_new_with_label("Réinitialiser l'image");
 
     gtk_box_pack_start(GTK_BOX(horizontal_box), grayscale_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), binarize_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), rotate_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), close_button, TRUE, TRUE, 5);
     
     //Initialize AppData
@@ -247,10 +266,12 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->current = gdk_pixbuf_copy(pixbuf);
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
+    data->save_index = 1;
     
     g_signal_connect(grayscale_button, "clicked", G_CALLBACK(on_grayscale_clicked), data);
     g_signal_connect(binarize_button, "clicked", G_CALLBACK(on_binarize_clicked), data);
     g_signal_connect(rotate_button, "clicked", G_CALLBACK(on_rotate_clicked), data);
+    g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
     g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked), data);
 
     g_signal_connect(window, "destroy", G_CALLBACK(free_app_data), data);
