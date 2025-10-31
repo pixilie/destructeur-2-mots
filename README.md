@@ -33,12 +33,13 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
   - `ocr_word_search_solver_fr.pdf`
 
 ## Build
-- `make`        → builds everything except the tests.
-- `make test`   → builds build/test from src/*.c + tests/*.c, then runs it.
-- `make solver` → builds src/solver.c
-- `make ui`     → builds src/ui.c
-- `make image`  → builds src/image/*.c
-- `make clean`  → cleans everything.
+- `make`          → builds everything except the tests.
+- `make test`     → builds build/test from src/*.c + tests/*.c, then runs it.
+- `make solver`   → builds src/solver.c
+- `make ui`       → builds src/ui.c
+- `make image`    → builds src/image/*.c
+- `make pipeline` → builds src/line_detection.c
+- `make clean`    → cleans everything.
 
 ## Usage
 - `./image <function_name> <image_path> <function_params> <optional:output>`
@@ -54,6 +55,8 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 - `./solver <grid_path> <word>`
 
 - `./ui <optional:image_path>`: launch ui and load `<image_path>` (default: level_1_image_1.png)
+
+- `./pipeline <input_image> <output_grid_words_dir>`
 
 ## Commit convention
 - git commit -m "feat: new features"  
