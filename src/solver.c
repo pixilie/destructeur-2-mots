@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,7 +86,6 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
     int index_in_word = 1;
     int is_found = 0;
     int t_is_found = 0;
-    int temp_is_found = 0;
     int c = 0;
     int l = 0;
     while (t_is_found == 0)
@@ -96,7 +96,7 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
             {
                 while (c < nbcolls && is_found == 0)
                 {
-                    if (tab[l][c] == word[0])
+                    if (tolower(tab[l][c]) == tolower(word[0]))
                     {
                         tempx1 = c;
                         tempy1 = l;
@@ -121,7 +121,8 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
             {
                 tempy2--;
                 while (index_in_word < len_w && tempy2 >= 0 &&
-                       word[index_in_word] == tab[tempy2][tempx2])
+                       tolower(word[index_in_word]) ==
+                           tolower(tab[tempy2][tempx2]))
                 {
                     index_in_word++;
                     tempy2--;
@@ -143,7 +144,8 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
             {
                 tempx2++;
                 while (index_in_word < len_w && tempx2 < nbcolls &&
-                       word[index_in_word] == tab[tempy2][tempx2])
+                       tolower(word[index_in_word]) ==
+                           tolower(tab[tempy2][tempx2]))
                 {
                     index_in_word++;
                     tempx2++;
@@ -165,7 +167,8 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
             {
                 tempy2++;
                 while (index_in_word < len_w && tempy2 < nblines &&
-                       word[index_in_word] == tab[tempy2][tempx2])
+                       tolower(word[index_in_word]) ==
+                           tolower(tab[tempy2][tempx2]))
                 {
                     index_in_word++;
                     tempy2++;
@@ -187,7 +190,8 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
             {
                 tempx2--;
                 while (index_in_word < len_w && tempx2 >= 0 &&
-                       word[index_in_word] == tab[tempy2][tempx2])
+                       tolower(word[index_in_word]) ==
+                           tolower(tab[tempy2][tempx2]))
                 {
                     index_in_word++;
                     tempx2--;
@@ -211,7 +215,8 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
                 tempy2++;
                 while (index_in_word < len_w && tempy2 < nblines &&
                        tempx2 < nbcolls &&
-                       word[index_in_word] == tab[tempy2][tempx2])
+                       tolower(word[index_in_word]) ==
+                           tolower(tab[tempy2][tempx2]))
                 {
                     index_in_word++;
                     tempy2++;
@@ -237,7 +242,8 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
                 tempy2--;
                 while (index_in_word < len_w && tempy2 >= 0 &&
                        tempx2 < nbcolls &&
-                       word[index_in_word] == tab[tempy2][tempx2])
+                       tolower(word[index_in_word]) ==
+                           tolower(tab[tempy2][tempx2]))
                 {
                     index_in_word++;
                     tempy2--;
@@ -263,7 +269,8 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
                 tempy2++;
                 while (index_in_word < len_w && tempy2 < nblines &&
                        tempx2 >= 0 &&
-                       word[index_in_word] == tab[tempy2][tempx2])
+                       tolower(word[index_in_word]) ==
+                           tolower(tab[tempy2][tempx2]))
                 {
                     index_in_word++;
                     tempy2++;
@@ -288,7 +295,8 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
                 tempx2--;
                 tempy2--;
                 while (index_in_word < len_w && tempy2 >= 0 && tempx2 >= 0 &&
-                       word[index_in_word] == tab[tempy2][tempx2])
+                       tolower(word[index_in_word]) ==
+                           tolower(tab[tempy2][tempx2]))
                 {
                     index_in_word++;
                     tempy2--;
@@ -361,7 +369,7 @@ int main(int argc, char *argv[])
 
     solve(argv[1], argv[2], x1, y1, x2, y2);
 
-    printf("( %i %i )( %i %i )\n", *x1, *y1, *x2, *y2);
+    printf("(%i, %i)(%i, %i)\n", *x1, *y1, *x2, *y2);
 
     free(x1);
     free(y1);
