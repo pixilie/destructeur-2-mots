@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200809L
+#define _XOPEN_SOURCE 700
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
@@ -12,7 +12,23 @@
 char *get_image_path(const char *filename)
 {
     static char image_path[PATH_MAX];
+    char resolved_path[PATH_MAX];
 
+    // Absolute path
+    if (g_path_is_absolute(filename))
+    {
+        snprintf(image_path, sizeof(image_path), "%s", filename);
+        return image_path;
+    }
+
+    // assets/<filename>
+    if (realpath(filename, resolved_path))
+    {
+        snprintf(image_path, sizeof(image_path), "%s", resolved_path);
+        return image_path;
+    }
+
+    //../assets/<filename>
     char exe_path[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
     if (len == -1)
@@ -24,9 +40,15 @@ char *get_image_path(const char *filename)
 
     char *dir = dirname(exe_path);
 
-    snprintf(image_path, sizeof(image_path), "%s/../assets/%s", dir, filename);
+    snprintf(resolved_path, sizeof(resolved_path), "%s/../assets/%s", dir,
+             filename);
+    if (realpath(resolved_path, image_path))
+    {
+        return image_path;
+    }
 
-    return image_path;
+    g_printerr("ERROR: Could not resolve path for '%s'\n", filename);
+    return NULL;
 }
 
 GdkPixbuf *load_image(char *filename)
