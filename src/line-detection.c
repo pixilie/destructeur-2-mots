@@ -382,25 +382,9 @@ void find_word_by_word(int **coo, int **word_list, int *words_coo,
 
 void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 {
-<<<<<<< HEAD
-	g_mkdir_with_parents(output_gw_file, 0777);
-        g_mkdir_with_parents(output_letter_file, 0777);
+    g_mkdir_with_parents(output_gw_file, 0777);
+    g_mkdir_with_parents(output_letter_file, 0777);
 
-	int nb_letter = 0;
-	int nb_words = 50; // we state that there will not be more than 50 words in an exercise
-	GdkPixbuf *pixbuf = load_image(filename);
-	GdkPixbuf *pixbuf_to_slice = load_image(filename);
-	int width = gdk_pixbuf_get_width(pixbuf);
-    	int height = gdk_pixbuf_get_height(pixbuf);	
-	int *grid_coo = malloc(4 * sizeof(int));
-        int *words_coo = malloc(4 * sizeof(int));
-	int **coo = malloc(width * height * sizeof(int*));
-	for(int i = 0; i < width * height; i ++)
-	{
-		coo[i] = malloc(4 * sizeof(int)); // coo[i][0] = x1 coo[i][1] = y1 coo[i][2] = x2 coo[i][3] = y2
-		coo[i][0] = coo[i][1] = coo[i][2] = coo[i][3] = 0;
-	}
-=======
     int nb_letter = 0;
     int nb_words =
         50; // we state that there will not be more than 50 words in an exercise
@@ -417,7 +401,6 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
                                           // coo[i][2] = x2 coo[i][3] = y2
         coo[i][0] = coo[i][1] = coo[i][2] = coo[i][3] = 0;
     }
->>>>>>> 1875bca6b5082f046ba1be921967fb9f424c3d5c
 
     convert_to_grayscale(pixbuf);
     binarize_image(pixbuf, 180);
@@ -445,49 +428,6 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 
     find_word_by_word(coo, word_list, words_coo, nb_letter, nb_words);
 
-<<<<<<< HEAD
-	char* grid_path = malloc(strlen(output_gw_file) + 40 * sizeof(char));
-	char* words_path = malloc(strlen(output_gw_file) + 40 * sizeof(char));
-	sprintf(grid_path, "%s/grid.png",output_gw_file);
-	sprintf(words_path, "%s/words.png",output_gw_file);
-	
-	GdkPixbuf *grid = crop(pixbuf_to_slice, grid_coo[0], grid_coo[1], grid_coo[2], grid_coo[3]);
-        save_pixbuf_as_png(grid, grid_path);
-        g_object_unref(grid);
-	
-        GdkPixbuf *words = crop(pixbuf_to_slice, words_coo[0], words_coo[1], words_coo[2], words_coo[3]);
-        save_pixbuf_as_png(words, words_path);
-        g_object_unref(words);
-	
-	
-	
-	// free all pointers
-	
-	for(int i = 0; i < width * height; i ++)
-	{
-		free(coo[i]);
-	}
-	for(int i = 0; i < nb_words; i ++)
-	{
-		free(word_list[i]);
-	}
-	free(coo);
-	free(word_list);
-	free(grid_coo);
-	free(words_coo);
-	free(grid_path);
-	free(word_path);
-	g_object_unref(pixbuf);
-	g_object_unref(pixbuf_to_slice);
-}
-
-#ifndef TESTING
-int main(int argc, char *argv[])
-{
-	pipeline(argv[1], argv[2], argv[3]);
-}
-#endif
-=======
     // crop the grid, word list and words of the image
 
     char *word_path = malloc(strlen(output_gw_file) + 40 * sizeof(char));
@@ -540,5 +480,9 @@ int main(int argc, char *argv[])
     g_object_unref(pixbuf_to_slice);
 }
 
-void main(int argc, char *argv[]) { pipeline(argv[1], argv[2], argv[3]); }
->>>>>>> 1875bca6b5082f046ba1be921967fb9f424c3d5c
+#ifndef TESTING
+int main(int argc, char *argv[])
+{
+	pipeline(argv[1], argv[2], argv[3]);
+}
+#endif
