@@ -14,15 +14,15 @@ char *get_image_path(const char *filename)
     static char image_path[PATH_MAX];
     char resolved_path[PATH_MAX];
 
-    //Absolute path
-    if(g_path_is_absolute(filename))
+    // Absolute path
+    if (g_path_is_absolute(filename))
     {
         snprintf(image_path, sizeof(image_path), "%s", filename);
         return image_path;
     }
 
-    //assets/<filename>
-    if(realpath(filename, resolved_path))
+    // assets/<filename>
+    if (realpath(filename, resolved_path))
     {
         snprintf(image_path, sizeof(image_path), "%s", resolved_path);
         return image_path;
@@ -40,8 +40,9 @@ char *get_image_path(const char *filename)
 
     char *dir = dirname(exe_path);
 
-    snprintf(resolved_path, sizeof(resolved_path), "%s/../assets/%s", dir, filename);
-    if(realpath(resolved_path, image_path))
+    snprintf(resolved_path, sizeof(resolved_path), "%s/../assets/%s", dir,
+             filename);
+    if (realpath(resolved_path, image_path))
     {
         return image_path;
     }
