@@ -45,12 +45,12 @@ int test_horizontal()
     if (res == 1)
     {
         printf("All tests passed.\n");
-	return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
     }
     else
     {
         printf("Some tests did not pass.\n");
-	return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
     return res;
 }
@@ -66,12 +66,12 @@ int test_vertical()
     if (res == 1)
     {
         printf("All tests passed.\n");
-	return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
     }
     else
     {
         printf("Some tests did not pass.\n");
-	return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
     return res;
 }
@@ -87,12 +87,12 @@ int test_diagonal()
     if (res == 1)
     {
         printf("All tests passed.\n");
-	return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
     }
     else
     {
         printf("Some tests did not pass.\n");
-	return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
     return res;
 }
