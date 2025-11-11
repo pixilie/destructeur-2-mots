@@ -86,9 +86,9 @@ int test_black_and_white()
         g_object_unref(pixbuf);
         return 0;
     }
+    print_histogram(pixbuf);
 
-    int threshold = calculate_mean_treshold(pixbuf);
-    binarize_image(pixbuf, threshold);
+    int threshold = convert_to_black_and_white(pixbuf);
     if (!pixbuf)
     {
         printf("[FAIL] Binarize failed");
@@ -120,7 +120,8 @@ int test_black_and_white()
 
     if (ok)
     {
-        printf("[SUCCESS] Successfully converted image to black and white with threshold %i\n", threshold);
+        printf("[SUCCESS] Successfully converted image to black and white with"
+               " threshold %i\n", threshold);
     }
     else
     {

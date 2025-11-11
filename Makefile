@@ -102,8 +102,8 @@ tests: $(TEST_BINS)
 $(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(TEST_OBJ) $(NN_OBJ) $(PIPELINE_IMG_OBJ)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Building test: $@"
-	$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line_detection.c -o $(BUILD_DIR)/line_detection.o
-	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(BUILD_DIR)/line_detection.o $(LDFLAGS)
+	$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line_detection.c -o $(BUILD_DIR)/test_line_detection.o
+	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(BUILD_DIR)/test_line_detection.o $(LDFLAGS)
 
 $(BUILD_DIR)/test_solver_tests: $(TEST_DIR)/solver_tests.c $(TEST_DIR)/test_helpers.c src/solver.c
 	@mkdir -p $(BUILD_DIR)

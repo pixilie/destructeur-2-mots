@@ -16,21 +16,17 @@
  */
 void convert_to_grayscale(GdkPixbuf *pixbuf)
 {
-    // Formula for grayscale: Gray = 0.299 × R + 0.587 × G + 0.114 × B
-
     // Get image dimensions
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
-
     // Get channels per pixel: (R, G, B) = 3, (R, G, B, A) = 4
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-
-    // Get array of pixeks
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-
     // Get rowstride = bytes between 2 lines (can have unused bytes at the end
     // of each row)
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    // Get array of pixeks
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
     for (int y = 0; y < height; y++)
     {
         guchar *rows = pixels + y * rowstride;
@@ -43,6 +39,8 @@ void convert_to_grayscale(GdkPixbuf *pixbuf)
 
             // Calculate gray formula and make every R, G and B the same
             // grayness
+            
+            // Formula for grayscale: Gray = 0.299 × R + 0.587 × G + 0.114 × B
             guchar gray = (guchar)(0.299 * r + 0.587 * g + 0.114 * b);
             for (int i = 0; i < 3; i++)
             {
@@ -53,7 +51,7 @@ void convert_to_grayscale(GdkPixbuf *pixbuf)
 }
 
 int calculate_mean_treshold(GdkPixbuf *pixbuf)
-{ 
+{
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
@@ -76,6 +74,99 @@ int calculate_mean_treshold(GdkPixbuf *pixbuf)
     return (int)(sum / total_pixel_count);
 }
 
+
+int* create_histogram(GdkPixbuf *pixbuf)
+{
+    int* histogram = calloc(256, sizeof(int));
+
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+    
+    for (int y = 0; y < height; y++)
+    {
+        guchar *rows = pixels + y * rowstride;
+        for (int x = 0; x < width; x++)
+        {
+            guchar *pixel = rows + x * n_channels;
+            histogram[pixel[0]]++;
+        }
+    }
+
+    return histogram;
+}
+
+void print_histogram(GdkPixbuf *pixbuf)
+{
+    int *histogram = create_histogram(pixbuf);
+
+    printf("Histogram of pixels:\n");
+    
+    for (int i = 0; i < 256; i++)
+    // Print histogram[0] to histogram[255] of pixel intensities with number of
+    // pixels of intensity i
+    {
+        printf("Intensity %i : %i pixels\n", i, histogram[i]);
+    }
+
+    free(histogram);
+}
+
+int calculate_otsu_threshold(GdkPixbuf *pixbuf)
+{
+    int *histogram = create_histogram(pixbuf);
+    
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    
+    int total_pixels = width * height;
+
+    double sum = 0; //Total sum of intensities
+    for (int i = 0; i < 256; i++)
+    {
+        sum += i * histogram[i];
+    }
+
+    double sum_dark = 0;
+    int weight_dark = 0;
+    int weight_light = 0;
+    double max_var_between_class = 0;
+    int threshold = 128;
+
+    for (int t = 0; t < 256; t++)
+    {
+        weight_dark += histogram[t];
+        if (weight_dark == 0)
+        {
+            continue;
+        }
+    
+        weight_light = total_pixels - weight_dark;
+        if (weight_light == 0)
+        {
+            break;
+        }
+
+        sum_dark += (double)(t * histogram[t]);
+        double mean_dark = sum_dark / weight_dark;
+        double mean_light = (sum - sum_dark) / weight_light;
+
+        double var_between_class = (double)weight_dark  * (double)weight_light
+                * (mean_dark - mean_light) * (mean_dark - mean_light);
+
+        if (var_between_class > max_var_between_class)
+        {
+            max_var_between_class = var_between_class;
+            threshold = t;
+        }
+    }
+    
+    free(histogram);
+    return threshold;
+}
+
 /**
  * binarize_image:
  * Binarize a grayscale GdkPixbuf in-place using a threshold.
@@ -93,9 +184,9 @@ void binarize_image(GdkPixbuf *pixbuf, int threshold)
 {
     // Transform gray image into a black and white image
     // For each pixel in image:
-    //  - if gray < treshold -> black pixel
-    //  - if gray >= treshold -> white pixel
-    // Treshold is 128 by default
+    //  - if gray < threshold -> black pixel
+    //  - if gray >= threshold -> white pixel
+    // Threshold is 128 by default
 
     // Get image dimensions
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -135,44 +226,49 @@ void binarize_image(GdkPixbuf *pixbuf, int threshold)
 
 int convert_to_black_and_white(GdkPixbuf *pixbuf)
 {
-    int threshold = calculate_mean_treshold(pixbuf);
-    binarize_image(pixbuf, threshold);
-    return threshold;
-}
+    int mean_threshold = calculate_mean_treshold(pixbuf);
+    int otsu_threshold = calculate_otsu_threshold(pixbuf);
+    int threshold;
 
-int* create_histogram(GdkPixbuf *pixbuf)
-{
-    int* histogram = calloc(256, sizeof(int));
+    int *histogram = create_histogram(pixbuf);
 
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
-    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-    
-    for (int y = 0; y < height; y++)
+
+    // Calculate mean of intensity distribution
+    double mean = 0;
+    int total_pixels = width * height;
+
+    for (int i = 0; i < 256; i++)
     {
-        guchar *rows = pixels + y * rowstride;
-        for (int x = 0; x < width; x++)
-        {
-            guchar *pixel = rows + x * n_channels;
-            histogram[pixel[0]]++;
-        }
+        mean += histogram[i];
     }
+    mean /= total_pixels;
 
-    return histogram;
-}
+    // Calculate variance of intensity distribution
+    double variance = 0;
 
-void print_histogram(GdkPixbuf *pixbuf)
-{
-    int *histogram = create_histogram(pixbuf);
-
-    printf("Histogram of pixels:\n");
-    
-    for (int i = 0; i < 256; i++) //Print histogram[0] to histogram[255] of values
+    for (int i = 0; i < 256; i++)
     {
-        printf("Pixel %i : %i pixels\n", i, histogram[i]);
+        variance += (mean - i) * (mean - i) * histogram[i];
     }
+    variance /= total_pixels;
 
     free(histogram);
+
+    //High variance -> Use Otsu threshold
+    if (variance > 1500)
+    {
+        threshold = otsu_threshold;
+        printf("Otsu\n");
+    }
+    //Low variance -> Use mean threshold
+    else
+    {
+        threshold = mean_threshold;
+        printf("Mean\n");
+    }
+
+    binarize_image(pixbuf, threshold);
+    return threshold;
 }

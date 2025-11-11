@@ -115,8 +115,7 @@ void on_binarize_clicked(GtkButton *button, gpointer user_data)
     }
 
     convert_to_grayscale(data->transformed);
-    int threshold = calculate_mean_treshold(data->transformed);
-    binarize_image(data->transformed, threshold);
+    int threshold = convert_to_black_and_white(data->transformed);
 
     apply_transformations(data);
 
