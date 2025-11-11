@@ -1,5 +1,5 @@
 #include "../include/image_helpers.h"
-#include "../include/image_treatment.h"
+#include "../include/image_processing.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <stdio.h>
 
@@ -87,7 +87,8 @@ int test_black_and_white()
         return 0;
     }
 
-    binarize_image(pixbuf, 128);
+    int threshold = calculate_mean_treshold(pixbuf);
+    binarize_image(pixbuf, threshold);
     if (!pixbuf)
     {
         printf("[FAIL] Binarize failed");
@@ -119,7 +120,7 @@ int test_black_and_white()
 
     if (ok)
     {
-        printf("[SUCCESS] Successfully converted image to black and white\n");
+        printf("[SUCCESS] Successfully converted image to black and white with threshold %i\n", threshold);
     }
     else
     {

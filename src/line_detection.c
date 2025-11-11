@@ -1,7 +1,7 @@
 #include "../include/image_helpers.h"
 #include "../include/image_rotation.h"
 #include "../include/image_slice.h"
-#include "../include/image_treatment.h"
+#include "../include/image_processing.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

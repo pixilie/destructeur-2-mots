@@ -1,5 +1,5 @@
-#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libgen.h>
 #include <limits.h>
 #include <unistd.h>
@@ -52,6 +52,30 @@ void convert_to_grayscale(GdkPixbuf *pixbuf)
     }
 }
 
+int calculate_mean_treshold(GdkPixbuf *pixbuf)
+{ 
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+    long sum = 0; //sum of all gray pixels
+    int total_pixel_count = width * height;
+    
+    for (int y = 0; y < height; y++)
+    {
+        guchar *rows = pixels + y * rowstride;
+        for (int x = 0; x < width; x++)
+        {
+            guchar *pixel = rows + x * n_channels;
+            sum += pixel[0]; //Add pixel value to sum of all gray pixels
+        }
+    }
+
+    return (int)(sum / total_pixel_count);
+}
+
 /**
  * binarize_image:
  * Binarize a grayscale GdkPixbuf in-place using a threshold.
@@ -65,7 +89,7 @@ void convert_to_grayscale(GdkPixbuf *pixbuf)
  * Returns:
  *  - void
  */
-void binarize_image(GdkPixbuf *pixbuf, int treshold)
+void binarize_image(GdkPixbuf *pixbuf, int threshold)
 {
     // Transform gray image into a black and white image
     // For each pixel in image:
@@ -93,7 +117,7 @@ void binarize_image(GdkPixbuf *pixbuf, int treshold)
         {
             guchar *pixel = rows + x * n_channels;
             guchar gray = pixel[0];
-            if (gray < treshold)
+            if (gray < threshold)
             {
                 gray = 0; // Black pixel
             }
@@ -107,4 +131,48 @@ void binarize_image(GdkPixbuf *pixbuf, int treshold)
             }
         }
     }
+}
+
+int convert_to_black_and_white(GdkPixbuf *pixbuf)
+{
+    int threshold = calculate_mean_treshold(pixbuf);
+    binarize_image(pixbuf, threshold);
+    return threshold;
+}
+
+int* create_histogram(GdkPixbuf *pixbuf)
+{
+    int* histogram = calloc(256, sizeof(int));
+
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+    
+    for (int y = 0; y < height; y++)
+    {
+        guchar *rows = pixels + y * rowstride;
+        for (int x = 0; x < width; x++)
+        {
+            guchar *pixel = rows + x * n_channels;
+            histogram[pixel[0]]++;
+        }
+    }
+
+    return histogram;
+}
+
+void print_histogram(GdkPixbuf *pixbuf)
+{
+    int *histogram = create_histogram(pixbuf);
+
+    printf("Histogram of pixels:\n");
+    
+    for (int i = 0; i < 256; i++) //Print histogram[0] to histogram[255] of values
+    {
+        printf("Pixel %i : %i pixels\n", i, histogram[i]);
+    }
+
+    free(histogram);
 }
