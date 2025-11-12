@@ -86,7 +86,6 @@ int test_black_and_white()
         g_object_unref(pixbuf);
         return 0;
     }
-    print_histogram(pixbuf);
 
     int threshold = convert_to_black_and_white(pixbuf);
     if (!pixbuf)
