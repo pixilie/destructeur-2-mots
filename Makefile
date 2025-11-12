@@ -97,11 +97,11 @@ TEST_BINS = $(TEST_FILES:$(TEST_DIR)/%.c=$(BUILD_DIR)/test_%)
 tests: $(TEST_BINS)
 	@echo "All tests built successfully."
 	@echo "Running tests..."
-	@for t in $(TEST_BINS); do echo "Running $$t..."; ./$$t; echo ""; done
+	@for t in $(TEST_BINS); do ./$$t; done
 
-$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(TEST_OBJ) $(NN_OBJ) $(PIPELINE_IMG_OBJ)
+$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(TEST_DIR)/test_helpers.c $(TEST_OBJ) $(NN_OBJ) $(PIPELINE_IMG_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	@echo "Building test: $@"
+	echo "Building test: $@"
 	$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line_detection.c -o $(BUILD_DIR)/test_line_detection.o
 	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(BUILD_DIR)/test_line_detection.o $(LDFLAGS)
 
