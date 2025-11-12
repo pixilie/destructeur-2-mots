@@ -1,8 +1,4 @@
-#include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <libgen.h>
-#include <limits.h>
-#include <unistd.h>
 
 /**
  * convert_to_grayscale:

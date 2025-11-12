@@ -511,7 +511,7 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     }
 
     convert_to_grayscale(pixbuf);
-    binarize_image(pixbuf, 180);
+    convert_to_black_and_white(pixbuf);
 
     double angle = find_good_rotation(pixbuf);
     pixbuf = rotate_image(pixbuf, angle);
