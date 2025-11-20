@@ -1,31 +1,34 @@
 #include "../include/image_helpers.h"
 #include "../include/image_rotation.h"
+#include "../include/test_helpers.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <stdio.h>
-#include <unistd.h>
 
 int test_rotate_90()
 {
-    printf("\n--- Rotate 90 Degrees Test ---\n");
+    print_test_subcategory("Rotate 90 Degrees Tests");
 
     const char *path = get_image_path("level_1_image_1.png");
     if (!path)
     {
-        printf("[FAIL] Failed to get image path\n");
+        print_fail();
+        printf("Failed to get image path\n");
         return 0;
     }
 
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, NULL);
     if (!pixbuf)
     {
-        printf("[FAIL] Failed to load image\n");
+        print_fail();
+        printf("Failed to load image\n");
         return 0;
     }
 
     GdkPixbuf *rotated = rotate_image(pixbuf, 90);
     if (!rotated)
     {
-        printf("[FAIL] Rotation failed\n");
+        print_fail();
+        printf("Rotation failed\n");
         g_object_unref(pixbuf);
         return 0;
     }
@@ -39,12 +42,14 @@ int test_rotate_90()
     int ok = (new_width >= height && new_height >= width);
     if (!ok)
     {
-        printf("[FAIL] Rotated dimensions incorrect (original %dx%d, rotated %dx%d)\n",
+        print_fail();
+        printf("Rotated dimensions incorrect (original %dx%d, rotated %dx%d)\n",
                width, height, new_width, new_height);
     }
     else
     {
-        printf("[SUCCESS] Rotated dimensions are correct\n");
+        print_success();
+        printf("Rotated dimensions are correct\n");
     }
 
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
@@ -67,11 +72,13 @@ int test_rotate_90()
 
     if (!pixel_same)
     {
-        printf("[SUCCESS] Top-left pixel moved as expected\n");
+        print_success();
+        printf("Top-left pixel moved as expected\n");
     }
     else
     {
-        printf("[FAIL] Top-left pixel did not move\n");
+        print_fail();
+        printf("Top-left pixel did not move\n");
         ok = 0;
     }
 
@@ -88,13 +95,20 @@ int main()
         return 1;
     }
 
+    print_test_category("Image Rotation Tests");
+
     int passed = 1;
 
     passed &= test_rotate_90();
 
-    printf("\nImage Rotation Tests : %s\n",
-           passed ? "All tests passed" : "Some tests did not pass");
-
+    if (passed)
+    {
+        print_all_tests_passed("Image Rotation Tests");
+    }
+    else
+    {
+        print_some_tests_failed("Image Rotation Tests");
+    }
     return passed ? 0 : 1;
 }
 

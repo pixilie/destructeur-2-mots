@@ -1,7 +1,7 @@
 #include "../../include/image_helpers.h"
 #include "../../include/image_rotation.h"
 #include "../../include/image_slice.h"
-#include "../../include/image_treatment.h"
+#include "../../include/image_processing.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +27,7 @@
  *  - argv: argument vector. Expected forms:
  *      ./image convert_to_grayscale <image_path> [output]
  *      ./image binarize_image <image_path> <threshold> [output]
+ *      ./image convert_to_black_and_white <image_path> [output]
  *      ./image rotate_image <image_path> <angle_degrees> [output]
  *      ./image slice_from <image_path> <x> <y> <direction> [out1] [out2]
  *      ./image slice_in_n <image_path> <n_slice> [output_prefix]
@@ -44,6 +45,8 @@ int main(int argc, char **argv)
         printf(
             " - ./image convert_to_grayscale <image_path> <optional:output>\n");
         printf(" - ./image binarize_image <image_path> <threshold> "
+               "<optional:output>\n");
+        printf(" - ./image convert_to_black_and_white <image_path> "
                "<optional:output>\n");
         printf(" - ./image rotate_image <image_path> <angle_degrees> "
                "<optional:output>\n");
@@ -63,6 +66,7 @@ int main(int argc, char **argv)
     // Check function name
     if (strcmp(function_name, "convert_to_grayscale") &&
         strcmp(function_name, "binarize_image") &&
+        strcmp(function_name, "convert_to_black_and_white") &&
         strcmp(function_name, "rotate_image") &&
         strcmp(function_name, "slice_from") &&
         strcmp(function_name, "slice_in_n") &&
@@ -79,6 +83,8 @@ int main(int argc, char **argv)
         printf(
             " - ./image convert_to_grayscale <image_path> <optional:output>\n");
         printf(" - ./image binarize_image <image_path> <threshold> "
+               "<optional:output>\n");
+        printf(" - ./image convert_to_black_and_white <image_path> "
                "<optional:output>\n");
         printf(" - ./image rotate_image <image_path> <angle_degrees> "
                "<optional:output>\n");
@@ -142,8 +148,8 @@ int main(int argc, char **argv)
             {
                 printf(COLOR_RED "[FAIL]" COLOR_RESET
                                  " Not enough arguments for binarize_image\n");
-                printf("Usage: ./image binarize_image <image_path> <threshold> "
-                       "<optional:output>\n");
+                printf("Usage: ./image binarize_image <image_path> "
+                       "<threshold> <optional:output>\n");
                 return EXIT_FAILURE;
             }
 
@@ -179,6 +185,51 @@ int main(int argc, char **argv)
             return EXIT_SUCCESS;
         }
 
+        // convert_to_black_and_white
+        if (strcmp(function_name, "convert_to_black_and_white") == 0)
+        {
+            if (argc < 3)
+            {
+                printf(COLOR_RED
+                       "[FAIL]" COLOR_RESET
+                       " Not enough arguments for convert_to_black_and_white\n");
+                printf("Usage: ./image convert_to_black_and_white <image_path>"
+                       " <optional:output>\n");
+                return EXIT_FAILURE;
+            }
+            
+            // Load image
+            GdkPixbuf *pixbuf = load_image(argv[2]);
+            if (!pixbuf)
+            {
+                printf(COLOR_RED "[FAIL]" COLOR_RESET
+                                 " Image could not be loaded\n");
+                return EXIT_FAILURE;
+            }
+
+            convert_to_grayscale(pixbuf);
+            int threshold = convert_to_black_and_white(pixbuf);
+            if (argc > 3)
+            {
+                save_pixbuf_as_png(pixbuf, argv[3]);
+                printf(COLOR_GREEN
+                       "[SUCCESS]" COLOR_RESET
+                       " Image %s converted to black and white with threshold"
+                       " %i and saved as %s\n",
+                       argv[2], threshold, argv[3]);
+            }
+            else
+            {
+                save_pixbuf_as_png(pixbuf, "black_and_white.png");
+                printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                       " Image %s converted to black and white"
+                       " with threshold %i and saved as black_and_white.png\n",
+                       argv[2], threshold);
+            }
+            g_object_unref(pixbuf);
+            return EXIT_SUCCESS;
+        }
+        
         // rotate_image
         if (strcmp(function_name, "rotate_image") == 0)
         {
