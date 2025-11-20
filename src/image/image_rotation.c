@@ -88,55 +88,61 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
 {
     //used to calculate the variance of an image
     //the higher the return is, the better is the angle of the image
-    int w = gdk_pixbuf_get_width(pixbuf);
-    int h = gdk_pixbuf_get_height(pixbuf);
-    int stride = gdk_pixbuf_get_rowstride(pixbuf);
-    guchar *px = gdk_pixbuf_get_pixels(pixbuf);
-    int nch = gdk_pixbuf_get_n_channels(pixbuf);
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     double sum = 0.0;
     double sum2 = 0.0;
 
     //iterate through each line
-    for(int y = 0; y < h; y++)
+    for(int y = 0; y < height; y++)
     {
         int line_sum = 0;
-        guchar *row = px + y * stride;
+        guchar *row = pixels + y * rowstride;
 
-        for(int x = 0; x < w; x++)
+        for(int x = 1; x < width; x++)
         {
-            line_sum += (255 - row[x * nch]);
+            int current_pixel = (int) row[x * n_channels];
+            int previous_pixel = (int) row[(x - 1) * n_channels];
+            
+            // Measure the change between neighboring pixels
+            int edge_strength = abs(current_pixel - previous_pixel);
+            
+            line_sum += edge_strength;
         }
 
         sum += line_sum;
         sum2 += line_sum * line_sum;
     }
 
-    double mean = sum / h;
-    double var = sum2 / h - mean * mean;
+    double mean = sum / height;
+    double var = sum2 / height - mean * mean;
     return var;
 }
 
 double detect_best_angle(GdkPixbuf *pixbuf)
 {
-//test image from -10° to 10°
-//it NEED to take a binary-image (white/black) to function correctly
-//return a double which is the better angle found
+    //test image from -90° to 90°
+    //it NEEDS to take a black and white image to function correctly
+    //return a double which is the better angle found
 
     double best_angle = 0.0;
     double best_score = -1.0;
 
-    //check every angle from 0 to 20 (200tests)
-    for(double angle = 0.0; angle < 20.0; angle += 0.1)
+    //check every angle from -90° to 90° (= 180 tests)
+    for(double angle = -90.0; angle <= 90.0; angle += 1)
     {
-        GdkPixbuf *temp = rotate_image(pixbuf, angle);
-        double score = compute_projection_variance(temp);
-        g_object_unref(temp); //maybe free(temp) ?
+        GdkPixbuf *rotated_pixbuf = rotate_image(pixbuf, angle);
+        double score = compute_projection_variance(rotated_pixbuf);
+        g_object_unref(rotated_pixbuf);
 
         if(score > best_score)
         {
             best_score = score;
-            best_angle = angle;
+            best_angle = angle; // New best score found -> New best angle found
         }
     }
 
