@@ -146,6 +146,9 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
         data->rotation_angle -= 360.0;
     }
 
+    double best_angle = detect_best_angle(data->transformed);
+    printf("Best rotation angle : %f degrees\n", best_angle);
+    
     apply_transformations(data);
 
     printf("Image rotated by 45 degrees\n");

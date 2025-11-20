@@ -47,6 +47,8 @@ int main(int argc, char **argv)
                "<optional:output>\n");
         printf(" - ./image rotate_image <image_path> <angle_degrees> "
                "<optional:output>\n");
+
+        printf(" - ./image detect_best_angle <image_path>\n");
         printf(" - ./image slice_from <image_path> <x> <y> <direction> "
                "<optional:output1> <optional:output2>\n");
         printf(" - ./image slice_in_n <image_path> <n_slice> "
@@ -63,7 +65,9 @@ int main(int argc, char **argv)
         strcmp(function_name, "binarize_image") &&
         strcmp(function_name, "rotate_image") &&
         strcmp(function_name, "slice_from") &&
-        strcmp(function_name, "slice_in_n") && strcmp(function_name, "crop"))
+        strcmp(function_name, "slice_in_n") &&
+        strcmp(function_name, "crop") &&
+        strcmp(function_name, "detect_best_angle"))
     {
         printf(COLOR_RED "[FAIL]" COLOR_RESET
                          " Incorrect function name, got: " COLOR_RED
@@ -223,6 +227,32 @@ int main(int argc, char **argv)
             }
             g_object_unref(pixbuf);
             g_object_unref(rotated);
+            return EXIT_SUCCESS;
+        }
+
+        // detect_best_angle
+        if (strcmp(function_name, "detect_best_angle") == 0)
+        {
+            if (argc < 3)
+            {
+                printf(COLOR_RED "[FAIL]" COLOR_RESET
+                                 " Not enough arguments for detect_best_angle\n");
+                printf("Usage: ./image detect_best_angle <image_path>\n");
+                return EXIT_FAILURE;
+            }
+
+            // Load image
+            GdkPixbuf *pixbuf = load_image(argv[2]);
+            if (!pixbuf)
+            {
+                printf(COLOR_RED "[FAIL]" COLOR_RESET
+                                 " Image could not be loaded\n");
+                return EXIT_FAILURE;
+            }
+
+            double best_angle = detect_best_angle(pixbuf);
+            printf("Best rotation angle : %f degrees\n", best_angle);
+            g_object_unref(pixbuf);
             return EXIT_SUCCESS;
         }
 
