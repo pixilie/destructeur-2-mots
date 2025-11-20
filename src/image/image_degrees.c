@@ -4,7 +4,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "image_rotation.h"
+#include "../../include/image_rotation.h"
 
 
 double compute_projection_variance(GdkPixbuf *pix) {
