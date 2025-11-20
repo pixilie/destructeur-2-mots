@@ -51,13 +51,11 @@ int test_horizontal()
     {
         print_success();
         printf("Correctly solved all horizontal words\n");
-        return EXIT_SUCCESS;
     }
     else
     {
         print_fail();
         printf("Some horizontal words were not solved correctly\n");
-        return EXIT_FAILURE;
     }
     return res;
 }
@@ -76,13 +74,11 @@ int test_vertical()
     {
         print_success();
         printf("Correctly solved all vertical words\n");
-        return EXIT_SUCCESS;
     }
     else
     {
         print_fail();
         printf("Some vertical words were not solved correctly\n");
-        return EXIT_FAILURE;
     }
     return res;
 }
@@ -101,13 +97,11 @@ int test_diagonal()
     {
         print_success();
         printf("Correctly solved all diagonal words\n");
-        return EXIT_SUCCESS;
     }
     else
     {
         print_fail();
         printf("Some diagonal words were not saved correctly\n");
-        return EXIT_FAILURE;
     }
     return res;
 }
@@ -116,7 +110,30 @@ int main()
 {
     print_test_category("Solver Tests");
     
-    int passed = test_horizontal() & test_vertical() & test_diagonal();
+    int passed = 1;
+    if (!test_horizontal())
+    {
+        passed = 0;
+    }
+    
+    if (!test_vertical())
+    {
+        passed = 0;
+    }
+    
+    if (!test_diagonal())
+    {
+        passed = 0;
+    }
+
+    if (passed)
+    {
+        print_all_tests_passed("Solver Tests");
+    }
+    else
+    {
+        print_some_tests_failed("Solver Tests");
+    }
     
     return passed ? 0 : 1;
 }

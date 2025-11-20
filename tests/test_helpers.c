@@ -20,12 +20,14 @@ void print_success()
 
 void print_all_tests_passed(const char *test_name)
 {
+	printf("\n");
 	print_success();
 	printf("%s : All tests passed\n", test_name);
 }
 
 void print_some_tests_failed(const char *test_name)
 {
+	printf("\n");
 	print_fail();
 	printf("%s : Some tests did not pass\n", test_name);
 }
