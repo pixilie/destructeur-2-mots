@@ -2,7 +2,6 @@
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
-#include <string.h>
 
 /**
  * rotate_image:
@@ -19,13 +18,13 @@
  *  - The function does not return NULL on error in the current implementation;
  *    callers should still validate the return value.
  */
-GdkPixbuf *rotate_image(GdkPixbuf *src, double angle_degrees)
+GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
 {
-    int width = gdk_pixbuf_get_width(src);
-    int height = gdk_pixbuf_get_height(src);
-    int rowstride = gdk_pixbuf_get_rowstride(src);
-    int n_channels = gdk_pixbuf_get_n_channels(src);
-    guchar *pixels = gdk_pixbuf_get_pixels(src);
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     // Convert degrees to radians
     double angle = angle_degrees * M_PI / 180;
@@ -36,7 +35,7 @@ GdkPixbuf *rotate_image(GdkPixbuf *src, double angle_degrees)
 
     // Create new Pixbuf for the rotated image
     GdkPixbuf *new =
-        gdk_pixbuf_new(GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha(src), 8,
+        gdk_pixbuf_new(GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha(pixbuf), 8,
                        new_width, new_height);
 
     int new_rowstride = gdk_pixbuf_get_rowstride(new);
@@ -85,16 +84,15 @@ GdkPixbuf *rotate_image(GdkPixbuf *src, double angle_degrees)
     return new;
 }
 
-double compute_projection_variance(GdkPixbuf *pix)
+double compute_projection_variance(GdkPixbuf *pixbuf)
 {
-//used to calculate the variance of an image
-//the higher the return is, the better is the angle of the image
-
-    int w = gdk_pixbuf_get_width(pix);
-    int h = gdk_pixbuf_get_height(pix);
-    int stride = gdk_pixbuf_get_rowstride(pix);
-    guchar *px = gdk_pixbuf_get_pixels(pix);
-    int nch = gdk_pixbuf_get_n_channels(pix);
+    //used to calculate the variance of an image
+    //the higher the return is, the better is the angle of the image
+    int w = gdk_pixbuf_get_width(pixbuf);
+    int h = gdk_pixbuf_get_height(pixbuf);
+    int stride = gdk_pixbuf_get_rowstride(pixbuf);
+    guchar *px = gdk_pixbuf_get_pixels(pixbuf);
+    int nch = gdk_pixbuf_get_n_channels(pixbuf);
 
     double sum = 0.0;
     double sum2 = 0.0;
@@ -119,7 +117,7 @@ double compute_projection_variance(GdkPixbuf *pix)
     return var;
 }
 
-double detect_best_angle(GdkPixbuf *src)
+double detect_best_angle(GdkPixbuf *pixbuf)
 {
 //test image from -10° to 10°
 //it NEED to take a binary-image (white/black) to function correctly
@@ -131,8 +129,7 @@ double detect_best_angle(GdkPixbuf *src)
     //check every angle from 0 to 20 (200tests)
     for(double angle = 0.0; angle < 20.0; angle += 0.1)
     {
-
-        GdkPixbuf * temp = rotate_image(src, angle);
+        GdkPixbuf *temp = rotate_image(pixbuf, angle);
         double score = compute_projection_variance(temp);
         g_object_unref(temp); //maybe free(temp) ?
 
