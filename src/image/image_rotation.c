@@ -84,6 +84,24 @@ GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
     return new;
 }
 
+GdkPixbuf *downscale_pixbuf(GdkPixbuf *pixbuf, int target_width)
+{
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+
+    if (width <= target_width)
+    {
+        return pixbuf; // Image already small enough -> No downscaling needed
+    }
+
+    double scale = (double) target_width / width;
+    int new_width = target_width;
+    int new_height = (int) height * scale;
+
+    // Return the downscaled pixbuf
+    return gdk_pixbuf_scale_simple(pixbuf, new_width, new_height, GDK_INTERP_NEAREST);
+}
+
 double compute_projection_variance(GdkPixbuf *pixbuf)
 {
     //used to calculate the variance of an image
@@ -129,13 +147,16 @@ double detect_best_angle(GdkPixbuf *pixbuf)
     //it NEEDS to take a black and white image to function correctly
     //return a double which is the better angle found
 
+    // Downscale to speed up rotation to 100 pixels width (less pixels)
+    GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 100);
+
     double best_angle = 0.0;
     double best_score = -1.0;
 
     //check every angle from -90° to 90° (= 180 tests)
     for(double angle = -90.0; angle <= 90.0; angle += 1)
     {
-        GdkPixbuf *rotated_pixbuf = rotate_image(pixbuf, angle);
+        GdkPixbuf *rotated_pixbuf = rotate_image(downscaled_pixbuf, angle);
         double score = compute_projection_variance(rotated_pixbuf);
         g_object_unref(rotated_pixbuf);
 
