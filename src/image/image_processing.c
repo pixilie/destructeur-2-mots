@@ -256,13 +256,13 @@ int convert_to_black_and_white(GdkPixbuf *pixbuf)
     if (variance > 1500)
     {
         threshold = otsu_threshold;
-        printf("Otsu\n");
+        //printf("Threshold method chosen : Otsu\n");
     }
     //Low variance -> Use mean threshold
     else
     {
         threshold = mean_threshold;
-        printf("Mean\n");
+        //printf("Threshold method chosen : Mean\n");
     }
 
     binarize_image(pixbuf, threshold);

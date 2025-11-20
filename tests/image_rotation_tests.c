@@ -1,22 +1,51 @@
 #include "../include/image_helpers.h"
+#include "../include/image_processing.h"
 #include "../include/image_rotation.h"
 #include "../include/test_helpers.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <math.h>
 #include <stdio.h>
+
+int is_best_angle_correct(double expected_angle, double actual_angle, double tolerance)
+{
+    if (fabs(expected_angle - actual_angle) < tolerance)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+int find_best_rotation_angle(char *filename, char *image_print_name, double expected_angle, double tolerance)
+{
+    GdkPixbuf *pixbuf = load_image(filename);
+    if (!pixbuf)
+    {
+        return 0;
+    }
+    
+    convert_to_black_and_white(pixbuf);
+    double actual_best_rotation_angle = detect_best_angle(pixbuf);
+    int result = is_best_angle_correct(expected_angle, actual_best_rotation_angle, tolerance);
+    
+    if (result)
+    {
+        print_success();
+        printf("Image : %s. Expected best rotation angle %f, got: %f\n", image_print_name, expected_angle, actual_best_rotation_angle);
+    }
+    else
+    {
+        print_fail();
+        printf("Image : %s. Expected best rotation angle %f, got: %f\n", image_print_name, expected_angle, actual_best_rotation_angle);
+    }
+    
+    return result;
+}
 
 int test_rotate_90()
 {
     print_test_subcategory("Rotate 90 Degrees Tests");
 
-    const char *path = get_image_path("level_1_image_1.png");
-    if (!path)
-    {
-        print_fail();
-        printf("Failed to get image path\n");
-        return 0;
-    }
-
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, NULL);
+    GdkPixbuf *pixbuf = load_image("level_1_image_1.png");
     if (!pixbuf)
     {
         print_fail();
@@ -37,10 +66,10 @@ int test_rotate_90()
     int height = gdk_pixbuf_get_height(pixbuf);
     int new_width = gdk_pixbuf_get_width(rotated);
     int new_height = gdk_pixbuf_get_height(rotated);
-
+    
     // Basic dimension check
-    int ok = (new_width >= height && new_height >= width);
-    if (!ok)
+    int is_rotation_correct = (new_width >= height && new_height >= width);
+    if (!is_rotation_correct)
     {
         print_fail();
         printf("Rotated dimensions incorrect (original %dx%d, rotated %dx%d)\n",
@@ -79,12 +108,23 @@ int test_rotate_90()
     {
         print_fail();
         printf("Top-left pixel did not move\n");
-        ok = 0;
+        is_rotation_correct = 0;
     }
 
     g_object_unref(pixbuf);
     g_object_unref(rotated);
-    return ok;
+    return is_rotation_correct;
+}
+
+int test_detect_best_angle()
+{
+    print_test_subcategory("Detect Best Angle Tests");
+    
+    int res = find_best_rotation_angle("level_1_image_1.png", "Level 1 Image 1", 0, 1);
+    res &= find_best_rotation_angle("level_2_image_1.png", "Level 2 Image 1", -25, 1);
+    res &= find_best_rotation_angle("level_2_image_2.png", "Level 2 Image 2", 5, 1);
+    
+    return res;    
 }
 
 int main()
@@ -100,6 +140,7 @@ int main()
     int passed = 1;
 
     passed &= test_rotate_90();
+    passed &= test_detect_best_angle();
 
     if (passed)
     {
