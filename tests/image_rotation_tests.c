@@ -30,12 +30,12 @@ int find_best_rotation_angle(char *filename, char *image_print_name, double expe
     if (result)
     {
         print_success();
-        printf("Image : %s. Expected best rotation angle %f, got: %f\n", image_print_name, expected_angle, actual_best_rotation_angle);
+        printf("Image : %s. Expected best rotation angle %f°, got: %f°\n", image_print_name, expected_angle, actual_best_rotation_angle);
     }
     else
     {
         print_fail();
-        printf("Image : %s. Expected best rotation angle %f, got: %f\n", image_print_name, expected_angle, actual_best_rotation_angle);
+        printf("Image : %s. Expected best rotation angle %f°, got: %f°\n", image_print_name, expected_angle, actual_best_rotation_angle);
     }
     
     return result;
