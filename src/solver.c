@@ -317,6 +317,7 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
  * Usage:
  *  ./solver filename word
  */
+#ifndef TESTING
 int main(int argc, char *argv[])
 {
     if (argc < 3)
@@ -352,3 +353,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+#endif
