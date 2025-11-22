@@ -1,29 +1,33 @@
 #include "../include/image_helpers.h"
-#include "../include/image_treatment.h"
+#include "../include/image_processing.h"
+#include "../include/test_helpers.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <stdio.h>
 
 int test_grayscale()
 {
-    printf("\n--- Grayscale Tests ---\n");
+    print_test_subcategory("Grayscale Tests");
 
     const char *path = get_image_path("level_1_image_1.png");
     if (!path)
     {
-        printf("[FAIL] Failed to load image\n");
+        print_fail();
+        printf("Failed to load image\n");
         return 0;
     }
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, NULL);
     if (!pixbuf)
     {
-        printf("[FAIL] Failed to load image\n");
+        print_fail();
+        printf("Failed to load image\n");
         return 0;
     }
 
     convert_to_grayscale(pixbuf);
     if (!pixbuf)
     {
-        printf("[FAIL] Grayscale failed\n");
+        print_fail();
+        printf("Grayscale failed\n");
         g_object_unref(pixbuf);
         return 0;
     }
@@ -52,11 +56,13 @@ int test_grayscale()
 
     if (ok)
     {
-        printf("[SUCCESS] Grayscale success\n");
+        print_success();
+        printf("Successfully converted image %s to grayscale\n", path);
     }
     else
     {
-        printf("[FAIL] Grayscale failed\n");
+        print_fail();
+        printf("Grayscale failed\n");
     }
     g_object_unref(pixbuf);
     return ok;
@@ -64,33 +70,37 @@ int test_grayscale()
 
 int test_black_and_white()
 {
-    printf("\n--- Binarize Tests ---\n");
+    print_test_subcategory("Binarize Tests");
 
     const char *path = get_image_path("level_1_image_1.png");
     if (!path)
     {
-        printf("[FAIL] Failed to load image\n");
+        print_fail();
+        printf("Failed to load image\n");
         return 0;
     }
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, NULL);
     if (!pixbuf)
     {
-        printf("[FAIL] Failed to load image\n");
+        print_fail();
+        printf("Failed to load image\n");
         return 0;
     }
 
     convert_to_grayscale(pixbuf);
     if (!pixbuf)
     {
-        printf("[FAIL] Grayscale failed\n");
+        print_fail();
+        printf("Grayscale failed\n");
         g_object_unref(pixbuf);
         return 0;
     }
 
-    binarize_image(pixbuf, 128);
+    int threshold = convert_to_black_and_white(pixbuf);
     if (!pixbuf)
     {
-        printf("[FAIL] Binarize failed");
+        print_fail();
+        printf("Binarize failed");
         g_object_unref(pixbuf);
         return 0;
     }
@@ -119,11 +129,14 @@ int test_black_and_white()
 
     if (ok)
     {
-        printf("[SUCCESS] Successfully converted image to black and white\n");
+        print_success();
+        printf("Successfully converted image to black and white with"
+               " threshold %i\n", threshold);
     }
     else
     {
-        printf("[FAIL] Binarize failed\n");
+        print_fail();
+        printf("Binarize failed\n");
     }
     g_object_unref(pixbuf);
     return ok;
@@ -137,13 +150,20 @@ int main()
         return 1;
     }
 
+    print_test_category("Image Processing Tests");
+
     int passed = 1;
 
     passed &= test_grayscale();
     passed &= test_black_and_white();
 
-    printf("\nImage Tests : %s\n",
-           passed ? "All tests passed" : "Some tests did not pass");
-
+    if (passed)
+    {
+        print_all_tests_passed("Image Processing Tests");
+    }
+    else
+    {
+        print_some_tests_failed("Image Processing Tests");
+    }
     return passed ? 0 : 1;
 }
