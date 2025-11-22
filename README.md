@@ -6,29 +6,38 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 - `src`: Source code
   - `image`
     - `image_helpers.c`
+    - `image_processing.c`
     - `image_rotation.c`
     - `image_slice.c`
-    - `image_processing.c`
     - `main.c`  
-  - `solver.c`
-  - `neural_network.c`
-  - `ui.c`
+  - `line_detection.c`
   - `main.c`
-- `include`: Header files  
+  - `neural_network.c`
+  - `solver.c`
+  - `ui.c`
+- `include`: Header files
+  - `image`
+    - `image.h`
+    - `image_helpers.h`
+    - `image_processing.h`
+    - `image_rotation.h`
+    - `image_slice.h`
+  - `line_detection.h`
   - `neural_network.h`
+  - `solver.h`
+  - `test_helpers.h`
   - `ui.h`
-  - `image_helpers.h`
-  - `image_rotation.h`
-  - `image_slice.h`
-  - `image_processing.h`
 - `build`: Compiled objects & executables  
 - `tests`: Unit tests
-  - `results`
+  - `image`
+    - `image_processing_tests.c`
+    - `image_rotation_tests.c`
+    - `image_slice_tests.c`
+  - `line_detection_tests.c`
 	- `poc_neural_tests.c`  
-  - `image_rotation_tests.c`
-  - `image_slice_tests.c`
-  - `image_processing_tests.c`
 	- `solver_grid_sample.txt`
+  - `solver_tests.c`
+  - `test_helpers.c`
 - `docs`: Documentation (reports, documents...)
   - `ocr_word_search_solver_fr.pdf`
   - `destructeur_2_mots_rapport_n1.pdf`
