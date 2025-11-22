@@ -1,5 +1,6 @@
 #include "../include/neural_network.h"
 #include "../include/test_helpers.h"
+
 #include <stdio.h>
 
 int test_xor()

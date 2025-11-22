@@ -1,6 +1,5 @@
-#include "../include/image_helpers.h"
-#include "../include/image_rotation.h"
-#include "../include/image_processing.h"
+#include "../include/image/image.h"
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 #include <libgen.h>

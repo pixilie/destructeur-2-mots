@@ -1,7 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "../include/test_helpers.h"
 #include "../include/solver.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 int solve_word(char *word, int x1_out, int y1_out, int x2_out, int y2_out)
 {

@@ -1,7 +1,8 @@
-#include "../include/image_helpers.h"
-#include "../include/image_processing.h"
-#include "../include/image_rotation.h"
+#include "../include/image/image_helpers.h"
+#include "../include/image/image_processing.h"
+#include "../include/image/image_rotation.h"
 #include "../include/test_helpers.h"
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
 #include <stdio.h>

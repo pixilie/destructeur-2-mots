@@ -1,6 +1,7 @@
-#include "../include/image_helpers.h"
-#include "../include/image_slice.h"
+#include "../include/image/image_helpers.h"
+#include "../include/image/image_slice.h"
 #include "../include/test_helpers.h"
+
 #include <assert.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <stdio.h>

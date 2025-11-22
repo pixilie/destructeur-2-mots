@@ -1,5 +1,7 @@
 #define _XOPEN_SOURCE 700
 
+#include "../include/image/image_helpers.h"
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 #include <libgen.h>
