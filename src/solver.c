@@ -42,10 +42,10 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
     }
 
     char ch = fgetc(f);
-    while (ch != '\r' && ch != '\n' && ch != '\0')
+    while (ch != '\r' && ch != '\n' && ch != EOF)
     {
-        ch = fgetc(f);
         nbcolls++;
+        ch = fgetc(f);
     }
     rewind(f);
 
@@ -56,18 +56,18 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
 
     char tab[nblines][nbcolls];
     char line[nbcolls + 2];
-    int i = 0;
     int j = 0;
 
     while (fgets(line, sizeof(line), f) != NULL)
     {
-        while (line[i] != '\r' && line[i] != '\n' && line[i] != '\0')
+        for (int i = 0; i < nbcolls; i++)
         {
-            tab[j][i] = line[i];
-            i++;
+            if (line[i] != '\0' && line[i] != '\n' && line[i] != '\r')
+                tab[j][i] = line[i];
+            else
+                tab[j][i] = 0;
         }
         j++;
-        i = 0;
     }
     fclose(f);
 
@@ -82,7 +82,6 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
         {
             while (l < nblines && is_found == 0)
             {
-                c = 0;
                 while (c < nbcolls && is_found == 0)
                 {
                     if (tolower(tab[l][c]) == tolower(word[0]))
@@ -95,7 +94,11 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
                     }
                     c++;
                 }
-                l++;
+                if(c == nbcolls)
+                {
+                    l++;
+                    c = 0;
+                }
             }
             if (is_found == 0)
             {
@@ -126,10 +129,6 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
                     if (index_in_word == len_w)
                     {
                         is_found = 1;
-                    }
-                    else
-                    {
-                        is_found = 0;
                     }
                 }
                 if (is_found == 1)
