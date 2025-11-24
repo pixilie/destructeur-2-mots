@@ -1,5 +1,7 @@
 #define _XOPEN_SOURCE 700
 
+#include "../include/image/image_helpers.h"
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 #include <libgen.h>
@@ -40,7 +42,7 @@ char *get_image_path(const char *filename)
 
     char exe_path[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
-    if(len == -1)
+    if (len == -1)
     {
         g_printerr("ERROR: Failed to read binary path\n");
         return NULL;
