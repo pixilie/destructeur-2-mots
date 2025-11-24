@@ -169,3 +169,11 @@ double detect_best_angle(GdkPixbuf *pixbuf)
 
     return best_angle;
 }
+
+// Detects the best rotation angle and rotates the image by that angle
+GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
+{
+    double best_angle = detect_best_angle(pixbuf);
+    printf("Image automatically rotated by best rotation angle : %f\n", best_angle);
+    return rotate_image(pixbuf, best_angle);
+}
