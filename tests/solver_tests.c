@@ -15,7 +15,7 @@ int solve_word(char *word, int x1_out, int y1_out, int x2_out, int y2_out)
 		print_fail();
 		printf("Failed to solve word %s : expected (%i, %i)(%i, %i), got: (%i, %i)(%i, %i)\n", 
 			word, x1_out, y1_out, x2_out, y2_out, x1, y1, x2, y2);
-		return EXIT_FAILURE;
+		return 0;
 	}
 	
 	else
@@ -30,7 +30,7 @@ int solve_word(char *word, int x1_out, int y1_out, int x2_out, int y2_out)
 		{
 			printf("(%i, %i)(%i, %i)\n", x1, y1, x2, y2);
 		}
-		return EXIT_SUCCESS;
+		return 1;
 	}
 }
 	
