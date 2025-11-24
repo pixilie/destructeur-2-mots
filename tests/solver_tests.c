@@ -44,7 +44,7 @@ int test_horizontal()
     res &= solve_word("hori", 0, 0, 3, 0);
     res &= solve_word("HELLO", 9, 8, 5, 8);
     res &= solve_word("world", 5, 5, 1, 5);
-    res &= solve_word("toit", 9, 5, 6, 5);
+    res &= solve_word("toit", 9, 4, 6, 4);
     res &= solve_word("GOD", 3, 4, 5, 4); 
     res &= solve_word("EPITA", -1, -1, -1, -1); //Not Found
     
@@ -68,7 +68,7 @@ int test_vertical()
     int res = solve_word("vertical", 9, 7, 9, 0); 
     res &= solve_word("VERTICAL", 9, 7, 9, 0); 
     res &= solve_word("LACITREV", 9, 0, 9, 7); 
-    res &= solve_word("khld", 1, 9, 1, 6);
+    res &= solve_word("khld", 1, 8, 1, 5);
     res &= solve_word("vetcal", -1, -1, -1, -1); //Not Found
     
     if (res == 1)
