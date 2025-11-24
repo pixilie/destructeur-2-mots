@@ -149,7 +149,7 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
     }
     else
     {
-        printf("Image automatically rotated by best rotation angle : %f degrees\n", best_angle);
+        printf("Image automatically rotated by best rotation angle : %.2f degrees\n", best_angle);
     }
 }
 
