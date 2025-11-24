@@ -60,12 +60,6 @@ int test_slice_in_n()
     return 1;
 }
 
-    print_success();
-    printf("slice_in_n() produced %d tiles of %dx%d\n", n_slice * n_slice,
-           expected_size, expected_size);
-
-    return 1;
-}
 
 int test_slice_from()
 {
