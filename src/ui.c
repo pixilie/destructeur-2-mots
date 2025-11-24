@@ -139,18 +139,18 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
         return;
     }
 
-    data->rotation_angle += 45.0;
-    if (data->rotation_angle >= 360.0)
-    {
-        data->rotation_angle -= 360.0;
-    }
-
     double best_angle = detect_best_angle(data->transformed);
-    printf("Best rotation angle : %f degrees\n", best_angle);
+    data->rotation_angle = best_angle;
     
     apply_transformations(data);
-
-    printf("Image rotated by 45 degrees\n");
+    if (best_angle == 0)
+    {
+        printf("Image is already upright, no rotation applied !\n");
+    }
+    else
+    {
+        printf("Image automatically rotated by best rotation angle : %f degrees\n", best_angle);
+    }
 }
 
 /**
@@ -337,7 +337,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     grayscale_button = gtk_button_new_with_label("Conversion en niveaux de gris");
     binarize_button = gtk_button_new_with_label("Conversion en noir et blanc");
-    rotate_button = gtk_button_new_with_label("Rotation de 45 degrés");
+    rotate_button = gtk_button_new_with_label("Rotation automatique");
     save_button = gtk_button_new_with_label("Sauvegarder l'image");
     reset_button = gtk_button_new_with_label("Réinitialiser l'image");
 
