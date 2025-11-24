@@ -7,7 +7,8 @@
 #include <math.h>
 #include <stdio.h>
 
-int is_best_angle_correct(double expected_angle, double actual_angle, double tolerance)
+int is_best_angle_correct(double expected_angle, double actual_angle,
+                          double tolerance)
 {
     if (fabs(expected_angle - actual_angle) < tolerance)
     {
@@ -16,7 +17,8 @@ int is_best_angle_correct(double expected_angle, double actual_angle, double tol
     return 0;
 }
 
-int find_best_rotation_angle(char *filename, char *image_print_name, double expected_angle, double tolerance)
+int find_best_rotation_angle(char *filename, char *image_print_name,
+                             double expected_angle, double tolerance)
 {
     GdkPixbuf *pixbuf = load_image(filename);
     if (!pixbuf)
@@ -120,12 +122,15 @@ int test_rotate_90()
 int test_detect_best_angle()
 {
     print_test_subcategory("Detect Best Angle Tests");
-    
-    int res = find_best_rotation_angle("level_1_image_1.png", "Level 1 Image 1", 0, 1);
-    res &= find_best_rotation_angle("level_2_image_1.png", "Level 2 Image 1", -25, 1);
-    res &= find_best_rotation_angle("level_2_image_2.png", "Level 2 Image 2", 5, 1);
-    
-    return res;    
+
+    int res = find_best_rotation_angle("level_1_image_1.png", "Level 1 Image 1",
+                                       0, 1);
+    res &= find_best_rotation_angle("level_2_image_1.png", "Level 2 Image 1",
+                                    -25, 1);
+    res &= find_best_rotation_angle("level_2_image_2.png", "Level 2 Image 2", 5,
+                                    1);
+
+    return res;
 }
 
 int main()
@@ -153,4 +158,3 @@ int main()
     }
     return passed ? 0 : 1;
 }
-

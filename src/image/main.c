@@ -175,9 +175,10 @@ int main(int argc, char **argv)
         {
             if (argc < 3)
             {
-                printf(COLOR_RED
-                       "[FAIL]" COLOR_RESET
-                       " Not enough arguments for convert_to_black_and_white\n");
+                printf(
+                    COLOR_RED
+                    "[FAIL]" COLOR_RESET
+                    " Not enough arguments for convert_to_black_and_white\n");
                 printf("Usage: ./image convert_to_black_and_white <image_path>"
                        " <optional:output>\n");
                 return EXIT_FAILURE;

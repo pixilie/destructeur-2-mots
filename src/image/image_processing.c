@@ -63,24 +63,23 @@ int calculate_mean_treshold(GdkPixbuf *pixbuf)
         for (int x = 0; x < width; x++)
         {
             guchar *pixel = rows + x * n_channels;
-            sum += pixel[0]; //Add pixel value to sum of all gray pixels
+            sum += pixel[0]; // Add pixel value to sum of all gray pixels
         }
     }
 
     return (int)(sum / total_pixel_count);
 }
 
-
-int* create_histogram(GdkPixbuf *pixbuf)
+int *create_histogram(GdkPixbuf *pixbuf)
 {
-    int* histogram = calloc(256, sizeof(int));
+    int *histogram = calloc(256, sizeof(int));
 
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-    
+
     for (int y = 0; y < height; y++)
     {
         guchar *rows = pixels + y * rowstride;
@@ -99,7 +98,7 @@ void print_histogram(GdkPixbuf *pixbuf)
     int *histogram = create_histogram(pixbuf);
 
     printf("Histogram of pixels:\n");
-    
+
     for (int i = 0; i < 256; i++)
     // Print histogram[0] to histogram[255] of pixel intensities with number of
     // pixels of intensity i
@@ -113,13 +112,13 @@ void print_histogram(GdkPixbuf *pixbuf)
 int calculate_otsu_threshold(GdkPixbuf *pixbuf)
 {
     int *histogram = create_histogram(pixbuf);
-    
+
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
-    
+
     int total_pixels = width * height;
 
-    double sum = 0; //Total sum of intensities
+    double sum = 0; // Total sum of intensities
     for (int i = 0; i < 256; i++)
     {
         sum += i * histogram[i];
@@ -138,7 +137,7 @@ int calculate_otsu_threshold(GdkPixbuf *pixbuf)
         {
             continue;
         }
-    
+
         weight_light = total_pixels - weight_dark;
         if (weight_light == 0)
         {
@@ -149,8 +148,9 @@ int calculate_otsu_threshold(GdkPixbuf *pixbuf)
         double mean_dark = sum_dark / weight_dark;
         double mean_light = (sum - sum_dark) / weight_light;
 
-        double var_between_class = (double)weight_dark  * (double)weight_light
-                * (mean_dark - mean_light) * (mean_dark - mean_light);
+        double var_between_class = (double)weight_dark * (double)weight_light *
+                                   (mean_dark - mean_light) *
+                                   (mean_dark - mean_light);
 
         if (var_between_class > max_var_between_class)
         {
@@ -158,7 +158,7 @@ int calculate_otsu_threshold(GdkPixbuf *pixbuf)
             threshold = t;
         }
     }
-    
+
     free(histogram);
     return threshold;
 }
@@ -252,17 +252,17 @@ int convert_to_black_and_white(GdkPixbuf *pixbuf)
 
     free(histogram);
 
-    //High variance -> Use Otsu threshold
+    // High variance -> Use Otsu threshold
     if (variance > 1500)
     {
         threshold = otsu_threshold;
-        //printf("Threshold method chosen : Otsu\n");
+        // printf("Threshold method chosen : Otsu\n");
     }
-    //Low variance -> Use mean threshold
+    // Low variance -> Use mean threshold
     else
     {
         threshold = mean_threshold;
-        //printf("Threshold method chosen : Mean\n");
+        // printf("Threshold method chosen : Mean\n");
     }
 
     binarize_image(pixbuf, threshold);

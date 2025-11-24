@@ -147,7 +147,8 @@ int test_black_and_white()
     {
         print_success();
         printf("Successfully converted image to black and white with"
-               " threshold %i\n", threshold);
+               " threshold %i\n",
+               threshold);
     }
     else
     {

@@ -166,11 +166,11 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
 
 double detect_best_angle(GdkPixbuf *pixbuf)
 {
-    //test image from -90° to 90°
-    //it NEEDS to take a black and white image to function correctly
-    //return a double which is the better angle found
+    // test image from -90° to 90°
+    // it NEEDS to take a black and white image to function correctly
+    // return a double which is the better angle found
 
-    // Downscale to speed up rotation to 150 pixels width (less pixels)
+    // Downscale to speed up rotation to 100 pixels width (less pixels)
     GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 150);
 
     double best_angle = 0.0;
