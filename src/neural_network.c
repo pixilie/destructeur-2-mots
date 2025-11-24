@@ -29,6 +29,18 @@ double sigmoid(double x) { return 1.0 / (1.0 + exp(-x)); }
  */
 double sigmoid_derivative(double x) { return x * (1.0 - x); }
 
+/**
+ * Compute the softmax activation function on an input vector.
+ *
+ * Parameters:
+ *  - input : array of raw output values
+ *  - output: array where the normalized probabilities will be stored
+ *  - size  : number of elements
+ *
+ * Returns:
+ *  - the normalization factor (sum of exp(inputs - max)),
+ *    mostly for debugging; not required for inference.
+ */
 double softmax(double *input, double *output, int size)
 {
     double max = input[0];
@@ -70,8 +82,7 @@ double rand_weight() { return ((double)rand() / RAND_MAX) * 2.0 - 1.0; }
  *  - output_size: number of output neurons
  *
  * Returns:
- *  - pointer to an allocated NeuralNetwork with randomly initialized weights
- * and biases
+ *  - pointer to an allocated NeuralNetwork
  */
 NeuralNetwork *create_network(int input_size, int hidden_size, int output_size)
 {
@@ -106,8 +117,7 @@ NeuralNetwork *create_network(int input_size, int hidden_size, int output_size)
  * Free all memory allocated for the neural network.
  *
  * Parameters:
- *  - nn: pointer to the NeuralNetwork to free (must not be used after this
- * call)
+ *  - nn: pointer to the NeuralNetwork to free
  */
 void free_network(NeuralNetwork *nn)
 {
@@ -159,14 +169,15 @@ void forward(NeuralNetwork *nn, double *inputs)
 }
 
 /**
- * Train the network on a small fixed dataset (typically XOR).
+ * Train the neural network using gradient descent.
  *
  * Parameters:
- *  - nn           : pointer to the NeuralNetwork to train
- *  - inputs       : 4x2 array containing 4 training examples (each of size 2)
- *  - targets      : array of 4 target values (one target per example)
- *  - learning_rate: learning rate for weight updates
- *  - epochs       : number of training iterations (epochs)
+ *  - nn           : pointer to the neural network
+ *  - inputs       : array of training samples (samples × input_size)
+ *  - targets      : array of expected outputs (samples × output_size)
+ *  - samples      : number of training samples
+ *  - lr           : learning rate
+ *  - epochs       : number of training epochs
  */
 void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
            double lr, int epochs)
