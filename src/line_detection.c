@@ -1,7 +1,5 @@
-#include "../include/image_helpers.h"
-#include "../include/image_rotation.h"
-#include "../include/image_slice.h"
-#include "../include/image_treatment.h"
+#include "../include/image/image.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -511,7 +509,7 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     }
 
     convert_to_grayscale(pixbuf);
-    binarize_image(pixbuf, 180);
+    convert_to_black_and_white(pixbuf);
 
     double angle = find_good_rotation(pixbuf);
     pixbuf = rotate_image(pixbuf, angle);

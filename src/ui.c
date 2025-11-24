@@ -1,6 +1,5 @@
-#include "../include/image_helpers.h"
-#include "../include/image_rotation.h"
-#include "../include/image_treatment.h"
+#include "../include/image/image.h"
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 #include <libgen.h>
@@ -115,11 +114,11 @@ void on_binarize_clicked(GtkButton *button, gpointer user_data)
     }
 
     convert_to_grayscale(data->transformed);
-    binarize_image(data->transformed, 180);
+    int threshold = convert_to_black_and_white(data->transformed);
 
     apply_transformations(data);
 
-    printf("Image converted to black and white\n");
+    printf("Image converted to black and white with threshold %i\n", threshold);
 }
 
 /**
@@ -145,6 +144,9 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
     {
         data->rotation_angle -= 360.0;
     }
+
+    double best_angle = detect_best_angle(data->transformed);
+    printf("Best rotation angle : %f degrees\n", best_angle);
 
     apply_transformations(data);
 
@@ -333,7 +335,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     g_signal_connect_swapped(close_button, "clicked",
                              G_CALLBACK(gtk_window_close), window);
 
-    grayscale_button = gtk_button_new_with_label("Conversion en niveaux de gris");
+    grayscale_button =
+        gtk_button_new_with_label("Conversion en niveaux de gris");
     binarize_button = gtk_button_new_with_label("Conversion en noir et blanc");
     rotate_button = gtk_button_new_with_label("Rotation de 45 degrés");
     save_button = gtk_button_new_with_label("Sauvegarder l'image");
