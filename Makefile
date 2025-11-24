@@ -110,11 +110,6 @@ $(BUILD_DIR)/test_solver_tests: $(TEST_DIR)/solver_tests.c $(TEST_DIR)/test_help
 	@echo "Building solver test: $@"
 	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/test_solver_tests: $(TEST_DIR)/solver_tests.c $(TEST_DIR)/test_helpers.c src/solver.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Building solver test: $@"
-	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
-
 # ===================== Clean =====================
 clean:
 	@echo "Cleaning build files..."
