@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define LETTERS 26
+
 /**
  * Compute the sigmoid activation function.
  *
@@ -25,6 +27,30 @@ double sigmoid(double x) { return 1.0 / (1.0 + exp(-x)); }
  *  - derivative ds/dz = s * (1 - s)
  */
 double sigmoid_derivative(double x) { return x * (1.0 - x); }
+
+double softmax(double *input, double *output, int size)
+{
+    double max = input[0];
+    for (int i = 1; i < size; i++)
+    {
+
+        if (input[i] > max)
+            max = input[i];
+    }
+
+    double sum = 0.0;
+    for (int i = 0; i < size; i++)
+    {
+        output[i] = exp(input[i] - max);
+        sum += output[i];
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        output[i] /= sum;
+    }
+    return sum;
+}
 
 /**
  * Generate a random weight in the range [-1.0, 1.0].
@@ -55,8 +81,10 @@ NeuralNetwork *create_network(int input_size, int hidden_size, int output_size)
 
     nn->hidden_weights = malloc(sizeof(double) * input_size * hidden_size);
     nn->output_weights = malloc(sizeof(double) * hidden_size * output_size);
+
     nn->hidden_bias = malloc(sizeof(double) * hidden_size);
     nn->output_bias = malloc(sizeof(double) * output_size);
+
     nn->hidden = malloc(sizeof(double) * hidden_size);
     nn->output = malloc(sizeof(double) * output_size);
 
@@ -100,23 +128,33 @@ void free_network(NeuralNetwork *nn)
  */
 void forward(NeuralNetwork *nn, double *inputs)
 {
-    // Hidden layer
     for (int i = 0; i < nn->hidden_size; i++)
     {
         double sum = nn->hidden_bias[i];
         for (int j = 0; j < nn->input_size; j++)
+        {
             sum += inputs[j] * nn->hidden_weights[j * nn->hidden_size + i];
+        }
+
         nn->hidden[i] = sigmoid(sum);
     }
 
-    // Output layer
+    double *raw_output = malloc(sizeof(double) * nn->output_size);
+
     for (int i = 0; i < nn->output_size; i++)
     {
         double sum = nn->output_bias[i];
         for (int j = 0; j < nn->hidden_size; j++)
+        {
             sum += nn->hidden[j] * nn->output_weights[j * nn->output_size + i];
-        nn->output[i] = sigmoid(sum);
+        }
+
+        raw_output[i] = sum;
     }
+
+    softmax(raw_output, nn->output, nn->output_size);
+
+    free(raw_output);
 }
 
 /**
@@ -129,57 +167,71 @@ void forward(NeuralNetwork *nn, double *inputs)
  *  - learning_rate: learning rate for weight updates
  *  - epochs       : number of training iterations (epochs)
  */
-void train(NeuralNetwork *nn, double inputs[4][2], double targets[4],
-           double learning_rate, int epochs)
+void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
+           double lr, int epochs)
 {
     for (int epoch = 0; epoch < epochs; epoch++)
     {
         double total_error = 0.0;
-        for (int s = 0; s < 4; s++)
+
+        for (int s = 0; s < samples; s++)
         {
-            double *x = inputs[s];
-            double y = targets[s];
+            forward(nn, inputs[s]);
 
-            // Forward pass
-            forward(nn, x);
-
-            double output = nn->output[0];
-            double error = y - output;
-            total_error += error * error;
-
-            // Backpropagation
-            double output_delta = error * sigmoid_derivative(output);
-
+            double *output_deltas = malloc(sizeof(double) * nn->output_size);
             double *hidden_deltas = malloc(sizeof(double) * nn->hidden_size);
-            for (int i = 0; i < nn->hidden_size; i++)
+
+            for (int o = 0; o < nn->output_size; o++)
             {
-                double h = nn->hidden[i];
-                double w = nn->output_weights[i * nn->output_size + 0];
-                hidden_deltas[i] = sigmoid_derivative(h) * output_delta * w;
+                double error = targets[s][o] - nn->output[o];
+                total_error += error * error;
+                output_deltas[o] = error;
             }
 
-            // Update output weight
-            for (int i = 0; i < nn->hidden_size; i++)
-                nn->output_weights[i] +=
-                    learning_rate * output_delta * nn->hidden[i];
-            nn->output_bias[0] += learning_rate * output_delta;
-
-            // Update hidden weight
-            for (int i = 0; i < nn->input_size; i++)
+            for (int h = 0; h < nn->hidden_size; h++)
             {
-                for (int j = 0; j < nn->hidden_size; j++)
+                double sum = 0.0;
+                for (int o = 0; o < nn->output_size; o++)
                 {
-                    nn->hidden_weights[i * nn->hidden_size + j] +=
-                        learning_rate * hidden_deltas[j] * x[i];
+                    sum += output_deltas[o] *
+                           nn->output_weights[h * nn->output_size + o];
+                }
+                hidden_deltas[h] = sigmoid_derivative(nn->hidden[h]) * sum;
+            }
+
+            for (int h = 0; h < nn->hidden_size; h++)
+            {
+                for (int o = 0; o < nn->output_size; o++)
+                {
+                    nn->output_weights[h * nn->output_size + o] +=
+                        lr * output_deltas[o] * nn->hidden[h];
                 }
             }
-            for (int j = 0; j < nn->hidden_size; j++)
-                nn->hidden_bias[j] += learning_rate * hidden_deltas[j];
 
+            for (int o = 0; o < nn->output_size; o++)
+            {
+                nn->output_bias[o] += lr * output_deltas[o];
+            }
+
+            for (int i = 0; i < nn->input_size; i++)
+            {
+                for (int h = 0; h < nn->hidden_size; h++)
+                {
+                    nn->hidden_weights[i * nn->hidden_size + h] +=
+                        lr * hidden_deltas[h] * inputs[s][i];
+                }
+            }
+
+            for (int h = 0; h < nn->hidden_size; h++)
+            {
+                nn->hidden_bias[h] += lr * hidden_deltas[h];
+            }
+
+            free(output_deltas);
             free(hidden_deltas);
         }
 
-        if (epoch % 1000 == 0)
+        if (epoch % 100 == 0)
         {
             printf("Epoch %d - Error: %.6f\n", epoch, total_error);
         }

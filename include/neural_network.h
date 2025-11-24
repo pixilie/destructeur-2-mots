@@ -17,9 +17,12 @@ typedef struct
 
 NeuralNetwork *create_network(int input_size, int hidden_size, int output_size);
 void free_network(NeuralNetwork *nn);
+
 double sigmoid(double x);
 double sigmoid_derivative(double x);
+double softmax(double *input, double *output, int size);
 double rand_weight();
+
 void forward(NeuralNetwork *nn, double *inputs);
-void train(NeuralNetwork *nn, double inputs[4][2], double targets[4],
-           double learning_rate, int epochs);
+void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
+           double lr, int epochs);
