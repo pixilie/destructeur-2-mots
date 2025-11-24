@@ -147,7 +147,7 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
 
     double best_angle = detect_best_angle(data->transformed);
     printf("Best rotation angle : %f degrees\n", best_angle);
-    
+
     apply_transformations(data);
 
     printf("Image rotated by 45 degrees\n");
@@ -335,7 +335,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     g_signal_connect_swapped(close_button, "clicked",
                              G_CALLBACK(gtk_window_close), window);
 
-    grayscale_button = gtk_button_new_with_label("Conversion en niveaux de gris");
+    grayscale_button =
+        gtk_button_new_with_label("Conversion en niveaux de gris");
     binarize_button = gtk_button_new_with_label("Conversion en noir et blanc");
     rotate_button = gtk_button_new_with_label("Rotation de 45 degrés");
     save_button = gtk_button_new_with_label("Sauvegarder l'image");

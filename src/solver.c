@@ -94,7 +94,7 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
                     }
                     c++;
                 }
-                if(c == nbcolls)
+                if (c == nbcolls)
                 {
                     l++;
                     c = 0;
@@ -107,20 +107,26 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
         }
         else
         {
-            int dir[8][2] = {{1, 1},{1, 0},{1, -1},{0, -1},{-1, -1},{-1, 0},{-1, 1},{0, 1}};
+            int dir[8][2] = {{1, 1},   {1, 0},  {1, -1}, {0, -1},
+                             {-1, -1}, {-1, 0}, {-1, 1}, {0, 1}};
             int len_w = len_word(word);
             is_found = 0;
-            for(int j = 0; j < 8; j ++)
+            for (int j = 0; j < 8; j++)
             {
                 tempx2 = tempx1;
                 tempy2 = tempy1;
                 index_in_word = 1;
-                if (tempy2 + dir[j][1] >= 0 && tempy2 + dir[j][1] < nblines && tempx2 + dir[j][0] >= 0 && tempx2 + dir[j][0] < nbcolls && is_found == 0)
+                if (tempy2 + dir[j][1] >= 0 && tempy2 + dir[j][1] < nblines &&
+                    tempx2 + dir[j][0] >= 0 && tempx2 + dir[j][0] < nbcolls &&
+                    is_found == 0)
                 {
                     while (index_in_word < len_w && tempy2 + dir[j][1] >= 0 &&
-                           tempy2 + dir[j][1] < nblines && tempx2 + dir[j][0] >= 0 &&
+                           tempy2 + dir[j][1] < nblines &&
+                           tempx2 + dir[j][0] >= 0 &&
                            tempx2 + dir[j][0] < nbcolls && is_found == 0 &&
-                           tolower(word[index_in_word]) == tolower(tab[tempy2 + dir[j][1]][tempx2+ dir[j][0]]))
+                           tolower(word[index_in_word]) ==
+                               tolower(
+                                   tab[tempy2 + dir[j][1]][tempx2 + dir[j][0]]))
                     {
                         index_in_word++;
                         tempx2 += dir[j][0];
@@ -175,11 +181,11 @@ int main(int argc, char *argv[])
     int *y2 = malloc(sizeof(int));
 
     solve(argv[1], argv[2], x1, y1, x2, y2);
-	
-    if(*x1 == -1 && *x2 == -1)
+
+    if (*x1 == -1 && *x2 == -1)
     {
-         printf("Not Found\n");
-         exit(EXIT_FAILURE);
+        printf("Not Found\n");
+        exit(EXIT_FAILURE);
     }
     printf("(%i, %i)(%i, %i)\n", *x1, *y1, *x2, *y2);
 

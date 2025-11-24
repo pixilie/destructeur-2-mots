@@ -94,18 +94,19 @@ GdkPixbuf *downscale_pixbuf(GdkPixbuf *pixbuf, int target_width)
         return pixbuf; // Image already small enough -> No downscaling needed
     }
 
-    double scale = (double) target_width / width;
+    double scale = (double)target_width / width;
     int new_width = target_width;
-    int new_height = (int) height * scale;
+    int new_height = (int)height * scale;
 
     // Return the downscaled pixbuf
-    return gdk_pixbuf_scale_simple(pixbuf, new_width, new_height, GDK_INTERP_NEAREST);
+    return gdk_pixbuf_scale_simple(pixbuf, new_width, new_height,
+                                   GDK_INTERP_NEAREST);
 }
 
 double compute_projection_variance(GdkPixbuf *pixbuf)
 {
-    //used to calculate the variance of an image
-    //the higher the return is, the better is the angle of the image
+    // used to calculate the variance of an image
+    // the higher the return is, the better is the angle of the image
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
@@ -115,20 +116,20 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
     double sum = 0.0;
     double sum2 = 0.0;
 
-    //iterate through each line
-    for(int y = 0; y < height; y++)
+    // iterate through each line
+    for (int y = 0; y < height; y++)
     {
         int line_sum = 0;
         guchar *row = pixels + y * rowstride;
 
-        for(int x = 1; x < width; x++)
+        for (int x = 1; x < width; x++)
         {
-            int current_pixel = (int) row[x * n_channels];
-            int previous_pixel = (int) row[(x - 1) * n_channels];
-            
+            int current_pixel = (int)row[x * n_channels];
+            int previous_pixel = (int)row[(x - 1) * n_channels];
+
             // Measure the change between neighboring pixels
             int edge_strength = abs(current_pixel - previous_pixel);
-            
+
             line_sum += edge_strength;
         }
 
@@ -143,9 +144,9 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
 
 double detect_best_angle(GdkPixbuf *pixbuf)
 {
-    //test image from -90° to 90°
-    //it NEEDS to take a black and white image to function correctly
-    //return a double which is the better angle found
+    // test image from -90° to 90°
+    // it NEEDS to take a black and white image to function correctly
+    // return a double which is the better angle found
 
     // Downscale to speed up rotation to 100 pixels width (less pixels)
     GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 100);
@@ -153,14 +154,14 @@ double detect_best_angle(GdkPixbuf *pixbuf)
     double best_angle = 0.0;
     double best_score = -1.0;
 
-    //check every angle from -90° to 90° (= 180 tests)
-    for(double angle = -90.0; angle <= 90.0; angle += 1)
+    // check every angle from -90° to 90° (= 180 tests)
+    for (double angle = -90.0; angle <= 90.0; angle += 1)
     {
         GdkPixbuf *rotated_pixbuf = rotate_image(downscaled_pixbuf, angle);
         double score = compute_projection_variance(rotated_pixbuf);
         g_object_unref(rotated_pixbuf);
 
-        if(score > best_score)
+        if (score > best_score)
         {
             best_score = score;
             best_angle = angle; // New best score found -> New best angle found

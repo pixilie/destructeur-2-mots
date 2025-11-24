@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void check_pixbuf_dimensions(GdkPixbuf *pixbuf, int expected_width, int expected_height)
+static void check_pixbuf_dimensions(GdkPixbuf *pixbuf, int expected_width,
+                                    int expected_height)
 {
     assert(gdk_pixbuf_get_width(pixbuf) == expected_width);
     assert(gdk_pixbuf_get_height(pixbuf) == expected_height);
@@ -19,7 +20,8 @@ int test_slice_in_n()
 
     const char *test_image1 = "square.jpg";
 
-    GdkPixbuf *pixbuf1 = gdk_pixbuf_new_from_file(get_image_path(test_image1), NULL);
+    GdkPixbuf *pixbuf1 =
+        gdk_pixbuf_new_from_file(get_image_path(test_image1), NULL);
     if (!pixbuf1)
     {
         print_fail();
@@ -38,7 +40,7 @@ int test_slice_in_n()
         g_object_unref(pixbuf1);
         return 0;
     }
-    
+
     for (int i = 0; i < n_slice * n_slice; i++)
     {
         check_pixbuf_dimensions(tiles[i], expected_size, expected_size);
@@ -50,21 +52,22 @@ int test_slice_in_n()
     }
     free(tiles);
     g_object_unref(pixbuf1);
-    
+
     print_success();
-    printf("slice_in_n() produced %d tiles of %dx%d\n",
-           n_slice * n_slice, expected_size, expected_size);
-    
+    printf("slice_in_n() produced %d tiles of %dx%d\n", n_slice * n_slice,
+           expected_size, expected_size);
+
     return 1;
 }
 
 int test_slice_from()
 {
     print_test_subcategory("Slice From Tests");
-    
+
     const char *test_image2 = "level_1_image_1.png";
 
-    GdkPixbuf *pixbuf2 = gdk_pixbuf_new_from_file(get_image_path(test_image2), NULL);
+    GdkPixbuf *pixbuf2 =
+        gdk_pixbuf_new_from_file(get_image_path(test_image2), NULL);
     if (!pixbuf2)
     {
         print_fail();
@@ -75,7 +78,7 @@ int test_slice_from()
     int width = gdk_pixbuf_get_width(pixbuf2);
     int height = gdk_pixbuf_get_height(pixbuf2);
     int y_cut = height / 2;
-    
+
     GdkPixbuf **horizontal = slice_from(pixbuf2, 0, y_cut, 1);
     if (!horizontal)
     {
@@ -98,7 +101,7 @@ int test_slice_from()
         printf("No tiles generated with vertical cut of slice_from\n");
         g_object_unref(horizontal[0]);
         g_object_unref(horizontal[1]);
-        free(horizontal);        
+        free(horizontal);
         g_object_unref(pixbuf2);
         return 0;
     }
@@ -112,25 +115,26 @@ int test_slice_from()
     free(horizontal);
     free(vertical);
     g_object_unref(pixbuf2);
-    
+
     print_success();
     printf("Correctly cut image vertically with slice_from\n");
-    
+
     return 1;
 }
 
 int test_crop()
 {
     print_test_subcategory("Crop Tests");
-    
+
     const char *test_image1 = "square.jpg";
 
     int x1 = 100;
     int y1 = 100;
     int x2 = 300;
     int y2 = 300;
-    
-    GdkPixbuf *pixbuf3 = gdk_pixbuf_new_from_file(get_image_path(test_image1), NULL);
+
+    GdkPixbuf *pixbuf3 =
+        gdk_pixbuf_new_from_file(get_image_path(test_image1), NULL);
     if (!pixbuf3)
     {
         print_fail();
@@ -151,13 +155,12 @@ int test_crop()
 
     g_object_unref(pixbuf3);
     g_object_unref(crop_result);
-    
+
     print_success();
     printf("Produced a new slice of %dx%d with crop()\n", x2 - x1, y2 - y1);
 
     return 1;
 }
-
 
 int main(void)
 {
@@ -177,6 +180,6 @@ int main(void)
     {
         print_some_tests_failed("Image Slice Tests");
     }
-    
+
     return passed ? 0 : 1;
 }

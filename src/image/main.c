@@ -67,8 +67,7 @@ int main(int argc, char **argv)
         strcmp(function_name, "convert_to_black_and_white") &&
         strcmp(function_name, "rotate_image") &&
         strcmp(function_name, "slice_from") &&
-        strcmp(function_name, "slice_in_n") &&
-        strcmp(function_name, "crop") &&
+        strcmp(function_name, "slice_in_n") && strcmp(function_name, "crop") &&
         strcmp(function_name, "detect_best_angle"))
     {
         printf(COLOR_RED "[FAIL]" COLOR_RESET
@@ -188,14 +187,15 @@ int main(int argc, char **argv)
         {
             if (argc < 3)
             {
-                printf(COLOR_RED
-                       "[FAIL]" COLOR_RESET
-                       " Not enough arguments for convert_to_black_and_white\n");
+                printf(
+                    COLOR_RED
+                    "[FAIL]" COLOR_RESET
+                    " Not enough arguments for convert_to_black_and_white\n");
                 printf("Usage: ./image convert_to_black_and_white <image_path>"
                        " <optional:output>\n");
                 return EXIT_FAILURE;
             }
-            
+
             // Load image
             GdkPixbuf *pixbuf = load_image(argv[2]);
             if (!pixbuf)
@@ -219,7 +219,8 @@ int main(int argc, char **argv)
             else
             {
                 save_pixbuf_as_png(pixbuf, "black_and_white.png");
-                printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                printf(COLOR_GREEN
+                       "[SUCCESS]" COLOR_RESET
                        " Image %s converted to black and white"
                        " with threshold %i and saved as black_and_white.png\n",
                        argv[2], threshold);
@@ -227,7 +228,7 @@ int main(int argc, char **argv)
             g_object_unref(pixbuf);
             return EXIT_SUCCESS;
         }
-        
+
         // rotate_image
         if (strcmp(function_name, "rotate_image") == 0)
         {
@@ -284,8 +285,9 @@ int main(int argc, char **argv)
         {
             if (argc < 3)
             {
-                printf(COLOR_RED "[FAIL]" COLOR_RESET
-                                 " Not enough arguments for detect_best_angle\n");
+                printf(COLOR_RED
+                       "[FAIL]" COLOR_RESET
+                       " Not enough arguments for detect_best_angle\n");
                 printf("Usage: ./image detect_best_angle <image_path>\n");
                 return EXIT_FAILURE;
             }

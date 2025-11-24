@@ -42,7 +42,7 @@ char *get_image_path(const char *filename)
 
     char exe_path[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
-    if(len == -1)
+    if (len == -1)
     {
         g_printerr("ERROR: Failed to read binary path\n");
         return NULL;
