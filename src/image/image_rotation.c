@@ -224,5 +224,10 @@ GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
     double best_angle = detect_best_angle(pixbuf);
     // printf("Image automatically rotated by best rotation angle : %f\n",
     // best_angle);
+    if (best_angle == 0)
+    {
+        printf("Image is already upright, no rotation needed");
+        return pixbuf;
+    }
     return rotate_image(pixbuf, best_angle);
 }
