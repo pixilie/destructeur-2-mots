@@ -25,22 +25,25 @@ int find_best_rotation_angle(char *filename, char *image_print_name,
     {
         return 0;
     }
-    
+
     convert_to_black_and_white(pixbuf);
     double actual_best_rotation_angle = detect_best_angle(pixbuf);
-    int result = is_best_angle_correct(expected_angle, actual_best_rotation_angle, tolerance);
-    
+    int result = is_best_angle_correct(expected_angle,
+                                       actual_best_rotation_angle, tolerance);
+
     if (result)
     {
         print_success();
-        printf("Image : %s. Expected best rotation angle %.2f°, got: %.2f°\n", image_print_name, expected_angle, actual_best_rotation_angle);
+        printf("Image : %s. Expected best rotation angle %.2f°, got: %.2f°\n",
+               image_print_name, expected_angle, actual_best_rotation_angle);
     }
     else
     {
         print_fail();
-        printf("Image : %s. Expected best rotation angle %.2f°, got: %.2f°\n", image_print_name, expected_angle, actual_best_rotation_angle);
+        printf("Image : %s. Expected best rotation angle %.2f°, got: %.2f°\n",
+               image_print_name, expected_angle, actual_best_rotation_angle);
     }
-    
+
     return result;
 }
 
@@ -69,7 +72,7 @@ int test_rotate_90()
     int height = gdk_pixbuf_get_height(pixbuf);
     int new_width = gdk_pixbuf_get_width(rotated);
     int new_height = gdk_pixbuf_get_height(rotated);
-    
+
     // Basic dimension check
     int is_rotation_correct = (new_width >= height && new_height >= width);
     if (!is_rotation_correct)

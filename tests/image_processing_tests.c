@@ -162,14 +162,14 @@ int test_black_and_white()
 int test_selection_sort()
 {
     print_test_subcategory("Selection Sort Tests");
-    
+
     guchar neighborhood[9] = {241, 255, 48, 99, 14, 74, 67, 147, 145};
     guchar sorted_neighborhood[9];
     memcpy(sorted_neighborhood, neighborhood, sizeof(guchar) * 9);
     selection_sort(sorted_neighborhood);
 
     int is_sorted = 1;
-    for (int i = 0; i < 8; i ++)
+    for (int i = 0; i < 8; i++)
     {
         // check if all values are in increasing order
         if (sorted_neighborhood[i] > sorted_neighborhood[i + 1])
