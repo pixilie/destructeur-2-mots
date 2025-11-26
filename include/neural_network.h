@@ -20,8 +20,8 @@ NeuralNetwork *load_network(const char *filename);
 void save_network(NeuralNetwork *nn, const char *filename);
 void free_network(NeuralNetwork *nn);
 
-double sigmoid(double x);
-double sigmoid_derivative(double x);
+double relu(double x);
+double relu_derivative(double x);
 double softmax(double *input, double *output, int size);
 double rand_weight();
 
