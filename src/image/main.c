@@ -72,12 +72,12 @@ int main(int argc, char **argv)
         strcmp(function_name, "rotate_image") &&
         strcmp(function_name, "rotate_image_automatic") &&
         strcmp(function_name, "slice_from") &&
-        strcmp(function_name, "slice_in_n") &&
-        strcmp(function_name, "crop"))
+        strcmp(function_name, "slice_in_n") && strcmp(function_name, "crop"))
     {
         printf(COLOR_RED "[FAIL]" COLOR_RESET
-                " Incorrect function name, got: " COLOR_RED
-                "%s\n" COLOR_RESET, function_name);
+                         " Incorrect function name, got: " COLOR_RED
+                         "%s\n" COLOR_RESET,
+               function_name);
         print_all_function_usages();
         return EXIT_FAILURE;
     }
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
                        " <optional:output>\n");
                 return EXIT_FAILURE;
             }
-            
+
             // Load image
             GdkPixbuf *pixbuf = load_image(argv[2]);
             if (!pixbuf)
@@ -207,7 +207,8 @@ int main(int argc, char **argv)
             else
             {
                 save_pixbuf_as_png(pixbuf, "black_and_white.png");
-                printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                printf(COLOR_GREEN
+                       "[SUCCESS]" COLOR_RESET
                        " Image %s converted to black and white"
                        " with threshold %i and saved as black_and_white.png\n",
                        argv[2], threshold);
@@ -215,7 +216,7 @@ int main(int argc, char **argv)
             g_object_unref(pixbuf);
             return EXIT_SUCCESS;
         }
-        
+
         // rotate_image
         if (strcmp(function_name, "rotate_image") == 0)
         {
@@ -272,8 +273,9 @@ int main(int argc, char **argv)
         {
             if (argc < 3)
             {
-                printf(COLOR_RED "[FAIL]" COLOR_RESET
-                        " Not enough arguments for rotate_image_automatic\n");
+                printf(COLOR_RED
+                       "[FAIL]" COLOR_RESET
+                       " Not enough arguments for rotate_image_automatic\n");
                 printf("Usage: ./image rotate_image_automatic <image_path> "
                        "<optional: output>\n");
                 return EXIT_FAILURE;
@@ -291,35 +293,37 @@ int main(int argc, char **argv)
             double best_angle = detect_best_angle(pixbuf);
             if (best_angle == 0)
             {
-                printf(COLOR_RED "[FAIL]" COLOR_RESET
-                        "Image is already upright, no rotation applied !\n");
+                printf(COLOR_RED
+                       "[FAIL]" COLOR_RESET
+                       "Image is already upright, no rotation applied !\n");
                 g_object_unref(pixbuf);
                 return EXIT_FAILURE;
             }
-            
+
             GdkPixbuf *rotated_automatic = rotate_image_automatic(pixbuf);
             if (!rotated_automatic)
             {
                 printf(COLOR_RED "[FAIL]" COLOR_RESET
-                        " Rotate automatic function failed\n");
+                                 " Rotate automatic function failed\n");
                 g_object_unref(pixbuf);
                 return EXIT_FAILURE;
             }
-            
+
             if (argc > 3)
             {
                 save_pixbuf_as_png(rotated_automatic, argv[3]);
-                printf(COLOR_GREEN
-                       "[SUCCESS]" COLOR_RESET
-                       " Image %s rotated automatically by %.2f degrees and saved as %s\n",
+                printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                                   " Image %s rotated automatically by %.2f "
+                                   "degrees and saved as %s\n",
                        argv[2], best_angle, argv[3]);
             }
             else
             {
                 save_pixbuf_as_png(rotated_automatic, "rotated_automatic.png");
-                printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
-                        " Image %s rotated automatically by %.2f degrees and "
-                        "saved as rotated_automatic.png\n",
+                printf(COLOR_GREEN
+                       "[SUCCESS]" COLOR_RESET
+                       " Image %s rotated automatically by %.2f degrees and "
+                       "saved as rotated_automatic.png\n",
                        argv[2], best_angle);
             }
             g_object_unref(pixbuf);

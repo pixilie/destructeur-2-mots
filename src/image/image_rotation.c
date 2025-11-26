@@ -29,9 +29,9 @@ GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
     // Convert degrees to radians
     double angle = angle_degrees * M_PI / 180;
 
-    int new_width = (int) (fabs(width * cos(angle)) + fabs(height * sin(angle)));
+    int new_width = (int)(fabs(width * cos(angle)) + fabs(height * sin(angle)));
     int new_height =
-        (int) (fabs(width * sin(angle)) + fabs(height * cos(angle)));
+        (int)(fabs(width * sin(angle)) + fabs(height * cos(angle)));
 
     // Create new Pixbuf for the rotated image
     GdkPixbuf *new =
@@ -42,8 +42,8 @@ GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
     int new_n_channels = gdk_pixbuf_get_n_channels(new);
     guchar *new_pixels = gdk_pixbuf_get_pixels(new);
 
-    // Fill new Pixbuf with black backrgound
-    memset(new_pixels, 0, new_rowstride * new_height);
+    // Fill new Pixbuf with white backrgound
+    memset(new_pixels, 255, new_rowstride * new_height);
 
     double center_x = width / 2.0;
     double center_y = height / 2.0;
@@ -64,38 +64,19 @@ GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
                        (new_y - new_center_y) * cos_a + center_y;
 
             // Copy pixel color if it's inside bounds
-            if (x >= 0 && x < width - 1 && y >= 0 && y < height - 1)
+            if (x >= 0 && x < width && y >= 0 && y < height)
             {
-                int x0 = (int)x;
-                int y0 = (int)y;
-                int x1 = (x0 + 1 < width) ? x0 + 1 : x0;
-                int y1 = (y0 + 1  < width) ? y0 + 1 : y0;
+                int x_i = (int)x;
+                int y_i = (int)y;
 
-                double dx = x - x0;
-                double dy = y - y0;
-
+                guchar *pixel = pixels + y_i * rowstride + x_i * n_channels;
                 guchar *new_pixel =
                     new_pixels + new_y * new_rowstride + new_x * new_n_channels;
 
-                guchar *row_y0 = pixels + y0 * rowstride;
-                guchar *row_y1 = pixels + y1 * rowstride;
-
-                // Copy pixel using bilinear interpolation
+                // Copy pixel (RGB or RGBA)
                 for (int c = 0; c < n_channels; c++)
                 {
-                    double neighbor_pixel_00 = row_y0[x0 * n_channels + c]; // Top left
-                    double neighbor_pixel_10 = row_y0[x1 * n_channels + c]; // Top right
-                    double neighbor_pixel_01 = row_y1[x0 * n_channels + c]; // Bottom left
-                    double neighbor_pixel_11 = row_y1[x1 * n_channels + c]; // Bottom right
-
-                    // Horizontal interpolation
-                    double top = neighbor_pixel_00 * (1 - dx) + neighbor_pixel_10 * dx;
-                    double bottom = neighbor_pixel_01 * (1 - dx) + neighbor_pixel_11 * dx;
-
-                    // Vertical interpolation
-                    double value = top * (1 - dy) + bottom * dy;
-
-                    new_pixel[c] = (guchar) (value + 0.5); 
+                    new_pixel[c] = pixel[c];
                 }
             }
         }
@@ -113,12 +94,13 @@ GdkPixbuf *downscale_pixbuf(GdkPixbuf *pixbuf, int target_width)
         return pixbuf; // Image already small enough -> No downscaling needed
     }
 
-    double scale = (double) target_width / width;
+    double scale = (double)target_width / width;
     int new_width = target_width;
-    int new_height = (int) height * scale;
+    int new_height = (int)height * scale;
 
     // Return the downscaled pixbuf
-    return gdk_pixbuf_scale_simple(pixbuf, new_width, new_height, GDK_INTERP_BILINEAR);
+    return gdk_pixbuf_scale_simple(pixbuf, new_width, new_height,
+                                   GDK_INTERP_NEAREST);
 }
 
 double compute_projection_variance(GdkPixbuf *pixbuf)
@@ -139,11 +121,12 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
         double line_sum = 0;
         guchar *row = pixels + y * rowstride;
 
-        for (int x = 0; x < width; x++)
+        for (int x = 1; x < width; x++)
         {
-            line_sum += fabs((double) row[x * n_channels] - (double) row[(x - 1) * n_channels]);
+            line_sum += fabs((double)row[x * n_channels] -
+                             (double)row[(x - 1) * n_channels]);
         }
-        
+
         row_sums[y] = line_sum;
     }
 
@@ -153,14 +136,14 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
         mean += row_sums[y];
     }
     mean /= height;
-    
+
     double var = 0;
     for (int y = 0; y < height; y++)
     {
         var += (row_sums[y] - mean) * (row_sums[y] - mean);
     }
     var /= height;
-    
+
     return var;
 }
 
@@ -190,7 +173,8 @@ double detect_best_angle(GdkPixbuf *pixbuf)
         }
     }
 
-    // More refined second search : check every 0.1 degree around the previous best angle
+    // More refined second search : check every 0.1 degree around the previous
+    // best angle
     double search_start = best_angle - 3.0;
     double search_end = best_angle + 3.0;
     for (double angle = search_start; angle <= search_end; angle += 0.1)
@@ -204,7 +188,13 @@ double detect_best_angle(GdkPixbuf *pixbuf)
             best_score = score;
             best_angle = angle; // New best score found -> New best angle found
         }
-    } 
+    }
+
+    if (best_angle > -1.0 &&
+        best_angle < 1.0) // Avoid small angles for straight images
+    {
+        return 0.0;
+    }
 
     return best_angle;
 }
@@ -213,6 +203,11 @@ double detect_best_angle(GdkPixbuf *pixbuf)
 GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
 {
     double best_angle = detect_best_angle(pixbuf);
-    //printf("Image automatically rotated by best rotation angle : %f\n", best_angle);
+    if (best_angle == 0)
+    {
+        printf("Image is already upright, no rotation needed\n");
+        return pixbuf;
+    }
+    printf("Image automatically rotated by best rotation angle : %f\n",best_angle);
     return rotate_image(pixbuf, best_angle);
 }
