@@ -115,7 +115,7 @@ GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
  * (x1,y1)-(x2,y2).
  *
  * Parameters:
- *  - src : source GdkPixbuf (must not be NULL).
+ *  - pixbuf : source GdkPixbuf (must not be NULL).
  *  - x1,y1 : coordinates of one corner of the crop rectangle.
  *  - x2,y2 : coordinates of the opposite corner of the crop rectangle.
  *
@@ -124,7 +124,7 @@ GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
  * it).
  *  - NULL on error (coordinates out of bounds).
  */
-GdkPixbuf *crop(GdkPixbuf *src, int x1, int y1, int x2, int y2)
+GdkPixbuf *crop(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2)
 {
     if (x2 < x1)
     {
@@ -139,17 +139,23 @@ GdkPixbuf *crop(GdkPixbuf *src, int x1, int y1, int x2, int y2)
         y2 = tmp;
     }
 
+    int image_width = gdk_pixbuf_get_width(pixbuf);
+    int image_height = gdk_pixbuf_get_height(pixbuf);
+
+    x1 = CLAMP(x1, 0, image_width - 1);
+    y1 = CLAMP(y1, 0, image_height - 1);
+    x2 = CLAMP(x2, 0, image_width - 1);
+    y2 = CLAMP(y2, 0, image_height - 1);
+
+    
     int width = x2 - x1;
     int height = y2 - y1;
-
-    int src_width = gdk_pixbuf_get_width(src);
-    int src_height = gdk_pixbuf_get_height(src);
-
-    if (x1 < 0 || y1 < 0 || x2 > src_width || y2 > src_height)
+   
+    if (width <= 0 || height <= 0)
     {
         printf("[FAIL] Coordinates are outside of source pixbuf\n");
         return NULL;
     }
-
-    return gdk_pixbuf_new_subpixbuf(src, x1, y1, width, height);
+  
+    return gdk_pixbuf_new_subpixbuf(pixbuf, x1, y1, width, height);
 }
