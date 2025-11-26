@@ -297,87 +297,79 @@ void selection_sort(guchar *neighborhood, int count)
 }
 
 // Filter a 3x3 neighborhood
-void filter_neighborhood(GdkPixbuf *pixbuf, int x, int y)
+void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
+                             int width, int height, int rowstride,
+                             int n_channels)
 {
-    int width = gdk_pixbuf_get_width(pixbuf);
-    int height = gdk_pixbuf_get_height(pixbuf);
-    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-    
-    guchar *neighborhood; // The 9 pixels (or less)
-    for (int i = 0; i < 9; i++)
-    {
-        neighborhood[i] = -1; // -1 = pixel existe pas
-    }
-
-    int direction[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
-                               {0, 1},   {1, -1}, {1, 0},  {1, 1}};
-
-    for (int i = 0; i < 8; i++)
-    {
-        if (x < coo[index_coo][0])
-            coo[index_coo][0] = x;
-        if (y < coo[index_coo][1])
-            coo[index_coo][1] = y;
-        if (x > coo[index_coo][2])
-            coo[index_coo][2] = x;
-        if (y > coo[index_coo][3])
-            coo[index_coo][3] = y;
-
-        if ((x + direction[i][0]) >= 0 && (y + direction[i][1]) >= 0 &&
-            (x + direction[i][0]) < width &&
-            (y + direction[i][1]) < height &&
-
+    guchar neighborhood[9]; // The 9 neighboring pixels array
     int neighborhood_count = 0;
-    //realloc();
+
+    for (int dy = -1; dy <= 1; dy++)
     {
-        neighborhood[0] = pixels[x - 1]; //FIX
-        neighborhood_count++;
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            int new_x = x + dx;
+            int new_y = y + dy;
+
+            // Skip out of bounds neighboring pixels
+            if (new_x < 0 || new_x >= width || new_y < 0 || new_y >= height)
+            {
+                continue;
+            }
+
+            guchar *p = copy + new_y * rowstride + new_x * n_channels;
+
+            neighborhood[neighborhood_count] = p[0];
+            neighborhood_count++;
+        }
     }
 
     selection_sort(neighborhood, neighborhood_count);
-    int median_index = 0; // L'index de la mediane
-    int median = 0;       // The median of the 3x3 pixels
-    if (neighborhood_count % 2 ==
-        0) // Pair : Index de Mediane = Moyenne entre 2
+
+    guchar median; // The median of the 3x3 pixels
+
+    // Even neighborhood count : Median index = average between the 2 middle
+    // elements
+    if (neighborhood_count % 2 == 0)
     {
-        median = (neighborhood[neighborhood_count / 2] +
-                  neighborhood[neighborhood_count / 2 + 1]) /
+        median = (neighborhood[neighborhood_count / 2 - 1] +
+                  neighborhood[neighborhood_count / 2]) /
                  2;
     }
-    else // Uneven neighborhood count : Median index =
-         // neighborhood[neighborhood_count / 2]
+
+    // Uneven neighborhood count : Median index = middle element
+    else
     {
         median = neighborhood[neighborhood_count / 2];
     }
-    guchar *pixel = (pixels + y * rowstride) +  x * n_channels;
-    pixel[x] = median;
-}
 
-int is_in_bounds()
-{
-    return 1;
+    // Replace original pixel with median pixel
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+    guchar *dst = (pixels + y * rowstride) + x * n_channels;
+    dst[0] = dst[1] = dst[2] = median;
 }
-
 
 void median_filter_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
-    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     // Copy pixbuf to get the raw pixels before applying the median filter
     guchar *copy = g_malloc(rowstride * height);
     memcpy(copy, pixels, rowstride * height);
 
+    // Filter every pixel in a 3x3 neighborhood
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            filter_neighborhood(pixels, x, y);
+            filter_neighborhood_3x3(pixbuf, copy, x, y, width, height,
+                                    rowstride, n_channels);
         }
     }
+
+    g_free(copy);
 }
