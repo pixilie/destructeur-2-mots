@@ -16,6 +16,8 @@ typedef struct
 } NeuralNetwork;
 
 NeuralNetwork *create_network(int input_size, int hidden_size, int output_size);
+NeuralNetwork *load_network(const char *filename);
+void save_network(NeuralNetwork *nn, const char *filename);
 void free_network(NeuralNetwork *nn);
 
 double sigmoid(double x);

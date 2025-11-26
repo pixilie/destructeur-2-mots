@@ -131,6 +131,75 @@ void free_network(NeuralNetwork *nn)
 }
 
 /**
+ * Save the neural network's parameters (weights and biases) to a binary file.
+ *
+ * Parameters:
+ *  - nn       : pointer to the neural network to save
+ *  - filename : path to the file where the model will be written
+ */
+void save_network(NeuralNetwork *nn, const char *filename)
+{
+    FILE *f = fopen(filename, "wb");
+    if (!f)
+    {
+        printf("Error : can't open %s\n", filename);
+        return;
+    }
+
+    fwrite(&nn->input_size, sizeof(int), 1, f);
+    fwrite(&nn->hidden_size, sizeof(int), 1, f);
+    fwrite(&nn->output_size, sizeof(int), 1, f);
+
+    fwrite(nn->hidden_weights, sizeof(double), nn->input_size * nn->hidden_size,
+           f);
+    fwrite(nn->output_weights, sizeof(double),
+           nn->hidden_size * nn->output_size, f);
+
+    fwrite(nn->hidden_bias, sizeof(double), nn->hidden_size, f);
+    fwrite(nn->output_bias, sizeof(double), nn->output_size, f);
+
+    fclose(f);
+}
+
+/**
+ * Load a neural network from a binary file previously saved with
+ * save_network().
+ *
+ * Parameters:
+ *  - filename : path to the file containing the saved model
+ *
+ * Returns:
+ *  - pointer to a newly allocated NeuralNetwork initialized with the loaded
+ *    weights and biases, or NULL if the file cannot be opened.
+ */
+NeuralNetwork *load_network(const char *filename)
+{
+    FILE *f = fopen(filename, "rb");
+    if (!f)
+    {
+        printf("Erreur : can't open %s\n", filename);
+        return NULL;
+    }
+
+    int input, hidden, output;
+
+    fread(&input, sizeof(int), 1, f);
+    fread(&hidden, sizeof(int), 1, f);
+    fread(&output, sizeof(int), 1, f);
+
+    NeuralNetwork *nn = create_network(input, hidden, output);
+
+    fread(nn->hidden_weights, sizeof(double), input * hidden, f);
+    fread(nn->output_weights, sizeof(double), hidden * output, f);
+
+    fread(nn->hidden_bias, sizeof(double), hidden, f);
+    fread(nn->output_bias, sizeof(double), output, f);
+
+    fclose(f);
+    return nn;
+}
+
+/**
  * Perform a forward pass (inference) through the network.
  *
  * Parameters:
