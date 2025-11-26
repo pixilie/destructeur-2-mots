@@ -35,7 +35,7 @@ void convert_to_grayscale(GdkPixbuf *pixbuf)
 
             // Calculate gray formula and make every R, G and B the same
             // grayness
-            
+
             // Formula for grayscale: Gray = 0.299 × R + 0.587 × G + 0.114 × B
             guchar gray = (guchar)(0.299 * r + 0.587 * g + 0.114 * b);
             for (int i = 0; i < 3; i++)
@@ -54,9 +54,9 @@ int calculate_mean_treshold(GdkPixbuf *pixbuf)
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
-    long sum = 0; //sum of all gray pixels
+    long sum = 0; // sum of all gray pixels
     int total_pixel_count = width * height;
-    
+
     for (int y = 0; y < height; y++)
     {
         guchar *rows = pixels + y * rowstride;
@@ -270,10 +270,10 @@ int convert_to_black_and_white(GdkPixbuf *pixbuf)
 }
 
 // Returns the index of the minimum element of the 3x3 neighboring pixels array
-int find_minimum_index(int start_index, guchar neighborhood[9])
+int find_minimum_index(int start_index, guchar *neighborhood, int count)
 {
     int min_index = start_index;
-    for (int i = start_index + 1; i < 9; i++)
+    for (int i = start_index + 1; i < count; i++)
     {
         if (neighborhood[i] < neighborhood[min_index])
         {
@@ -283,24 +283,61 @@ int find_minimum_index(int start_index, guchar neighborhood[9])
     return min_index;
 }
 
-// Simple selection sort to sort the array of the 3x3 neighboring pixels to calculate the median of the array
-void selection_sort(guchar neighborhood[9])
+// Simple selection sort to sort the array of the 3x3 neighboring pixels to
+// calculate the median of the array
+void selection_sort(guchar *neighborhood, int count)
 {
-    for (int i = 0; i < 9; i++)
+    for (int i = 0; i < count; i++)
     {
-        int min_index = find_minimum_index(i, neighborhood);
+        int min_index = find_minimum_index(i, neighborhood, count);
         int temp = neighborhood[i];
         neighborhood[i] = neighborhood[min_index];
         neighborhood[min_index] = temp;
     }
 }
 
+// Filter a 3x3 neighborhood
+void filter_neighborhood(guchar *pixels, int x, int y)
+{
+    guchar *neighborhood; // The 9 pixels (or less)
+    for (int i = 0; i < 9; i++)
+    {
+        neighborhood[i] = -1; // -1 = pixel existe pas
+    }
+
+    int neighborhood_count = 0;
+    //realloc();
+    {
+        neighborhood[0] = pixels[x - 1]; //FIX
+        neighborhood_count++;
+    }
+
+    selection_sort(neighborhood, neighborhood_count);
+    int median_index = 0; // L'index de la mediane
+    int median = 0;       // The median of the 3x3 pixels
+    if (neighborhood_count % 2 ==
+        0) // Pair : Index de Mediane = Moyenne entre 2
+    {
+        median = (neighborhood[neighborhood_count / 2] +
+                  neighborhood[neighborhood_count / 2 + 1]) /
+                 2;
+    }
+    else // Uneven neighborhood count : Median index =
+         // neighborhood[neighborhood_count / 2]
+    {
+        median = neighborhood[neighborhood_count / 2];
+    }
+    pixels[x] = median;
+}
+
+int is_in_bounds()
+{
+    return 1;
+}
+
+
 void median_filter_3x3(GdkPixbuf *pixbuf)
 {
-    (void) pixbuf; //TODO: Remove this (just to remove the unused warning)
-    
-    //Comment to avoid warnings
-    /*
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
@@ -310,9 +347,12 @@ void median_filter_3x3(GdkPixbuf *pixbuf)
     // Copy pixbuf to get the raw pixels before applying the median filter
     guchar *copy = g_malloc(rowstride * height);
     memcpy(copy, pixels, rowstride * height);
-    
-    guchar neighborhood[9];
-    */
-    
-    //TODO: Continue function
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            filter_neighborhood(pixels, x, y);
+        }
+    }
 }
