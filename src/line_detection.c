@@ -93,24 +93,6 @@ void invert_color(GdkPixbuf *pixbuf)
 }
 
 /**
- * find_good_rotation:
- * Placeholder for an algorithm to detect the optimal rotation angle for the
- * image.
- *
- * Parameters:
- *  - pixbuf: pointer to a GdkPixbuf to analyze (typically binarized).
- *
- * Returns:
- *  - A rotation angle in degrees to be applied to deskew the image. Current
- *    implementation returns 0.0 (no rotation).
- */
-double find_good_rotation(GdkPixbuf *pixbuf)
-{
-    // need to be dev
-    return 0.0;
-}
-
-/**
  * remove_lines:
  * Detect and remove strong horizontal and vertical lines from a binarized
  * image.
@@ -290,7 +272,7 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
     g_mkdir_with_parents(output_file, 0777);
 
     int index_coo = 0;
-
+    int os = 3;
     char full_path[512];
 
     while (coo[index_coo][0] != 0)
@@ -299,12 +281,12 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
             coo[index_coo][1] < coo[index_coo][3] &&
             coo[index_coo][2] - coo[index_coo][0] <= 200 &&
             coo[index_coo][3] - coo[index_coo][1] <= 200 &&
-            coo[index_coo][2] - coo[index_coo][0] >= 5 &&
+            coo[index_coo][2] - coo[index_coo][0] >= 2 &&
             coo[index_coo][3] - coo[index_coo][1] >= 5)
         {
             GdkPixbuf *letter =
-                crop(pixbuf_to_crop, coo[index_coo][0], coo[index_coo][1],
-                     coo[index_coo][2], coo[index_coo][3]);
+                crop(pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
+                     coo[index_coo][2] + os, coo[index_coo][3] + os);
             snprintf(full_path, sizeof(full_path), "%s/letter_%d_%d.png",
                      output_file, coo[index_coo][0], coo[index_coo][1]);
             save_pixbuf_as_png(letter, full_path);
