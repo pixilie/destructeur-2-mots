@@ -297,6 +297,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *window;
     GtkWidget *vertical_box;
     GtkWidget *horizontal_box;
+    
     GtkWidget *grayscale_button;
     GtkWidget *convert_to_black_and_white_button;
     GtkWidget *filter_button;
@@ -304,6 +305,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *reset_button;
     GtkWidget *save_button;
     GtkWidget *close_button;
+    
     GtkWidget *image;
     GtkWidget *scrolled;
 
@@ -396,6 +398,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
                      G_CALLBACK(on_grayscale_clicked), data);
     g_signal_connect(convert_to_black_and_white_button, "clicked",
                      G_CALLBACK(on_convert_to_black_and_white_clicked), data);
+    g_signal_connect(filter_button, "clicked",
+                     G_CALLBACK(on_filter_clicked), data);
     g_signal_connect(rotate_button, "clicked", G_CALLBACK(on_rotate_clicked),
                      data);
     g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
