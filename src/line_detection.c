@@ -177,8 +177,8 @@ void remove_lines(GdkPixbuf *pixbuf)
  *  - coo        : array of integer arrays; coo[index_coo] holds
  * [xmin,ymin,xmax,ymax].
  */
-static void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y,
-                                     int *is_visited, int index_coo, int **coo)
+void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y, int *is_visited,
+                              int index_coo, int **coo)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
@@ -417,8 +417,8 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
  *  - nb_letter : number of letter boxes in coo.
  *  - nb_words  : capacity of word_list (maximum number of words to group).
  */
-void find_word_by_word(int **coo, int **word_list, int *words_coo,
-                       int nb_letter, int nb_words)
+int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
+                      int nb_words)
 {
     int seuil = 20;
     int seuilx = 20;
@@ -474,7 +474,24 @@ void find_word_by_word(int **coo, int **word_list, int *words_coo,
             }
         }
     }
+
+    int detected_words = 0;
+    for (int i = 0; i < nb_words; i++)
+    {
+        if (word_list[i][2] - word_list[i][0] > 0 &&
+            word_list[i][3] - word_list[i][1] > 0)
+        {
+            detected_words++;
+        }
+    }
+    return detected_words;
 }
+
+// Terminal colors
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[31m"
+#define COLOR_GREEN "\033[32m"
+#define COLOR_YELLOW "\033[33m"
 
 /**
  * pipeline:
@@ -496,7 +513,7 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
         50; // we state that there will not be more than 50 words in an exercise
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
-   
+
     convert_to_grayscale(pixbuf);
     convert_to_black_and_white(pixbuf);
 
@@ -514,7 +531,7 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
                                           // coo[i][2] = x2 coo[i][3] = y2
         coo[i][0] = coo[i][1] = coo[i][2] = coo[i][3] = 0;
     }
-    
+
     invert_color(pixbuf);
 
     nb_letter = find_letter(pixbuf, coo);
@@ -532,7 +549,8 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
             0;
     }
 
-    find_word_by_word(coo, word_list, words_coo, nb_letter, nb_words);
+    int nb_detected_words =
+        find_word_by_word(coo, word_list, words_coo, nb_letter, nb_words);
 
     // crop the grid, word list and words of the image
 
@@ -542,7 +560,7 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
         if (word_list[i][2] - word_list[i][0] > 0 &&
             word_list[i][3] - word_list[i][1] > 0)
         {
-            sprintf(word_path, "%s/word_n%i.png", output_gw_file, i);
+            sprintf(word_path, "%s/word_n%i.png", output_gw_file, i + 1);
             GdkPixbuf *word =
                 crop(pixbuf_to_slice, word_list[i][0], word_list[i][1],
                      word_list[i][2], word_list[i][3]);
@@ -556,11 +574,24 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     sprintf(grid_path, "%s/grid.png", output_gw_file);
     sprintf(words_path, "%s/words.png", output_gw_file);
 
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
+                        " Detected grid coordinates : (%i, %i)(%i, %i)\n",
+           grid_coo[0], grid_coo[1], grid_coo[2], grid_coo[3]);
     GdkPixbuf *grid = crop(pixbuf_to_slice, grid_coo[0], grid_coo[1],
                            grid_coo[2], grid_coo[3]);
     save_pixbuf_as_png(grid, grid_path);
     g_object_unref(grid);
 
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
+                        " Number of letters detected in the grid : %i\n",
+           nb_letter);
+    printf(COLOR_YELLOW
+           "[INFO]" COLOR_RESET
+           " Number of words detected in the words list of the grid : %i\n",
+           nb_detected_words);
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
+                        " Detected words list coordinates : (%i, %i)(%i, %i)\n",
+           words_coo[0], words_coo[1], words_coo[2], words_coo[3]);
     GdkPixbuf *words = crop(pixbuf_to_slice, words_coo[0], words_coo[1],
                             words_coo[2], words_coo[3]);
     save_pixbuf_as_png(words, words_path);
@@ -582,15 +613,10 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     free(words_coo);
     free(grid_path);
     free(word_path);
+    free(words_path);
     g_object_unref(pixbuf);
     g_object_unref(pixbuf_to_slice);
 }
-
-// Terminal colors
-#define COLOR_RESET "\033[0m"
-#define COLOR_RED "\033[31m"
-#define COLOR_GREEN "\033[32m"
-#define COLOR_YELLOW "\033[33m"
 
 #ifndef TESTING
 int main(int argc, char **argv)
@@ -623,7 +649,7 @@ int main(int argc, char **argv)
     pipeline(input_image, output_gw_dir, output_letters_dir);
 
     printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
-                       "Pipeline completed successfully!\n");
+                       " Pipeline completed successfully!\n");
     printf("  Processed image saved in:\n");
     printf("   - %s (grid and word crops)\n", output_gw_dir);
     printf("   - %s (letters)\n", output_letters_dir);
