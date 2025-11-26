@@ -487,6 +487,33 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
     return detected_words;
 }
 
+// Return the number of letters found in a bounding box (either the number of
+// letters in the grid box or the number of letters in the words list box)
+int count_letters_in_box(int **coo, int nb_letter, int *box)
+{
+    int count = 0;
+    for (int i = 0; i < nb_letter; i++)
+    {
+        int x1 = coo[i][0];
+        int y1 = coo[i][1];
+        int x2 = coo[i][2];
+        int y2 = coo[i][3];
+
+        if (x2 <= x1 || y2 <= y1)
+        {
+            continue;
+        }
+
+        // Letter coordinates are inside the bounds of the box -> Increment
+        // letter counter
+        if (x1 <= box[2] && x2 >= box[0] && y1 <= box[3] && y2 >= box[1])
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
 // Terminal colors
 #define COLOR_RESET "\033[0m"
 #define COLOR_RED "\033[31m"
@@ -508,7 +535,6 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     g_mkdir_with_parents(output_gw_file, 0777);
     g_mkdir_with_parents(output_letter_file, 0777);
 
-    int nb_letter = 0;
     int nb_words =
         50; // we state that there will not be more than 50 words in an exercise
     GdkPixbuf *pixbuf = load_image(filename);
@@ -539,11 +565,17 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 
     invert_color(pixbuf);
 
-    nb_letter = find_letter(pixbuf, coo);
-
-    generate_letter(pixbuf_to_slice, coo, output_letter_file);
+    int nb_letter =
+        find_letter(pixbuf, coo); // Number of letters in the grid + words list
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
+
+    int nb_letter_grid = count_letters_in_box(
+        coo, nb_letter, grid_coo); // Number of letters in the grid
+    int nb_letter_words = count_letters_in_box(
+        coo, nb_letter, words_coo); // Number of letters in the words list
+
+    generate_letter(pixbuf_to_slice, coo, output_letter_file);
 
     int **word_list = malloc(nb_words * sizeof(int *));
     for (int i = 0; i < nb_words; i++)
@@ -588,15 +620,16 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     g_object_unref(grid);
 
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
-                        " Number of letters detected in the grid : %i\n",
-           nb_letter);
+                        " Detected words list coordinates : (%i, %i)(%i, %i)\n",
+           words_coo[0], words_coo[1], words_coo[2], words_coo[3]);
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
+                        " Number of letters detected : %i (In the grid : %i, "
+                        "in the words list : %i)\n",
+           nb_letter, nb_letter_grid, nb_letter_words);
     printf(COLOR_YELLOW
            "[INFO]" COLOR_RESET
            " Number of words detected in the words list of the grid : %i\n",
            nb_detected_words);
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
-                        " Detected words list coordinates : (%i, %i)(%i, %i)\n",
-           words_coo[0], words_coo[1], words_coo[2], words_coo[3]);
     GdkPixbuf *words = crop(pixbuf_to_slice, words_coo[0], words_coo[1],
                             words_coo[2], words_coo[3]);
     save_pixbuf_as_png(words, words_path);
