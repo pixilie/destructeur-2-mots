@@ -33,7 +33,7 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
   - `image_rotation_tests.c`
   - `image_slice_tests.c`
   - `line_detection_tests.c`
-  - `poc_neural_tests.c`
+  - `neural_network_tests.c`
   - `solver_grid_sample.txt`
   - `solver_tests.c`
   - `test_helpers.c`
