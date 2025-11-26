@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define LETTERS 26
-
 /**
  * ReLU activation function.
  *
