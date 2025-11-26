@@ -1,6 +1,6 @@
 # ===================== Compiler & Flags =====================
 CC       = gcc
-CFLAGS   = -Wall -Wextra -std=c99 -Iinclude $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0)
+CFLAGS   = -Wall -Wextra -std=c99 -D_BSD_SOURCE -Iinclude $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0)
 LDFLAGS  = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0)
 
 # ===================== Directories =====================

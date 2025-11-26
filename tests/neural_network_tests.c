@@ -5,7 +5,7 @@
 #include "../include/test_helpers.h"
 
 #define DATASET_PATH "./tests/dataset/"
-#define MODEL_PATH "./tests/model.nn"
+#define MODEL_PATH "./tests/model"
 
 int argmax(double *arr, int size)
 {
@@ -47,7 +47,7 @@ int main()
            nn->output_size);
 
     print_test_subcategory("Training Neural Network");
-    train(nn, data.inputs, data.targets, data.samples, 0.01, 500);
+    train(nn, data.inputs, data.targets, data.samples, 0.01, 10000);
     print_success();
     printf("Training completed successfully.\n");
 
