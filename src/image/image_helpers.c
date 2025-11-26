@@ -145,17 +145,20 @@ GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
 }
 
 /**
- * Convert a grayscale 28x28 GdkPixbuf into a normalized input vector.
+ * Convert a GdkPixbuf into a normalized input vector for the neural network.
+ * Performs normalization (0.0 - 1.0) and color inversion (assuming input is
+ * black text on white).
  *
  * Parameters:
- *  - pixbuf : 28x28 grayscale image
- *  - out    : output array of size 784 (must be allocated)
+ * - pixbuf : the source image (must be valid)
+ * - out    : pointer to an allocated double array (size must be width * height)
  */
 void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     for (int y = 0; y < height; y++)
@@ -163,8 +166,8 @@ void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
         guchar *row = pixels + y * rowstride;
         for (int x = 0; x < width; x++)
         {
-            guchar pixel = row[x];
-            out[y * width + x] = pixel / 255.0;
+            guchar pixel = row[x * n_channels];
+            out[y * width + x] = (255.0 - (double)pixel) / 255.0;
         }
     }
 }

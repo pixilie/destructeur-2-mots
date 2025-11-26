@@ -13,6 +13,7 @@ typedef struct
     double *hidden_bias;
     double *output_bias;
 
+    double *hidden_raw;
     double *hidden;
     double *output;
 } NeuralNetwork;
@@ -25,7 +26,7 @@ void free_network(NeuralNetwork *nn);
 double relu(double x);
 double relu_derivative(double x);
 double softmax(double *input, double *output, int size);
-double rand_weight();
+void init_weights_he(double *weights, int size, int fan_in);
 
 void forward(NeuralNetwork *nn, double *inputs);
 void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,

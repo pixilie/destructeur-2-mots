@@ -1,6 +1,6 @@
 # ===================== Compiler & Flags =====================
 CC       = gcc
-CFLAGS   = -Wall -Wextra -std=c99 -D_BSD_SOURCE -Iinclude $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0)
+CFLAGS   = -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -Iinclude $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0)
 LDFLAGS  = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0)
 
 # ===================== Directories =====================
@@ -42,53 +42,58 @@ all: $(TARGET) $(SOLVER_BIN) $(UI_BIN) $(IMAGE_BIN) $(PIPELINE_BIN)
 # ---------- Main Program ----------
 $(TARGET): $(MAIN_OBJ) $(filter-out $(BUILD_DIR)/image_main.o, $(IMG_OBJ))
 	@mkdir -p $(BUILD_DIR)
-	$(CC) -o $@ $^ $(LDFLAGS)
-	@echo "Main program built successfully."
+	@echo "Linking Main..."
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 # ---------- Solver ----------
 $(SOLVER_BIN): $(SOLVER_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) -o $@ $^ $(LDFLAGS)
-	@echo "Solver built successfully."
+	@echo "Linking Solver..."
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 # ---------- UI ----------
 $(UI_BIN): $(UI_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) -o $@ $^ $(LDFLAGS)
-	@echo "UI built successfully."
+	@echo "Linking UI..."
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 $(BUILD_DIR)/ui.o: $(SRC_DIR)/ui.c
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "Compiling UI core..."
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # ---------- Image Program ----------
 $(IMAGE_BIN): $(IMG_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) -o $@ $^ $(LDFLAGS)
-	@echo "Image program built successfully."
+	@echo "Linking Image tool..."
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 # ---------- Pipeline Program ----------
 $(PIPELINE_BIN): $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) -o $@ $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ) $(LDFLAGS)
-	@echo "Pipeline built successfully."
+	@echo "Linking Pipeline..."
+	@$(CC) -o $@ $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ) $(LDFLAGS)
 
 $(BUILD_DIR)/line_detection.o: $(SRC_DIR)/line_detection.c
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "Compiling Line Detection..."
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # ===================== Generic Compilation =====================
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(NN_OBJ): $(SRC_DIR)/neural_network.c
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "Compiling Neural Network..."
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # ===================== Tests Compilation =====================
 TEST_OBJ = $(filter-out $(BUILD_DIR)/main.o,$(MAIN_OBJ))
@@ -101,27 +106,21 @@ tests: $(TEST_BINS)
 
 $(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(TEST_DIR)/test_helpers.c $(TEST_OBJ) $(NN_OBJ) $(PIPELINE_IMG_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	echo "Building test: $@"
-	$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line_detection.c -o $(BUILD_DIR)/test_line_detection.o
-	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(BUILD_DIR)/test_line_detection.o $(LDFLAGS)
+	@echo "Building test: $@"
+	@$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line_detection.c -o $(BUILD_DIR)/test_line_detection.o
+	@$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(BUILD_DIR)/test_line_detection.o $(LDFLAGS)
 
 $(BUILD_DIR)/test_solver_tests: $(TEST_DIR)/solver_tests.c $(TEST_DIR)/test_helpers.c src/solver.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Building solver test: $@"
-	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
-
-$(BUILD_DIR)/test_solver_tests: $(TEST_DIR)/solver_tests.c $(TEST_DIR)/test_helpers.c src/solver.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Building solver test: $@"
-	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
+	@$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
 
 # ===================== Clean =====================
 clean:
 	@echo "Cleaning build files..."
 	@find $(BUILD_DIR) -mindepth 1 ! -name ".__afs*" -exec rm -rf {} + 2>/dev/null || true
 	@rm -rf $(RESULTS_DIR) 2>/dev/null || true
+	@rm -f tests/model
 	@echo "Clean complete."
 
 .PHONY: all clean tests
-
-
