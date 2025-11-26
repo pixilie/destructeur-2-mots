@@ -4,6 +4,21 @@
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <stdio.h>
+#include <string.h>
+
+void print_array(guchar neighborhood[9])
+{
+    printf("[");
+    for (int i = 0; i < 9; i++)
+    {
+        printf("%i", neighborhood[i]);
+        if (i < 8)
+        {
+            printf(", ");
+        }
+    }
+    printf("]");
+}
 
 int test_grayscale()
 {
@@ -144,6 +159,47 @@ int test_black_and_white()
     return ok;
 }
 
+int test_selection_sort()
+{
+    print_test_subcategory("Selection Sort Tests");
+
+    guchar neighborhood[9] = {241, 255, 48, 99, 14, 74, 67, 147, 145};
+    guchar sorted_neighborhood[9];
+    memcpy(sorted_neighborhood, neighborhood, sizeof(guchar) * 9);
+    selection_sort(sorted_neighborhood);
+
+    int is_sorted = 1;
+    for (int i = 0; i < 8; i++)
+    {
+        // check if all values are in increasing order
+        if (sorted_neighborhood[i] > sorted_neighborhood[i + 1])
+        {
+            is_sorted = 0;
+        }
+    }
+
+    if (is_sorted)
+    {
+        print_success();
+        printf("Array of pixels ");
+        print_array(neighborhood);
+        printf(" is correctly sorted, got: ");
+        print_array(sorted_neighborhood);
+        printf("\n");
+    }
+    else
+    {
+        print_fail();
+        printf("Array of pixels ");
+        print_array(neighborhood);
+        printf(" is not correctly sorted, got: ");
+        print_array(sorted_neighborhood);
+        printf("\n");
+    }
+
+    return is_sorted;
+}
+
 int main()
 {
     if (chdir("..") != 0)
@@ -158,6 +214,7 @@ int main()
 
     passed &= test_grayscale();
     passed &= test_black_and_white();
+    passed &= test_selection_sort();
 
     if (passed)
     {

@@ -20,7 +20,7 @@ int test_xor()
         forward(nn_xor, inputs[i]);
         double out = nn_xor->output[0];
         int pred = (out > 0.5) ? 1 : 0;
-        
+
         if (pred != (int)targets[i])
         {
             passed = 0;
@@ -30,7 +30,7 @@ int test_xor()
         {
             print_success();
         }
-        
+
         printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
                inputs[i][0], inputs[i][1], pred, targets[i]);
     }
@@ -113,7 +113,7 @@ int test_or()
         forward(nn_or, inputs[i]);
         double out = nn_or->output[0];
         int pred = (out > 0.5) ? 1 : 0;
-    
+
         if (pred != (int)targets[i])
         {
             passed = 0;
@@ -191,17 +191,17 @@ int test_xnor()
 int main()
 {
     print_test_category("Neural Network Tests");
-    
+
     int passed = test_and() && test_or() && test_xnor() && test_xor();
 
     if (passed)
     {
-       print_all_tests_passed("Neural Network Tests"); 
+        print_all_tests_passed("Neural Network Tests");
     }
     else
     {
         print_some_tests_failed("Neural Network Tests");
     }
-    
+
     return passed ? 0 : 1;
 }

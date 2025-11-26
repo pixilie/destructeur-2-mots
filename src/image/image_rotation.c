@@ -105,40 +105,45 @@ GdkPixbuf *downscale_pixbuf(GdkPixbuf *pixbuf, int target_width)
 
 double compute_projection_variance(GdkPixbuf *pixbuf)
 {
-    // used to calculate the variance of an image
-    // the higher the return is, the better is the angle of the image
+    // Used to calculate the variance of an image
+    // The higher the return is, the better is the angle of the image
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
-    double sum = 0.0;
-    double sum2 = 0.0;
+    double row_sums[height];
 
-    // iterate through each line
+    // Iterate through each line
     for (int y = 0; y < height; y++)
     {
-        int line_sum = 0;
+        double line_sum = 0;
         guchar *row = pixels + y * rowstride;
 
         for (int x = 1; x < width; x++)
         {
-            int current_pixel = (int)row[x * n_channels];
-            int previous_pixel = (int)row[(x - 1) * n_channels];
-
-            // Measure the change between neighboring pixels
-            int edge_strength = abs(current_pixel - previous_pixel);
-
-            line_sum += edge_strength;
+            line_sum += fabs((double)row[x * n_channels] -
+                             (double)row[(x - 1) * n_channels]);
         }
 
-        sum += line_sum;
-        sum2 += line_sum * line_sum;
+        row_sums[y] = line_sum;
     }
 
-    double mean = sum / height;
-    double var = sum2 / height - mean * mean;
+    double mean = 0;
+    for (int y = 0; y < height; y++)
+    {
+        mean += row_sums[y];
+    }
+    mean /= height;
+
+    double var = 0;
+    for (int y = 0; y < height; y++)
+    {
+        var += (row_sums[y] - mean) * (row_sums[y] - mean);
+    }
+    var /= height;
+
     return var;
 }
 
@@ -149,13 +154,13 @@ double detect_best_angle(GdkPixbuf *pixbuf)
     // return a double which is the better angle found
 
     // Downscale to speed up rotation to 100 pixels width (less pixels)
-    GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 100);
+    GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 150);
 
     double best_angle = 0.0;
     double best_score = -1.0;
 
-    // check every angle from -90° to 90° (= 180 tests)
-    for (double angle = -90.0; angle <= 90.0; angle += 1)
+    // First search : check every 5 degrees from -45° to 45° (= 90 tests)
+    for (double angle = -45.0; angle <= 45.0; angle += 5.0)
     {
         GdkPixbuf *rotated_pixbuf = rotate_image(downscaled_pixbuf, angle);
         double score = compute_projection_variance(rotated_pixbuf);
@@ -168,5 +173,41 @@ double detect_best_angle(GdkPixbuf *pixbuf)
         }
     }
 
+    // More refined second search : check every 0.1 degree around the previous
+    // best angle
+    double search_start = best_angle - 3.0;
+    double search_end = best_angle + 3.0;
+    for (double angle = search_start; angle <= search_end; angle += 0.1)
+    {
+        GdkPixbuf *rotated_pixbuf = rotate_image(downscaled_pixbuf, angle);
+        double score = compute_projection_variance(rotated_pixbuf);
+        g_object_unref(rotated_pixbuf);
+
+        if (score > best_score)
+        {
+            best_score = score;
+            best_angle = angle; // New best score found -> New best angle found
+        }
+    }
+
+    if (best_angle > -1.0 &&
+        best_angle < 1.0) // Avoid small angles for straight images
+    {
+        return 0.0;
+    }
+
     return best_angle;
+}
+
+// Detects the best rotation angle and rotates the image by that angle
+GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
+{
+    double best_angle = detect_best_angle(pixbuf);
+    if (best_angle == 0)
+    {
+        printf("Image is already upright, no rotation needed\n");
+        return pixbuf;
+    }
+    printf("Image automatically rotated by best rotation angle : %f\n",best_angle);
+    return rotate_image(pixbuf, best_angle);
 }
