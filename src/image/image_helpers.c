@@ -129,3 +129,42 @@ int save_pixbuf_as_png(GdkPixbuf *pixbuf, const char *filename)
 
     return 1;
 }
+
+/**
+ * Resize the input pixbuf to 28x28 using bilinear interpolation.
+ *
+ * Parameters:
+ *  - src : original GdkPixbuf
+ *
+ * Returns:
+ *  - new 28x28 GdkPixbuf
+ */
+GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
+{
+    return gdk_pixbuf_scale_simple(src, 28, 28, GDK_INTERP_BILINEAR);
+}
+
+/**
+ * Convert a grayscale 28x28 GdkPixbuf into a normalized input vector.
+ *
+ * Parameters:
+ *  - pixbuf : 28x28 grayscale image
+ *  - out    : output array of size 784 (must be allocated)
+ */
+void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
+{
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+    for (int y = 0; y < height; y++)
+    {
+        guchar *row = pixels + y * rowstride;
+        for (int x = 0; x < width; x++)
+        {
+            guchar pixel = row[x];
+            out[y * width + x] = pixel / 255.0;
+        }
+    }
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <gdk-pixbuf/gdk-pixbuf.h>
+
 typedef struct
 {
     int input_size;
@@ -28,3 +30,4 @@ double rand_weight();
 void forward(NeuralNetwork *nn, double *inputs);
 void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
            double lr, int epochs);
+char predict_letter(NeuralNetwork *nn, GdkPixbuf *pixbuf);

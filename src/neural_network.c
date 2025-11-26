@@ -1,4 +1,5 @@
 #include "../include/neural_network.h"
+#include "image/image_helpers.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -361,4 +362,39 @@ void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
             printf("Epoch %d - Loss: %.6f\n", epoch, total_loss);
         }
     }
+}
+
+/**
+ * Predict a letter (A–Z) from a GdkPixbuf image.
+ *
+ * Parameters:
+ *  - nn      : trained neural network
+ *  - pixbuf  : grayscaled GdkPixbuf
+ *
+ * Returns:
+ *  - predicted uppercase letter (A–Z)
+ */
+char predict_letter(NeuralNetwork *nn, GdkPixbuf *pixbuf)
+{
+    GdkPixbuf *scaled_pixbuf = scale_pixbuf_to_28x28(pixbuf);
+
+    double input[28 * 28];
+    pixbuf_to_input_vector(scaled_pixbuf, input);
+
+    forward(nn, input);
+    g_object_unref(scaled_pixbuf);
+
+    int best = 0;
+    double best_val = nn->output[0];
+
+    for (int i = 1; i < nn->output_size; i++)
+    {
+        if (nn->output[i] > best_val)
+        {
+            best_val = nn->output[i];
+            best = i;
+        }
+    }
+
+    return (char)('A' + best);
 }
