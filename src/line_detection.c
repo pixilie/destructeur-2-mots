@@ -517,8 +517,13 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     convert_to_grayscale(pixbuf);
     convert_to_black_and_white(pixbuf);
 
-    pixbuf = rotate_image_automatic(pixbuf);
-    pixbuf_to_slice = rotate_image_automatic(pixbuf_to_slice);
+    double best_angle = detect_best_angle(pixbuf);
+    printf("Best rotation angle : %.2f\n", best_angle);
+    if (best_angle == 0)
+    {
+        pixbuf = rotate_image(pixbuf, best_angle);
+    }
+    pixbuf_to_slice = rotate_image(pixbuf_to_slice, best_angle);
 
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
