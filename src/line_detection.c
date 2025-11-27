@@ -244,6 +244,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
                     coo[index_coo][1] = coo[index_coo][3] = y;
                     find_black_pixels_around(pixbuf, x, y, is_visited,
                                              index_coo, coo);
+                    
                     is_visited[y * width + x] = 1;
                     index_coo++;
                     nb_letter++;
@@ -403,7 +404,7 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
                       int nb_words)
 {
     int seuil = 20;
-    int seuilx = 20;
+    int seuilx = 40;
     int seuily = 5;
 
     for (int i = 0; i < nb_letter; i++)
@@ -524,6 +525,8 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 
     convert_to_grayscale(pixbuf);
     convert_to_black_and_white(pixbuf);
+
+    median_filter_3x3(pixbuf);
 
     double best_angle = detect_best_angle(pixbuf);
     printf("Best rotation angle : %.2f\n", best_angle);

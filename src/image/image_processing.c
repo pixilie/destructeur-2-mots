@@ -270,10 +270,10 @@ int convert_to_black_and_white(GdkPixbuf *pixbuf)
 }
 
 // Returns the index of the minimum element of the 3x3 neighboring pixels array
-int find_minimum_index(int start_index, guchar *neighborhood, int count)
+int find_minimum_index(int start_index, guchar *neighborhood)
 {
     int min_index = start_index;
-    for (int i = start_index + 1; i < count; i++)
+    for (int i = start_index + 1; i < 9; i++)
     {
         if (neighborhood[i] < neighborhood[min_index])
         {
@@ -285,11 +285,11 @@ int find_minimum_index(int start_index, guchar *neighborhood, int count)
 
 // Simple selection sort to sort the array of the 3x3 neighboring pixels to
 // calculate the median of the array
-void selection_sort(guchar *neighborhood, int count)
+void selection_sort(guchar *neighborhood)
 {
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < 9; i++)
     {
-        int min_index = find_minimum_index(i, neighborhood, count);
+        int min_index = find_minimum_index(i, neighborhood);
         int temp = neighborhood[i];
         neighborhood[i] = neighborhood[min_index];
         neighborhood[min_index] = temp;
@@ -311,10 +311,21 @@ void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
             int new_x = x + dx;
             int new_y = y + dy;
 
-            // Skip out of bounds neighboring pixels
-            if (new_x < 0 || new_x >= width || new_y < 0 || new_y >= height)
+            if (new_x < 0)
             {
-                continue;
+                new_x = 0;
+            }
+            if (new_x >= width)
+            {
+                new_x = width - 1;
+            }
+            if (new_y < 0)
+            {
+                new_y = 0;
+            }
+            if(new_y >= height)
+            {
+                new_y = height - 1;
             }
 
             guchar *p = copy + new_y * rowstride + new_x * n_channels;
@@ -324,28 +335,13 @@ void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
         }
     }
 
-    selection_sort(neighborhood, neighborhood_count);
+    selection_sort(neighborhood);
 
-    guchar median; // The median of the 3x3 pixels
-
-    // Even neighborhood count : Median index = average between the 2 middle
-    // elements
-    if (neighborhood_count % 2 == 0)
-    {
-        median = (neighborhood[neighborhood_count / 2 - 1] +
-                  neighborhood[neighborhood_count / 2]) /
-                 2;
-    }
-
-    // Uneven neighborhood count : Median index = middle element
-    else
-    {
-        median = neighborhood[neighborhood_count / 2];
-    }
+    guchar median = neighborhood[4];
 
     // Replace original pixel with median pixel
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-    guchar *dst = (pixels + y * rowstride) + x * n_channels;
+    guchar *dst = pixels + y * rowstride + x * n_channels;
     dst[0] = dst[1] = dst[2] = median;
 }
 
