@@ -269,6 +269,105 @@ int convert_to_black_and_white(GdkPixbuf *pixbuf)
     return threshold;
 }
 
+// Removes tiny black pixels
+void erode_3x3(GdkPixbuf *pixbuf)
+{
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+    guchar *copy = g_malloc(rowstride * height);
+    memcpy(copy, pixels, rowstride * height);
+
+    for(int y = 0; y < height; y++)
+    {
+        for(int x = 0; x < width; x++)
+        {
+            int black_neighbor = 0;
+
+            for(int dy = -1; dy <= 1; dy++)
+            {
+                for(int dx = -1; dx <= 1; dx++)
+                {
+                    int nx = x + dx;
+                    int ny = y + dy;
+
+                    if(nx < 0 || nx >= width || ny < 0 || ny >= height)
+                    {
+                        continue;
+                    }
+                    
+                    guchar *p = copy + ny * rowstride + nx * n_channels;
+
+                    if(p[0] == 0) // Black pixel
+                    {
+                        black_neighbor++;
+                    }
+                }
+            }
+
+            guchar *dst = pixels + y * rowstride + x * n_channels;
+
+            if(black_neighbor == 0)
+            {
+                dst[0] = dst[1] = dst[2] = 255; // Turn isolated black pixels to white
+            }
+        }
+    }
+    g_free(copy);
+}
+
+// Restore black pixels
+void dilate_3x3(GdkPixbuf *pixbuf)
+{
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+    guchar *copy = g_malloc(rowstride * height);
+    memcpy(copy, pixels, rowstride * height);
+
+    for(int y = 0; y < height; y++)
+    {
+        for(int x = 0; x < width; x++)
+        {
+            int black_neighbor = 0;
+
+            for(int dy = -1; dy <= 1; dy++)
+            {
+                for(int dx = -1; dx <= 1; dx++)
+                {
+                    int nx = x + dx;
+                    int ny = y + dy;
+
+                    if(nx < 0 || nx >= width || ny < 0 || ny >= height)
+                    {
+                        continue;
+                    }
+                    
+                    guchar *p = copy + ny * rowstride + nx * n_channels;
+
+                    if(p[0] == 0)
+                    {
+                        black_neighbor++;
+                    }
+                }
+            }
+
+            guchar *dst = pixels + y * rowstride + x * n_channels;
+
+            if(black_neighbor > 0)
+                dst[0] = dst[1] = dst[2] = 0; // Restore nearby pixels to black
+        }
+    }
+
+    g_free(copy);
+}
+
 // Returns the index of the minimum element of the 3x3 neighboring pixels array
 int find_minimum_index(int start_index, guchar *neighborhood)
 {

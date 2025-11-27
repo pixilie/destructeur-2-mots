@@ -1,4 +1,5 @@
 #include "../include/image/image.h"
+#include "image/image_helpers.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -223,6 +224,8 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     int nb_letter = 0;
+    int min_letter_width = 2;
+    int min_letter_height = 5;
 
     int *is_visited =
         malloc(width * height * sizeof(int)); // 0 if False 1 if True
@@ -244,7 +247,16 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
                     coo[index_coo][1] = coo[index_coo][3] = y;
                     find_black_pixels_around(pixbuf, x, y, is_visited,
                                              index_coo, coo);
-                    
+
+                    // Skip small black pixels (NOT letters)
+                    if (coo[index_coo][2] - coo[index_coo][0] <
+                            min_letter_width ||
+                        coo[index_coo][3] - coo[index_coo][1] <
+                            min_letter_height)
+                    {
+                        continue;
+                    }
+
                     is_visited[y * width + x] = 1;
                     index_coo++;
                     nb_letter++;
@@ -272,9 +284,10 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
 {
     g_mkdir_with_parents(output_file, 0777);
 
-    int index_coo = 0;
     int os = 3;
     char full_path[512];
+
+    int index_coo = 0;
 
     while (coo[index_coo][0] != 0)
     {
@@ -285,9 +298,9 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
             coo[index_coo][2] - coo[index_coo][0] >= 2 &&
             coo[index_coo][3] - coo[index_coo][1] >= 5)
         {
-            GdkPixbuf *letter =
-                crop(pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
-                     coo[index_coo][2] + os, coo[index_coo][3] + os);
+            GdkPixbuf *letter = crop(
+                pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
+                coo[index_coo][2] + os, coo[index_coo][3] + os);
             snprintf(full_path, sizeof(full_path), "%s/letter_%d_%d.png",
                      output_file, coo[index_coo][0], coo[index_coo][1]);
             save_pixbuf_as_png(letter, full_path);
@@ -523,10 +536,9 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
 
-    convert_to_grayscale(pixbuf);
-    convert_to_black_and_white(pixbuf);
+    save_pixbuf_as_png(pixbuf, "image.png");
 
-    median_filter_3x3(pixbuf);
+    convert_to_grayscale(pixbuf);
 
     double best_angle = detect_best_angle(pixbuf);
     printf("Best rotation angle : %.2f\n", best_angle);
@@ -541,6 +553,21 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
         pixbuf_to_slice = rotated_slice;
     }
 
+    convert_to_black_and_white(pixbuf);
+
+    save_pixbuf_as_png(pixbuf, "bw.png");
+
+    invert_color(pixbuf);
+
+    erode_3x3(pixbuf);
+    median_filter_3x3(pixbuf);
+
+    save_pixbuf_as_png(pixbuf, "filtered.png");
+
+    // dilate_3x3(pixbuf);
+
+    save_pixbuf_as_png(pixbuf, "filtered2.png");
+
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int *grid_coo = malloc(4 * sizeof(int));
@@ -552,8 +579,6 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
                                           // coo[i][2] = x2 coo[i][3] = y2
         coo[i][0] = coo[i][1] = coo[i][2] = coo[i][3] = 0;
     }
-
-    invert_color(pixbuf);
 
     int nb_letter =
         find_letter(pixbuf, coo); // Number of letters in the grid + words list
