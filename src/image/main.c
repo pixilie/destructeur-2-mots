@@ -10,8 +10,29 @@
 #define COLOR_GREEN "\033[32m"
 #define COLOR_YELLOW "\033[33m"
 
-#ifndef TESTING
+void print_all_function_usages()
+{
+    printf("Usage: /image <function_name> <image_path> <function_params> "
+           "<optional:output>\n");
+    printf("Available functions:\n");
+    printf(" - ./image convert_to_grayscale <image_path> <optional:output>\n");
+    printf(" - ./image binarize_image <image_path> <threshold> "
+           "<optional:output>\n");
+    printf(" - ./image convert_to_black_and_white <image_path> "
+           "<optional:output>\n");
+    printf(" - ./image rotate_image <image_path> <angle_degrees> "
+           "<optional:output>\n");
+    printf(" - ./image rotate_image_automatic <image_path> "
+           "<optional: output>\n");
+    printf(" - ./image slice_from <image_path> <x> <y> <direction> "
+           "<optional:output1> <optional:output2>\n");
+    printf(" - ./image slice_in_n <image_path> <n_slice> "
+           "<optional:output_prefix>\n");
+    printf(" - ./image crop <image_path> <x1> <y1> <x2> <y2> "
+           "<optional:output>\n");
+}
 
+#ifndef TESTING
 /**
  * main:
  * Command-line driver for image utility functions. Parses arguments, loads the
@@ -27,6 +48,7 @@
  *      ./image binarize_image <image_path> <threshold> [output]
  *      ./image convert_to_black_and_white <image_path> [output]
  *      ./image rotate_image <image_path> <angle_degrees> [output]
+ *      ./image rotate_image_automatic <image_path> [output]
  *      ./image slice_from <image_path> <x> <y> <direction> [out1] [out2]
  *      ./image slice_in_n <image_path> <n_slice> [output_prefix]
  *      ./image crop <image_path> <x1> <y1> <x2> <y2> [output]
@@ -36,26 +58,8 @@ int main(int argc, char **argv)
     if (argc < 2)
     {
         printf(COLOR_RED "[FAIL]" COLOR_RESET " Not enough arguments\n");
-        printf("Usage: /image <function_name> <image_path> <function_params> "
-               "<optional:output>\n");
         printf("Please specify a function name\n");
-        printf("Available functions:\n");
-        printf(
-            " - ./image convert_to_grayscale <image_path> <optional:output>\n");
-        printf(" - ./image binarize_image <image_path> <threshold> "
-               "<optional:output>\n");
-        printf(" - ./image convert_to_black_and_white <image_path> "
-               "<optional:output>\n");
-        printf(" - ./image rotate_image <image_path> <angle_degrees> "
-               "<optional:output>\n");
-
-        printf(" - ./image detect_best_angle <image_path>\n");
-        printf(" - ./image slice_from <image_path> <x> <y> <direction> "
-               "<optional:output1> <optional:output2>\n");
-        printf(" - ./image slice_in_n <image_path> <n_slice> "
-               "<optional:output_prefix>\n");
-        printf(" - ./image crop <image_path> <x1> <y1> <x2> <y2> "
-               "<optional:output>\n");
+        print_all_function_usages();
         return EXIT_FAILURE;
     }
 
@@ -66,31 +70,15 @@ int main(int argc, char **argv)
         strcmp(function_name, "binarize_image") &&
         strcmp(function_name, "convert_to_black_and_white") &&
         strcmp(function_name, "rotate_image") &&
+        strcmp(function_name, "rotate_image_automatic") &&
         strcmp(function_name, "slice_from") &&
-        strcmp(function_name, "slice_in_n") && strcmp(function_name, "crop") &&
-        strcmp(function_name, "detect_best_angle"))
+        strcmp(function_name, "slice_in_n") && strcmp(function_name, "crop"))
     {
         printf(COLOR_RED "[FAIL]" COLOR_RESET
                          " Incorrect function name, got: " COLOR_RED
                          "%s\n" COLOR_RESET,
                function_name);
-        printf("Usage: ./image <function_name> <image_path> <function_params> "
-               "<optional:output>\n");
-        printf("Available functions:\n");
-        printf(
-            " - ./image convert_to_grayscale <image_path> <optional:output>\n");
-        printf(" - ./image binarize_image <image_path> <threshold> "
-               "<optional:output>\n");
-        printf(" - ./image convert_to_black_and_white <image_path> "
-               "<optional:output>\n");
-        printf(" - ./image rotate_image <image_path> <angle_degrees> "
-               "<optional:output>\n");
-        printf(" - ./image slice_from <image_path> <x> <y> <direction> "
-               "<optional:output1> <optional:output2>\n");
-        printf(" - ./image slice_in_n <image_path> <n_slice> "
-               "<optional:output_prefix>\n");
-        printf(" - ./image crop <image_path> <x1> <y1> <x2> <y2> "
-               "<optional:output>\n");
+        print_all_function_usages();
         return EXIT_FAILURE;
     }
     else
@@ -280,15 +268,16 @@ int main(int argc, char **argv)
             return EXIT_SUCCESS;
         }
 
-        // detect_best_angle
-        if (strcmp(function_name, "detect_best_angle") == 0)
+        // rotate_image_automatic
+        if (strcmp(function_name, "rotate_image_automatic") == 0)
         {
             if (argc < 3)
             {
                 printf(COLOR_RED
                        "[FAIL]" COLOR_RESET
-                       " Not enough arguments for detect_best_angle\n");
-                printf("Usage: ./image detect_best_angle <image_path>\n");
+                       " Not enough arguments for rotate_image_automatic\n");
+                printf("Usage: ./image rotate_image_automatic <image_path> "
+                       "<optional: output>\n");
                 return EXIT_FAILURE;
             }
 
@@ -302,8 +291,43 @@ int main(int argc, char **argv)
             }
 
             double best_angle = detect_best_angle(pixbuf);
-            printf("Best rotation angle : %f degrees\n", best_angle);
+            if (best_angle == 0)
+            {
+                printf(COLOR_RED
+                       "[FAIL]" COLOR_RESET
+                       "Image is already upright, no rotation applied !\n");
+                g_object_unref(pixbuf);
+                return EXIT_FAILURE;
+            }
+
+            GdkPixbuf *rotated_automatic = rotate_image_automatic(pixbuf);
+            if (!rotated_automatic)
+            {
+                printf(COLOR_RED "[FAIL]" COLOR_RESET
+                                 " Rotate automatic function failed\n");
+                g_object_unref(pixbuf);
+                return EXIT_FAILURE;
+            }
+
+            if (argc > 3)
+            {
+                save_pixbuf_as_png(rotated_automatic, argv[3]);
+                printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                                   " Image %s rotated automatically by %.2f "
+                                   "degrees and saved as %s\n",
+                       argv[2], best_angle, argv[3]);
+            }
+            else
+            {
+                save_pixbuf_as_png(rotated_automatic, "rotated_automatic.png");
+                printf(COLOR_GREEN
+                       "[SUCCESS]" COLOR_RESET
+                       " Image %s rotated automatically by %.2f degrees and "
+                       "saved as rotated_automatic.png\n",
+                       argv[2], best_angle);
+            }
             g_object_unref(pixbuf);
+            g_object_unref(rotated_automatic);
             return EXIT_SUCCESS;
         }
 

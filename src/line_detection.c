@@ -496,6 +496,13 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
         50; // we state that there will not be more than 50 words in an exercise
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
+   
+    convert_to_grayscale(pixbuf);
+    convert_to_black_and_white(pixbuf);
+
+    pixbuf = rotate_image_automatic(pixbuf);
+    pixbuf_to_slice = rotate_image_automatic(pixbuf_to_slice);
+
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int *grid_coo = malloc(4 * sizeof(int));
@@ -507,14 +514,7 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
                                           // coo[i][2] = x2 coo[i][3] = y2
         coo[i][0] = coo[i][1] = coo[i][2] = coo[i][3] = 0;
     }
-
-    convert_to_grayscale(pixbuf);
-    convert_to_black_and_white(pixbuf);
-
-    double angle = find_good_rotation(pixbuf);
-    pixbuf = rotate_image(pixbuf, angle);
-    pixbuf_to_slice = rotate_image(pixbuf_to_slice, angle);
-
+    
     invert_color(pixbuf);
 
     nb_letter = find_letter(pixbuf, coo);
