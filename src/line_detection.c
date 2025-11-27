@@ -560,7 +560,11 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     invert_color(pixbuf);
 
     erode_3x3(pixbuf);
-    median_filter_3x3(pixbuf);
+
+    if (best_angle != 0)
+    {
+        median_filter_3x3(pixbuf); // Only filter level 2 images
+    }
 
     save_pixbuf_as_png(pixbuf, "filtered.png");
 
