@@ -2,6 +2,7 @@
 #include "image/image_helpers.h"
 
 #include <math.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -231,17 +232,49 @@ NeuralNetwork *load_network(const char *filename)
     }
 
     int input, hidden, output;
+    if (fread(&input, sizeof(int), 1, f) != 1 ||
+        fread(&hidden, sizeof(int), 1, f) != 1 ||
+        fread(&output, sizeof(int), 1, f) != 1)
+    {
 
-    fread(&input, sizeof(int), 1, f);
-    fread(&hidden, sizeof(int), 1, f);
-    fread(&output, sizeof(int), 1, f);
+        fprintf(stderr, "Error: Failed to read network dimension ");
+        fclose(f);
+        return NULL;
+    }
 
     NeuralNetwork *nn = create_network(input, hidden, output);
 
-    fread(nn->hidden_weights, sizeof(double), input * hidden, f);
-    fread(nn->output_weights, sizeof(double), hidden * output, f);
-    fread(nn->hidden_bias, sizeof(double), hidden, f);
-    fread(nn->output_bias, sizeof(double), output, f);
+    size_t expected_hidden_weights = input * hidden;
+    if (fread(nn->hidden_weights, sizeof(double), expected_hidden_weights, f) !=
+        expected_hidden_weights)
+    {
+        fprintf(stderr, "An error occured while reading hidden_weights\n");
+        fclose(f);
+        return NULL;
+    }
+
+    size_t expected_output_weights = hidden * output;
+    if (fread(nn->output_weights, sizeof(double), expected_output_weights, f) !=
+        expected_output_weights)
+    {
+        fprintf(stderr, "An error occured while reading output_weights\n");
+        fclose(f);
+        return NULL;
+    }
+
+    if (fread(nn->hidden_bias, sizeof(double), hidden, f) != (size_t)hidden)
+    {
+        fprintf(stderr, "An error occured while reading hidden_weights\n");
+        fclose(f);
+        return NULL;
+    }
+
+    if (fread(nn->output_bias, sizeof(double), output, f) != (size_t)output)
+    {
+        fprintf(stderr, "An error occurend while reading output_bias\n");
+        fclose(f);
+        return NULL;
+    }
 
     fclose(f);
     return nn;

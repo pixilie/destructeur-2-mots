@@ -149,8 +149,8 @@ Dataset load_dataset(const char *path)
                 continue;
             }
 
-            char file_path[300];
-            sprintf(file_path, "%s/%s", letter_path, img->d_name);
+            char file_path[4096];
+            snprintf(file_path, sizeof(file_path), "%s/%s", letter_path, img->d_name);
 
             int size;
             double *vec = load_letter_image(file_path, &size);
