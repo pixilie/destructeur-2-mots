@@ -530,11 +530,16 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 
     double best_angle = detect_best_angle(pixbuf);
     printf("Best rotation angle : %.2f\n", best_angle);
-    if (best_angle == 0)
+    if (best_angle != 0)
     {
-        pixbuf = rotate_image(pixbuf, best_angle);
+        GdkPixbuf *rotated = rotate_image(pixbuf, best_angle);
+        g_object_unref(pixbuf);
+        pixbuf = rotated;
+
+        GdkPixbuf *rotated_slice = rotate_image(pixbuf_to_slice, best_angle);
+        g_object_unref(pixbuf_to_slice);
+        pixbuf_to_slice = rotated_slice;
     }
-    pixbuf_to_slice = rotate_image(pixbuf_to_slice, best_angle);
 
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
