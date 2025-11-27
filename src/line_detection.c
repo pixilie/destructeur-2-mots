@@ -1,3 +1,4 @@
+#include "../include/line_detection.h"
 #include "../include/image/image.h"
 #include "image/image_helpers.h"
 
@@ -147,6 +148,12 @@ void remove_lines(GdkPixbuf *pixbuf)
     }
 }
 
+typedef struct
+{
+    int x;
+    int y;
+} Point;
+
 /**
  * find_black_pixels_around:
  * Recursive flood-fill helper that expands a connected component of white
@@ -160,45 +167,64 @@ void remove_lines(GdkPixbuf *pixbuf)
  *  - coo        : array of integer arrays; coo[index_coo] holds
  * [xmin,ymin,xmax,ymax].
  */
-void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y, int *is_visited,
-                              int index_coo, int **coo)
+void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
+                              int *is_visited, int index_coo, int **coo)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-    guchar *p = pixels + y * rowstride + x * n_channels;
 
-    if (p[0] == 255 && is_visited[y * width + x] == 0)
+    Point *queue = malloc(width * height * sizeof(Point));
+    int front = 0;
+    int back = 0;
+
+    queue[back] = (Point){start_x, start_y};
+    back++;
+
+    int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
+                            {0, 1},   {1, -1}, {1, 0},  {1, 1}};
+
+    while (front < back)
     {
+        Point point = queue[front];
+        front++;
+
+        int x = point.x;
+        int y = point.y;
+
+        guchar *p = pixels + y * rowstride + x * n_channels;
+
+        if (p[0] < 200 || is_visited[y * width + x])
+        {
+            continue;
+        }
+
         is_visited[y * width + x] = 1;
-        int direction[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
-                               {0, 1},   {1, -1}, {1, 0},  {1, 1}};
+
+        if (x < coo[index_coo][0])
+            coo[index_coo][0] = x;
+        if (y < coo[index_coo][1])
+            coo[index_coo][1] = y;
+        if (x > coo[index_coo][2])
+            coo[index_coo][2] = x;
+        if (y > coo[index_coo][3])
+            coo[index_coo][3] = y;
 
         for (int i = 0; i < 8; i++)
         {
-            if (x < coo[index_coo][0])
-                coo[index_coo][0] = x;
-            if (y < coo[index_coo][1])
-                coo[index_coo][1] = y;
-            if (x > coo[index_coo][2])
-                coo[index_coo][2] = x;
-            if (y > coo[index_coo][3])
-                coo[index_coo][3] = y;
-
-            if ((x + direction[i][0]) >= 0 && (y + direction[i][1]) >= 0 &&
-                (x + direction[i][0]) < width &&
-                (y + direction[i][1]) < height &&
-                (coo[index_coo][2] - coo[index_coo][0] <= 200 ||
-                 coo[index_coo][3] - coo[index_coo][1] <= 200))
+            int nx = x + directions[i][0];
+            int ny = y + directions[i][1];
+            if (nx >= 0 && ny >= 0 && nx < width && ny < height)
             {
-                find_black_pixels_around(pixbuf, x + direction[i][0],
-                                         y + direction[i][1], is_visited,
-                                         index_coo, coo);
+                queue[back] = (Point){nx, ny};
+                back++;
             }
         }
     }
+
+    free(queue);
 }
 
 /**
@@ -224,8 +250,8 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     int nb_letter = 0;
-    int min_letter_width = 2;
-    int min_letter_height = 5;
+    int min_letter_width = 1;
+    int min_letter_height = 3;
 
     int *is_visited =
         malloc(width * height * sizeof(int)); // 0 if False 1 if True
@@ -249,17 +275,14 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
                                              index_coo, coo);
 
                     // Skip small black pixels (NOT letters)
-                    if (coo[index_coo][2] - coo[index_coo][0] <
-                            min_letter_width ||
-                        coo[index_coo][3] - coo[index_coo][1] <
+                    if (coo[index_coo][2] - coo[index_coo][0] >=
+                            min_letter_width &&
+                        coo[index_coo][3] - coo[index_coo][1] >=
                             min_letter_height)
                     {
-                        continue;
+                        index_coo++;
+                        nb_letter++;
                     }
-
-                    is_visited[y * width + x] = 1;
-                    index_coo++;
-                    nb_letter++;
                 }
             }
         }
@@ -526,13 +549,17 @@ int count_letters_in_box(int **coo, int nb_letter, int *box)
  *  - output_gw_file   : output directory for grid and word crops.
  *  - output_letter_file: output directory for individual letter images.
  */
-void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
+pipelineResult pipeline(char *filename, char *output_gw_file,
+                        char *output_letter_file)
 {
     g_mkdir_with_parents(output_gw_file, 0777);
     g_mkdir_with_parents(output_letter_file, 0777);
 
     int nb_words =
         50; // we state that there will not be more than 50 words in an exercise
+
+    pipelineResult pipelineResult;
+
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
 
@@ -541,7 +568,6 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     convert_to_grayscale(pixbuf);
 
     double best_angle = detect_best_angle(pixbuf);
-    printf("Best rotation angle : %.2f\n", best_angle);
     if (best_angle != 0)
     {
         GdkPixbuf *rotated = rotate_image(pixbuf, best_angle);
@@ -559,10 +585,9 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 
     invert_color(pixbuf);
 
-    erode_3x3(pixbuf);
-
     if (best_angle != 0)
     {
+        erode_3x3(pixbuf);
         median_filter_3x3(pixbuf); // Only filter level 2 images
     }
 
@@ -586,13 +611,16 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 
     int nb_letter =
         find_letter(pixbuf, coo); // Number of letters in the grid + words list
+    pipelineResult.nb_letters = nb_letter;
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
 
     int nb_letter_grid = count_letters_in_box(
         coo, nb_letter, grid_coo); // Number of letters in the grid
+    pipelineResult.nb_letters_grid = nb_letter_grid;
     int nb_letter_words = count_letters_in_box(
         coo, nb_letter, words_coo); // Number of letters in the words list
+    pipelineResult.nb_letters_words = nb_letter_words;
 
     generate_letter(pixbuf_to_slice, coo, output_letter_file);
 
@@ -607,6 +635,7 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
 
     int nb_detected_words =
         find_word_by_word(coo, word_list, words_coo, nb_letter, nb_words);
+    pipelineResult.nb_words = nb_detected_words;
 
     // crop the grid, word list and words of the image
 
@@ -630,17 +659,37 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     sprintf(grid_path, "%s/grid.png", output_gw_file);
     sprintf(words_path, "%s/words.png", output_gw_file);
 
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
-                        " Detected grid coordinates : (%i, %i)(%i, %i)\n",
-           grid_coo[0], grid_coo[1], grid_coo[2], grid_coo[3]);
+    for (int i = 0; i < 4; i++)
+    {
+        pipelineResult.grid_coo[i] = grid_coo[i];
+    }
     GdkPixbuf *grid = crop(pixbuf_to_slice, grid_coo[0], grid_coo[1],
                            grid_coo[2], grid_coo[3]);
     save_pixbuf_as_png(grid, grid_path);
     g_object_unref(grid);
 
+    for (int i = 0; i < 4; i++)
+    {
+        pipelineResult.words_coo[i] = words_coo[i];
+    }
+    GdkPixbuf *words = crop(pixbuf_to_slice, words_coo[0], words_coo[1],
+                            words_coo[2], words_coo[3]);
+    save_pixbuf_as_png(words, words_path);
+    g_object_unref(words);
+
+    //#ifndef TESTING
+    printf("Best rotation angle : %.2f\n", best_angle);
+
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
+                        " Detected grid coordinates : (%i, %i)(%i, %i)\n",
+           pipelineResult.grid_coo[0], pipelineResult.grid_coo[1],
+           pipelineResult.grid_coo[2], pipelineResult.grid_coo[3]);
+
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected words list coordinates : (%i, %i)(%i, %i)\n",
-           words_coo[0], words_coo[1], words_coo[2], words_coo[3]);
+           pipelineResult.words_coo[0], pipelineResult.words_coo[1],
+           pipelineResult.words_coo[2], pipelineResult.words_coo[3]);
+
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Number of letters detected : %i (In the grid : %i, "
                         "in the words list : %i)\n",
@@ -649,10 +698,8 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
            "[INFO]" COLOR_RESET
            " Number of words detected in the words list of the grid : %i\n",
            nb_detected_words);
-    GdkPixbuf *words = crop(pixbuf_to_slice, words_coo[0], words_coo[1],
-                            words_coo[2], words_coo[3]);
-    save_pixbuf_as_png(words, words_path);
-    g_object_unref(words);
+
+    //#endif
 
     // free all pointers
 
@@ -673,6 +720,8 @@ void pipeline(char *filename, char *output_gw_file, char *output_letter_file)
     free(words_path);
     g_object_unref(pixbuf);
     g_object_unref(pixbuf_to_slice);
+
+    return pipelineResult;
 }
 
 #ifndef TESTING
