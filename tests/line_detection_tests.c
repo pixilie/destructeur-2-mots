@@ -84,7 +84,7 @@ int main()
     int result = 1;
 
     // Level 1 Image 1
-    int grid_coo1[4] = {184, 18, 776, 610};
+    int grid_coo1[4] = {195, 30, 766, 603};
     int words_coo1[4] = {24, 123, 133, 398};
     int nb_letters1 = 340;
     int nb_letters_grid1 = 289;
@@ -99,7 +99,7 @@ int main()
     }
 
     // Level 1 Image 2
-    int grid_coo2[4] = {14, 16, 655, 659};
+    int grid_coo2[4] = {31, 33, 638, 643};
     int words_coo2[4] = {713, 54, 876, 641};
     int nb_letters2 = 215;
     int nb_letters_grid2 = 144;
