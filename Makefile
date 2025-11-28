@@ -6,6 +6,7 @@ LDFLAGS  = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0)
 # ===================== Directories =====================
 SRC_DIR      = src
 IMG_DIR      = $(SRC_DIR)/image
+UI_DIR       = $(SRC_DIR)/ui
 INCLUDE_DIR  = include
 TEST_DIR     = tests
 BUILD_DIR    = build
@@ -24,13 +25,15 @@ IMG_FILES    = $(wildcard $(IMG_DIR)/*.c)
 TEST_FILES   = $(filter-out $(TEST_DIR)/test_helpers.c, $(wildcard $(TEST_DIR)/*.c))
 
 MAIN_SRC     = $(filter-out $(SRC_DIR)/solver.c $(SRC_DIR)/ui.c $(SRC_DIR)/line_detection.c,$(SRC_FILES))
-IMG_UI_SRC   = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
+UI_SRC       = $(wildcard $(UI_DIR)/*.c)
 IMG_PIPE_SRC = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
 
 # ===================== Object Files =====================
 MAIN_OBJ     = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 SOLVER_OBJ   = $(BUILD_DIR)/solver.o
-UI_OBJ       = $(BUILD_DIR)/ui.o $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
+UI_OBJ = $(UI_SRC:$(UI_DIR)/%.c=$(BUILD_DIR)/ui_%.o) \
+         $(filter-out $(BUILD_DIR)/image_main.o, \
+         $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o))
 IMG_OBJ      = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 NN_OBJ       = $(BUILD_DIR)/neural_network.o
 PIPELINE_OBJ = $(BUILD_DIR)/line_detection.o
@@ -57,7 +60,7 @@ $(UI_BIN): $(UI_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 	@echo "UI built successfully."
 
-$(BUILD_DIR)/ui.o: $(SRC_DIR)/ui.c
+$(BUILD_DIR)/ui_%.o: $(UI_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 

@@ -1,13 +1,7 @@
 #include "../include/image/image.h"
+#include "../include/ui.h"
 
-#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
-#include <libgen.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 /**
  * AppData:
@@ -156,6 +150,37 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
 }
 
 /**
+ * on_draw_rectangle_clicked_clicked:
+ * GTK callback for the "Draw Rectangle" button.
+ *
+ * Parameters:
+ *  - button   : the clicked GtkButton (unused).
+ *  - user_data: pointer to struct AppData.
+ */
+void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    struct AppData *data = user_data;
+
+    if (!data->transformed)
+    {
+        return;
+    }
+
+    int x1 = 200;
+    int y1 = 200;
+    int x2 = 400;
+    int y2 = 300;
+    int thickness = 5;
+    
+    draw_rectangle(data->transformed, x1, y1, x2, y2, thickness);
+    
+    apply_transformations(data);
+
+    printf("Red rectangle drawn from (%i, %i) to (%i, %i) with thickness %i\n", x1, y1, x2, y2, thickness);
+}
+
+/**
  * on_reset_clicked:
  * GTK callback for the "Reset" button.
  *
@@ -253,9 +278,6 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
     }
 }
 
-static void on_activate(GtkApplication *app, gpointer user_data)
-    __attribute__((unused));
-
 /**
  * on_activate:
  * GTK "activate" signal handler that builds the application UI and loads the
@@ -271,12 +293,15 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *window;
     GtkWidget *vertical_box;
     GtkWidget *horizontal_box;
+
     GtkWidget *grayscale_button;
     GtkWidget *binarize_button;
     GtkWidget *rotate_button;
+    GtkWidget *draw_rectangle_button;
     GtkWidget *reset_button;
     GtkWidget *save_button;
     GtkWidget *close_button;
+    
     GtkWidget *image;
     GtkWidget *scrolled;
 
@@ -341,6 +366,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
         gtk_button_new_with_label("Conversion en niveaux de gris");
     binarize_button = gtk_button_new_with_label("Conversion en noir et blanc");
     rotate_button = gtk_button_new_with_label("Rotation automatique");
+    draw_rectangle_button = gtk_button_new_with_label("Dessiner un rectangle rouge");
     save_button = gtk_button_new_with_label("Sauvegarder l'image");
     reset_button = gtk_button_new_with_label("Réinitialiser l'image");
 
@@ -348,6 +374,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
                        5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), binarize_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), rotate_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), draw_rectangle_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), close_button, TRUE, TRUE, 5);
@@ -367,6 +394,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
                      G_CALLBACK(on_binarize_clicked), data);
     g_signal_connect(rotate_button, "clicked", G_CALLBACK(on_rotate_clicked),
                      data);
+    g_signal_connect(draw_rectangle_button, "clicked", G_CALLBACK(on_draw_rectangle_clicked), data);
     g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
     g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked),
                      data);

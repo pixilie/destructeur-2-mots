@@ -1,5 +1,9 @@
 #pragma once
 
-#include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
-static void on_activate(GtkApplication *app);
+void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness);
+void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2,
+                    int thickness);
+void find_solved_word();
+void solve_grid();
