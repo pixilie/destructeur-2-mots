@@ -251,7 +251,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
 
     int nb_letter = 0;
     int min_letter_width = 1;
-    int min_letter_height = 3;
+    int min_letter_height = 10;
 
     int *is_visited =
         malloc(width * height * sizeof(int)); // 0 if False 1 if True
@@ -318,8 +318,8 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
             coo[index_coo][1] < coo[index_coo][3] &&
             coo[index_coo][2] - coo[index_coo][0] <= 200 &&
             coo[index_coo][3] - coo[index_coo][1] <= 200 &&
-            coo[index_coo][2] - coo[index_coo][0] >= 2 &&
-            coo[index_coo][3] - coo[index_coo][1] >= 5)
+            coo[index_coo][2] - coo[index_coo][0] >= 1 &&
+            coo[index_coo][3] - coo[index_coo][1] >= 10)
         {
             GdkPixbuf *letter = crop(
                 pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
@@ -440,7 +440,7 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
                       int nb_words)
 {
     int seuil = 20;
-    int seuilx = 40;
+    int seuilx = 50;
     int seuily = 5;
 
     for (int i = 0; i < nb_letter; i++)
