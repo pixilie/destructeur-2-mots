@@ -1,17 +1,30 @@
 #define _GNU_SOURCE
 
-#include "../include/image_rotation.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
-#include <string.h>
 
-GdkPixbuf *rotate_image(GdkPixbuf *src, double angle_degrees)
+/**
+ * rotate_image:
+ * Rotate a GdkPixbuf by a given angle (degrees) and return a newly allocated
+ * GdkPixbuf containing the rotated image.
+ *
+ * Parameters:
+ *  - src          : pointer to the source GdkPixbuf to rotate (not modified).
+ *  - angle_degrees: rotation angle in degrees (positive = clockwise).
+ *
+ * Returns:
+ *  - A newly-allocated GdkPixbuf* containing the rotated image. The caller
+ *    owns the returned pixbuf and must call g_object_unref() when done.
+ *  - The function does not return NULL on error in the current implementation;
+ *    callers should still validate the return value.
+ */
+GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
 {
-    int width = gdk_pixbuf_get_width(src);
-    int height = gdk_pixbuf_get_height(src);
-    int rowstride = gdk_pixbuf_get_rowstride(src);
-    int n_channels = gdk_pixbuf_get_n_channels(src);
-    guchar *pixels = gdk_pixbuf_get_pixels(src);
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     // Convert degrees to radians
     double angle = angle_degrees * M_PI / 180;
@@ -22,7 +35,7 @@ GdkPixbuf *rotate_image(GdkPixbuf *src, double angle_degrees)
 
     // Create new Pixbuf for the rotated image
     GdkPixbuf *new =
-        gdk_pixbuf_new(GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha(src), 8,
+        gdk_pixbuf_new(GDK_COLORSPACE_RGB, gdk_pixbuf_get_has_alpha(pixbuf), 8,
                        new_width, new_height);
 
     int new_rowstride = gdk_pixbuf_get_rowstride(new);
@@ -69,4 +82,132 @@ GdkPixbuf *rotate_image(GdkPixbuf *src, double angle_degrees)
         }
     }
     return new;
+}
+
+GdkPixbuf *downscale_pixbuf(GdkPixbuf *pixbuf, int target_width)
+{
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+
+    if (width <= target_width)
+    {
+        return pixbuf; // Image already small enough -> No downscaling needed
+    }
+
+    double scale = (double)target_width / width;
+    int new_width = target_width;
+    int new_height = (int)height * scale;
+
+    // Return the downscaled pixbuf
+    return gdk_pixbuf_scale_simple(pixbuf, new_width, new_height,
+                                   GDK_INTERP_NEAREST);
+}
+
+double compute_projection_variance(GdkPixbuf *pixbuf)
+{
+    // Used to calculate the variance of an image
+    // The higher the return is, the better is the angle of the image
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+    double row_sums[height];
+
+    // Iterate through each line
+    for (int y = 0; y < height; y++)
+    {
+        double line_sum = 0;
+        guchar *row = pixels + y * rowstride;
+
+        for (int x = 1; x < width; x++)
+        {
+            line_sum += fabs((double)row[x * n_channels] -
+                             (double)row[(x - 1) * n_channels]);
+        }
+
+        row_sums[y] = line_sum;
+    }
+
+    double mean = 0;
+    for (int y = 0; y < height; y++)
+    {
+        mean += row_sums[y];
+    }
+    mean /= height;
+
+    double var = 0;
+    for (int y = 0; y < height; y++)
+    {
+        var += (row_sums[y] - mean) * (row_sums[y] - mean);
+    }
+    var /= height;
+
+    return var;
+}
+
+double detect_best_angle(GdkPixbuf *pixbuf)
+{
+    // test image from -90° to 90°
+    // it NEEDS to take a black and white image to function correctly
+    // return a double which is the better angle found
+
+    // Downscale to speed up rotation to 100 pixels width (less pixels)
+    GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 150);
+
+    double best_angle = 0.0;
+    double best_score = -1.0;
+
+    // First search : check every 5 degrees from -45° to 45° (= 90 tests)
+    for (double angle = -45.0; angle <= 45.0; angle += 5.0)
+    {
+        GdkPixbuf *rotated_pixbuf = rotate_image(downscaled_pixbuf, angle);
+        double score = compute_projection_variance(rotated_pixbuf);
+        g_object_unref(rotated_pixbuf);
+
+        if (score > best_score)
+        {
+            best_score = score;
+            best_angle = angle; // New best score found -> New best angle found
+        }
+    }
+
+    // More refined second search : check every 0.1 degree around the previous
+    // best angle
+    double search_start = best_angle - 3.0;
+    double search_end = best_angle + 3.0;
+    for (double angle = search_start; angle <= search_end; angle += 0.1)
+    {
+        GdkPixbuf *rotated_pixbuf = rotate_image(downscaled_pixbuf, angle);
+        double score = compute_projection_variance(rotated_pixbuf);
+        g_object_unref(rotated_pixbuf);
+
+        if (score > best_score)
+        {
+            best_score = score;
+            best_angle = angle; // New best score found -> New best angle found
+        }
+    }
+
+    if (best_angle > -1.0 &&
+        best_angle < 1.0) // Avoid small angles for straight images
+    {
+        return 0.0;
+    }
+
+    return best_angle;
+}
+
+// Detects the best rotation angle and rotates the image by that angle
+GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
+{
+    double best_angle = detect_best_angle(pixbuf);
+    if (best_angle == 0)
+    {
+        printf("Image is already upright, no rotation needed\n");
+        return pixbuf;
+    }
+    printf("Image automatically rotated by best rotation angle : %f\n",best_angle);
+    return rotate_image(pixbuf, best_angle);
 }

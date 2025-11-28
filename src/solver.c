@@ -1,7 +1,18 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+/**
+ * Search for a word in a rectangular letter grid stored in a text file.
+ *
+ * Parameters:
+ *  - filename: path to the input file containing the grid (each row on a line).
+ *  - word    : null-terminated string to search for.
+ *  - x1, y1  : output pointers to store coordinates of the first letter
+ * (start).
+ *  - x2, y2  : output pointers to store coordinates of the last letter (end).
+ */
 int len_word(char word[])
 {
     int i = 0;
@@ -31,10 +42,10 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
     }
 
     char ch = fgetc(f);
-    while (ch != '\r' && ch != '\n' && ch != '\0')
+    while (ch != '\r' && ch != '\n' && ch != EOF)
     {
-        ch = fgetc(f);
         nbcolls++;
+        ch = fgetc(f);
     }
     rewind(f);
 
@@ -45,18 +56,18 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
 
     char tab[nblines][nbcolls];
     char line[nbcolls + 2];
-    int i = 0;
     int j = 0;
 
     while (fgets(line, sizeof(line), f) != NULL)
     {
-        while (line[i] != '\r' && line[i] != '\n' && line[i] != '\0')
+        for (int i = 0; i < nbcolls; i++)
         {
-            tab[j][i] = line[i];
-            i++;
+            if (line[i] != '\0' && line[i] != '\n' && line[i] != '\r')
+                tab[j][i] = line[i];
+            else
+                tab[j][i] = 0;
         }
         j++;
-        i = 0;
     }
     fclose(f);
 
@@ -83,224 +94,58 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
                     }
                     c++;
                 }
-                l++;
+                if (c == nbcolls)
+                {
+                    l++;
+                    c = 0;
+                }
             }
-            if (c == nbcolls && l == nblines)
+            if (is_found == 0)
             {
                 t_is_found = 1;
             }
         }
         else
         {
+            int dir[8][2] = {{1, 1},   {1, 0},  {1, -1}, {0, -1},
+                             {-1, -1}, {-1, 0}, {-1, 1}, {0, 1}};
             int len_w = len_word(word);
             is_found = 0;
-            if (tempy2 - 1 >= 0)
+            for (int j = 0; j < 8; j++)
             {
-                tempy2--;
-                while (index_in_word < len_w && tempy2 >= 0 &&
-                       tolower(word[index_in_word]) ==
-                           tolower(tab[tempy2][tempx2]))
+                tempx2 = tempx1;
+                tempy2 = tempy1;
+                index_in_word = 1;
+                if (tempy2 + dir[j][1] >= 0 && tempy2 + dir[j][1] < nblines &&
+                    tempx2 + dir[j][0] >= 0 && tempx2 + dir[j][0] < nbcolls &&
+                    is_found == 0)
                 {
-                    index_in_word++;
-                    tempy2--;
+                    while (index_in_word < len_w && tempy2 + dir[j][1] >= 0 &&
+                           tempy2 + dir[j][1] < nblines &&
+                           tempx2 + dir[j][0] >= 0 &&
+                           tempx2 + dir[j][0] < nbcolls && is_found == 0 &&
+                           tolower(word[index_in_word]) ==
+                               tolower(
+                                   tab[tempy2 + dir[j][1]][tempx2 + dir[j][0]]))
+                    {
+                        index_in_word++;
+                        tempx2 += dir[j][0];
+                        tempy2 += dir[j][1];
+                    }
+                    if (index_in_word == len_w)
+                    {
+                        is_found = 1;
+                    }
                 }
-                if (index_in_word == len_w)
+                if (is_found == 1)
                 {
-                    tempy2++;
-                    is_found = 1;
+                    *x2 = tempx2;
+                    *y2 = tempy2;
+                    *x1 = tempx1;
+                    *y1 = tempy1;
+                    t_is_found = 1;
+                    break;
                 }
-                else
-                {
-                    tempx2 = tempx1;
-                    tempy2 = tempy1;
-                    index_in_word = 1;
-                    is_found = 0;
-                }
-            }
-            if (tempx2 + 1 < nbcolls && is_found == 0)
-            {
-                tempx2++;
-                while (index_in_word < len_w && tempx2 < nbcolls &&
-                       tolower(word[index_in_word]) ==
-                           tolower(tab[tempy2][tempx2]))
-                {
-                    index_in_word++;
-                    tempx2++;
-                }
-                if (index_in_word == len_w)
-                {
-                    tempx2--;
-                    is_found = 1;
-                }
-                else
-                {
-                    tempx2 = tempx1;
-                    tempy2 = tempy1;
-                    index_in_word = 1;
-                    is_found = 0;
-                }
-            }
-            if (tempy2 + 1 < nblines && is_found == 0)
-            {
-                tempy2++;
-                while (index_in_word < len_w && tempy2 < nblines &&
-                       tolower(word[index_in_word]) ==
-                           tolower(tab[tempy2][tempx2]))
-                {
-                    index_in_word++;
-                    tempy2++;
-                }
-                if (index_in_word == len_w)
-                {
-                    tempy2--;
-                    is_found = 1;
-                }
-                else
-                {
-                    tempx2 = tempx1;
-                    tempy2 = tempy1;
-                    index_in_word = 1;
-                    is_found = 0;
-                }
-            }
-            if (tempx2 - 1 >= 0 && is_found == 0)
-            {
-                tempx2--;
-                while (index_in_word < len_w && tempx2 >= 0 &&
-                       tolower(word[index_in_word]) ==
-                           tolower(tab[tempy2][tempx2]))
-                {
-                    index_in_word++;
-                    tempx2--;
-                }
-                if (index_in_word == len_w)
-                {
-                    tempx2++;
-                    is_found = 1;
-                }
-                else
-                {
-                    tempx2 = tempx1;
-                    tempy2 = tempy1;
-                    index_in_word = 1;
-                    is_found = 0;
-                }
-            }
-            if (tempx2 + 1 < nbcolls && tempy2 + 1 < nblines && is_found == 0)
-            {
-                tempx2++;
-                tempy2++;
-                while (index_in_word < len_w && tempy2 < nblines &&
-                       tempx2 < nbcolls &&
-                       tolower(word[index_in_word]) ==
-                           tolower(tab[tempy2][tempx2]))
-                {
-                    index_in_word++;
-                    tempy2++;
-                    tempx2++;
-                }
-                if (index_in_word == len_w)
-                {
-                    tempx2--;
-                    tempy2--;
-                    is_found = 1;
-                }
-                else
-                {
-                    tempx2 = tempx1;
-                    tempy2 = tempy1;
-                    index_in_word = 1;
-                    is_found = 0;
-                }
-            }
-            if (tempx2 + 1 < nbcolls && tempy2 - 1 >= 0 && is_found == 0)
-            {
-                tempx2++;
-                tempy2--;
-                while (index_in_word < len_w && tempy2 >= 0 &&
-                       tempx2 < nbcolls &&
-                       tolower(word[index_in_word]) ==
-                           tolower(tab[tempy2][tempx2]))
-                {
-                    index_in_word++;
-                    tempy2--;
-                    tempx2++;
-                }
-                if (index_in_word == len_w)
-                {
-                    tempx2--;
-                    tempy2++;
-                    is_found = 1;
-                }
-                else
-                {
-                    tempx2 = tempx1;
-                    tempy2 = tempy1;
-                    index_in_word = 1;
-                    is_found = 0;
-                }
-            }
-            if (tempx2 - 1 >= 0 && tempy2 + 1 < nblines && is_found == 0)
-            {
-                tempx2--;
-                tempy2++;
-                while (index_in_word < len_w && tempy2 < nblines &&
-                       tempx2 >= 0 &&
-                       tolower(word[index_in_word]) ==
-                           tolower(tab[tempy2][tempx2]))
-                {
-                    index_in_word++;
-                    tempy2++;
-                    tempx2--;
-                }
-                if (index_in_word == len_w)
-                {
-                    tempy2--;
-                    tempx2++;
-                    is_found = 1;
-                }
-                else
-                {
-                    tempx2 = tempx1;
-                    tempy2 = tempy1;
-                    index_in_word = 1;
-                    is_found = 0;
-                }
-            }
-            if (tempx2 - 1 >= 0 && tempy2 - 1 >= 0 && is_found == 0)
-            {
-                tempx2--;
-                tempy2--;
-                while (index_in_word < len_w && tempy2 >= 0 && tempx2 >= 0 &&
-                       tolower(word[index_in_word]) ==
-                           tolower(tab[tempy2][tempx2]))
-                {
-                    index_in_word++;
-                    tempy2--;
-                    tempx2--;
-                }
-                if (index_in_word == len_w)
-                {
-                    tempx2++;
-                    tempy2++;
-                    is_found = 1;
-                }
-                else
-                {
-                    tempx2 = tempx1;
-                    tempy2 = tempy1;
-                    index_in_word = 1;
-                    is_found = 0;
-                }
-            }
-
-            if (is_found == 1)
-            {
-                *x2 = tempx2;
-                *y2 = tempy2;
-                *x1 = tempx1;
-                *y1 = tempy1;
-                t_is_found = 1;
             }
         }
     }
@@ -309,7 +154,13 @@ void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2)
         *x1 = *x2 = *y1 = *y2 = -1;
     }
 }
-
+/**
+ * Program entry point: parse arguments, invoke solve and print coordinates.
+ *
+ * Usage:
+ *  ./solver filename word
+ */
+#ifndef TESTING
 int main(int argc, char *argv[])
 {
     if (argc < 3)
@@ -331,6 +182,11 @@ int main(int argc, char *argv[])
 
     solve(argv[1], argv[2], x1, y1, x2, y2);
 
+    if (*x1 == -1 && *x2 == -1)
+    {
+        printf("Not Found\n");
+        exit(EXIT_FAILURE);
+    }
     printf("(%i, %i)(%i, %i)\n", *x1, *y1, *x2, *y2);
 
     free(x1);
@@ -340,3 +196,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+#endif

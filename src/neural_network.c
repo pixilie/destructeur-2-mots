@@ -1,15 +1,52 @@
 #include "../include/neural_network.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
+/**
+ * Compute the sigmoid activation function.
+ *
+ * Parameters:
+ *  - x: input value
+ *
+ * Returns:
+ *  - sigmoid(x) in the interval (0, 1)
+ */
 double sigmoid(double x) { return 1.0 / (1.0 + exp(-x)); }
 
+/**
+ * Compute the derivative of the sigmoid function.
+ *
+ * Parameters:
+ *  - x: the sigmoid output value s = sigmoid(z)
+ *
+ * Returns:
+ *  - derivative ds/dz = s * (1 - s)
+ */
 double sigmoid_derivative(double x) { return x * (1.0 - x); }
 
+/**
+ * Generate a random weight in the range [-1.0, 1.0].
+ *
+ * Returns:
+ *  - random double uniformly distributed between -1 and 1
+ */
 double rand_weight() { return ((double)rand() / RAND_MAX) * 2.0 - 1.0; }
 
+/**
+ * Allocate and initialize a neural network with one hidden layer.
+ *
+ * Parameters:
+ *  - input_size : number of input neurons
+ *  - hidden_size: number of neurons in the hidden layer
+ *  - output_size: number of output neurons
+ *
+ * Returns:
+ *  - pointer to an allocated NeuralNetwork with randomly initialized weights
+ * and biases
+ */
 NeuralNetwork *create_network(int input_size, int hidden_size, int output_size)
 {
     NeuralNetwork *nn = malloc(sizeof(NeuralNetwork));
@@ -37,6 +74,13 @@ NeuralNetwork *create_network(int input_size, int hidden_size, int output_size)
     return nn;
 }
 
+/**
+ * Free all memory allocated for the neural network.
+ *
+ * Parameters:
+ *  - nn: pointer to the NeuralNetwork to free (must not be used after this
+ * call)
+ */
 void free_network(NeuralNetwork *nn)
 {
     free(nn->hidden_weights);
@@ -48,6 +92,13 @@ void free_network(NeuralNetwork *nn)
     free(nn);
 }
 
+/**
+ * Perform a forward pass (inference) through the network.
+ *
+ * Parameters:
+ *  - nn    : pointer to an initialized NeuralNetwork
+ *  - inputs: array of input values (length must be nn->input_size)
+ */
 void forward(NeuralNetwork *nn, double *inputs)
 {
     // Hidden layer
@@ -69,6 +120,16 @@ void forward(NeuralNetwork *nn, double *inputs)
     }
 }
 
+/**
+ * Train the network on a small fixed dataset (typically XOR).
+ *
+ * Parameters:
+ *  - nn           : pointer to the NeuralNetwork to train
+ *  - inputs       : 4x2 array containing 4 training examples (each of size 2)
+ *  - targets      : array of 4 target values (one target per example)
+ *  - learning_rate: learning rate for weight updates
+ *  - epochs       : number of training iterations (epochs)
+ */
 void train(NeuralNetwork *nn, double inputs[4][2], double targets[4],
            double learning_rate, int epochs)
 {

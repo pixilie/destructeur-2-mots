@@ -1,6 +1,7 @@
 #pragma once
 
-typedef struct {
+typedef struct
+{
     int input_size;
     int hidden_size;
     int output_size;
@@ -20,4 +21,5 @@ double sigmoid(double x);
 double sigmoid_derivative(double x);
 double rand_weight();
 void forward(NeuralNetwork *nn, double *inputs);
-void train(NeuralNetwork *nn, double inputs[4][2], double targets[4], double learning_rate, int epochs);
+void train(NeuralNetwork *nn, double inputs[4][2], double targets[4],
+           double learning_rate, int epochs);

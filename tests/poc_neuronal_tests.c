@@ -1,9 +1,11 @@
 #include "../include/neural_network.h"
+#include "../include/test_helpers.h"
+
 #include <stdio.h>
 
 int test_xor()
 {
-    printf("\n--- Tests XOR ---\n");
+    print_test_subcategory("XOR Tests");
 
     NeuralNetwork *nn_xor = create_network(2, 2, 1);
 
@@ -18,21 +20,30 @@ int test_xor()
         forward(nn_xor, inputs[i]);
         double out = nn_xor->output[0];
         int pred = (out > 0.5) ? 1 : 0;
-        printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
-               inputs[i][0], inputs[i][1], pred, targets[i]);
+
         if (pred != (int)targets[i])
         {
             passed = 0;
+            print_fail();
         }
+        else
+        {
+            print_success();
+        }
+
+        printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
+               inputs[i][0], inputs[i][1], pred, targets[i]);
     }
 
     if (passed)
     {
-        printf("All tests passed.\n");
+        print_success();
+        printf("All tests passed for XOR\n");
     }
     else
     {
-        printf("Some tests did not pass.\n");
+        print_fail();
+        printf("Some tests did not pass for XOR\n");
     }
 
     free_network(nn_xor);
@@ -42,7 +53,7 @@ int test_xor()
 
 int test_and()
 {
-    printf("\n--- Tests AND (A.B) ---\n");
+    print_test_subcategory("AND (A.B) Tests");
 
     NeuralNetwork *nn_and = create_network(2, 2, 1);
 
@@ -57,21 +68,28 @@ int test_and()
         forward(nn_and, inputs[i]);
         double out = nn_and->output[0];
         int pred = (out > 0.5) ? 1 : 0;
-        printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
-               inputs[i][0], inputs[i][1], pred, targets[i]);
+
         if (pred != (int)targets[i])
         {
             passed = 0;
+            print_fail();
         }
+        else
+        {
+            print_success();
+        }
+        printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
+               inputs[i][0], inputs[i][1], pred, targets[i]);
     }
 
     if (passed)
     {
-        printf("All tests passed.\n");
+        print_success();
+        printf("All tests passed for AND\n");
     }
     else
     {
-        printf("Some tests did not pass.\n");
+        printf("Some tests did not pass for AND\n");
     }
     free_network(nn_and);
 
@@ -80,7 +98,7 @@ int test_and()
 
 int test_or()
 {
-    printf("\n--- Tests OR (A+B) ---\n");
+    print_test_subcategory("OR (A+B) Tests");
 
     NeuralNetwork *nn_or = create_network(2, 2, 1);
 
@@ -95,21 +113,29 @@ int test_or()
         forward(nn_or, inputs[i]);
         double out = nn_or->output[0];
         int pred = (out > 0.5) ? 1 : 0;
-        printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
-               inputs[i][0], inputs[i][1], pred, targets[i]);
+
         if (pred != (int)targets[i])
         {
             passed = 0;
+            print_fail();
         }
+        else
+        {
+            print_success();
+        }
+        printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
+               inputs[i][0], inputs[i][1], pred, targets[i]);
     }
 
     if (passed)
     {
-        printf("All tests passed.\n");
+        print_success();
+        printf("All tests passed for OR\n");
     }
     else
     {
-        printf("Some tests did not pass.\n");
+        print_fail();
+        printf("Some tests did not pass for OR\n");
     }
     free_network(nn_or);
 
@@ -118,7 +144,7 @@ int test_or()
 
 int test_xnor()
 {
-    printf("\n--- Tests XNOR (!A.!B + A.B) ---\n");
+    print_test_subcategory("XNOR (!A.!B + A.B) Tests");
 
     NeuralNetwork *nn_xnor = create_network(2, 2, 1);
 
@@ -133,21 +159,29 @@ int test_xnor()
         forward(nn_xnor, inputs[i]);
         double out = nn_xnor->output[0];
         int pred = (out > 0.5) ? 1 : 0;
-        printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
-               inputs[i][0], inputs[i][1], pred, targets[i]);
+
         if (pred != (int)targets[i])
         {
             passed = 0;
+            print_fail();
         }
+        else
+        {
+            print_success();
+        }
+        printf("Input: %.0f %.0f, Predicted: %d, Expected: %.0f\n",
+               inputs[i][0], inputs[i][1], pred, targets[i]);
     }
 
     if (passed)
     {
-        printf("All tests passed.\n");
+        print_success();
+        printf("All tests passed for XNOR\n");
     }
     else
     {
-        printf("Some tests did not pass.\n");
+        print_fail();
+        printf("Some tests did not pass for XNOR\n");
     }
     free_network(nn_xnor);
 
@@ -156,6 +190,18 @@ int test_xnor()
 
 int main()
 {
+    print_test_category("Neural Network Tests");
+
     int passed = test_and() && test_or() && test_xnor() && test_xor();
+
+    if (passed)
+    {
+        print_all_tests_passed("Neural Network Tests");
+    }
+    else
+    {
+        print_some_tests_failed("Neural Network Tests");
+    }
+
     return passed ? 0 : 1;
 }
