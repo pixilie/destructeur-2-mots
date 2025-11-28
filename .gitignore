@@ -67,3 +67,4 @@ tests/results/*
 
 compile_commands.json
 .cache
+.direnv
