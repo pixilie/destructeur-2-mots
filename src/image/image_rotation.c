@@ -42,8 +42,8 @@ GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
     int new_n_channels = gdk_pixbuf_get_n_channels(new);
     guchar *new_pixels = gdk_pixbuf_get_pixels(new);
 
-    // Fill new Pixbuf with black backrgound
-    memset(new_pixels, 0, new_rowstride * new_height);
+    // Fill new Pixbuf with white backrgound
+    memset(new_pixels, 255, new_rowstride * new_height);
 
     double center_x = width / 2.0;
     double center_y = height / 2.0;
@@ -208,6 +208,6 @@ GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
         printf("Image is already upright, no rotation needed\n");
         return pixbuf;
     }
-    printf("Image automatically rotated by best rotation angle : %f\n",best_angle);
+    printf("Image automatically rotated by best rotation angle : %.2f°\n",best_angle);
     return rotate_image(pixbuf, best_angle);
 }

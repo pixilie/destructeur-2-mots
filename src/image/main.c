@@ -20,6 +20,7 @@ void print_all_function_usages()
            "<optional:output>\n");
     printf(" - ./image convert_to_black_and_white <image_path> "
            "<optional:output>\n");
+    printf(" - ./image median_filter_3x3 <image_path>\n");
     printf(" - ./image rotate_image <image_path> <angle_degrees> "
            "<optional:output>\n");
     printf(" - ./image rotate_image_automatic <image_path> "
@@ -47,6 +48,7 @@ void print_all_function_usages()
  *      ./image convert_to_grayscale <image_path> [output]
  *      ./image binarize_image <image_path> <threshold> [output]
  *      ./image convert_to_black_and_white <image_path> [output]
+ *      ./image median_filter_3x3 <image_path>
  *      ./image rotate_image <image_path> <angle_degrees> [output]
  *      ./image rotate_image_automatic <image_path> [output]
  *      ./image slice_from <image_path> <x> <y> <direction> [out1] [out2]
@@ -69,6 +71,7 @@ int main(int argc, char **argv)
     if (strcmp(function_name, "convert_to_grayscale") &&
         strcmp(function_name, "binarize_image") &&
         strcmp(function_name, "convert_to_black_and_white") &&
+        strcmp(function_name, "median_filter_3x3") &&
         strcmp(function_name, "rotate_image") &&
         strcmp(function_name, "rotate_image_automatic") &&
         strcmp(function_name, "slice_from") &&
@@ -212,6 +215,49 @@ int main(int argc, char **argv)
                        " Image %s converted to black and white"
                        " with threshold %i and saved as black_and_white.png\n",
                        argv[2], threshold);
+            }
+            g_object_unref(pixbuf);
+            return EXIT_SUCCESS;
+        }
+
+        // median_filter_3x3
+        if (strcmp(function_name, "median_filter_3x3") == 0)
+        {
+            if (argc < 3)
+            {
+                printf(COLOR_RED
+                       "[FAIL]" COLOR_RESET
+                       " Not enough arguments for median_filter_3x3\n");
+                printf("Usage: ./image median_filter_3x3 <image_path>\n");
+                return EXIT_FAILURE;
+            }
+
+            // Load image
+            GdkPixbuf *pixbuf = load_image(argv[2]);
+            if (!pixbuf)
+            {
+                printf(COLOR_RED "[FAIL]" COLOR_RESET
+                                 " Image could not be loaded\n");
+                return EXIT_FAILURE;
+            }
+
+            median_filter_3x3(pixbuf);
+            if (argc > 3)
+            {
+                save_pixbuf_as_png(pixbuf, argv[3]);
+                printf(
+                    COLOR_GREEN
+                    "[SUCCESS]" COLOR_RESET
+                    " Image %s filtered with median filter and saved as %s\n",
+                    argv[2], argv[3]);
+            }
+            else
+            {
+                save_pixbuf_as_png(pixbuf, "filtered.png");
+                printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
+                                   " Image %s filtered with median filter and "
+                                   "saved as filtered.png\n",
+                       argv[2]);
             }
             g_object_unref(pixbuf);
             return EXIT_SUCCESS;
