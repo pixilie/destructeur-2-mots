@@ -627,7 +627,6 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
     int **word_list = malloc(nb_words * sizeof(int *));
     for (int i = 0; i < nb_words; i++)
     {
-
         word_list[i] = malloc(4 * sizeof(int));
         word_list[i][0] = word_list[i][1] = word_list[i][2] = word_list[i][3] =
             0;
