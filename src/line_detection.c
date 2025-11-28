@@ -250,8 +250,8 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     int nb_letter = 0;
-    int min_letter_width = 1;
-    int min_letter_height = 10;
+    int min_letter_width = 2;
+    int min_letter_height = 5;
 
     int *is_visited =
         malloc(width * height * sizeof(int)); // 0 if False 1 if True
@@ -318,8 +318,8 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
             coo[index_coo][1] < coo[index_coo][3] &&
             coo[index_coo][2] - coo[index_coo][0] <= 200 &&
             coo[index_coo][3] - coo[index_coo][1] <= 200 &&
-            coo[index_coo][2] - coo[index_coo][0] >= 1 &&
-            coo[index_coo][3] - coo[index_coo][1] >= 10)
+            coo[index_coo][2] - coo[index_coo][0] >= 2 &&
+            coo[index_coo][3] - coo[index_coo][1] >= 5)
         {
             GdkPixbuf *letter = crop(
                 pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
