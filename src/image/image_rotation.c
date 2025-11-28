@@ -208,6 +208,6 @@ GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
         printf("Image is already upright, no rotation needed\n");
         return pixbuf;
     }
-    printf("Image automatically rotated by best rotation angle : %f\n",best_angle);
+    printf("Image automatically rotated by best rotation angle : %.2f°\n",best_angle);
     return rotate_image(pixbuf, best_angle);
 }

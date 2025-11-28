@@ -678,7 +678,7 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
     g_object_unref(words);
 
     //#ifndef TESTING
-    printf("Best rotation angle : %.2f\n", best_angle);
+    printf("Best rotation angle : %.2f°\n", best_angle);
 
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected grid coordinates : (%i, %i)(%i, %i)\n",
