@@ -334,8 +334,13 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
                 coo[index_coo][2] + os, coo[index_coo][3] + os);
             snprintf(full_path, sizeof(full_path), "%s/letter_%d_%d.png",
                      output_file, coo[index_coo][0], coo[index_coo][1]);
-            save_pixbuf_as_png(letter, full_path);
+
+            // Convert letter to 28x28 pixbuf for the neural network
+            GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
+            save_pixbuf_as_png(scaled_letter, full_path);
+            
             g_object_unref(letter);
+            g_object_unref(scaled_letter);
         }
         index_coo++;
     }
