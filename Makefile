@@ -13,7 +13,6 @@ RESULTS_DIR  = $(TEST_DIR)/results
 
 # ===================== Target Binaries =====================
 TARGET       = $(BUILD_DIR)/main
-SOLVER_BIN   = $(BUILD_DIR)/solver
 UI_BIN       = $(BUILD_DIR)/ui
 IMAGE_BIN    = $(BUILD_DIR)/image
 PIPELINE_BIN = $(BUILD_DIR)/pipeline
@@ -29,7 +28,6 @@ IMG_PIPE_SRC = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
 
 # ===================== Object Files =====================
 MAIN_OBJ     = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-SOLVER_OBJ   = $(BUILD_DIR)/solver.o
 UI_OBJ       = $(BUILD_DIR)/ui.o $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 IMG_OBJ      = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 NN_OBJ       = $(BUILD_DIR)/neural_network.o
@@ -37,18 +35,12 @@ PIPELINE_OBJ = $(BUILD_DIR)/line_detection.o
 PIPELINE_IMG_OBJ = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 
 # ===================== Main Rules =====================
-all: $(TARGET) $(SOLVER_BIN) $(UI_BIN) $(IMAGE_BIN) $(PIPELINE_BIN)
+all: $(TARGET) $(UI_BIN) $(IMAGE_BIN) $(PIPELINE_BIN)
 
 # ---------- Main Program ----------
 $(TARGET): $(MAIN_OBJ) $(filter-out $(BUILD_DIR)/image_main.o, $(IMG_OBJ))
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking Main..."
-	@$(CC) -o $@ $^ $(LDFLAGS)
-
-# ---------- Solver ----------
-$(SOLVER_BIN): $(SOLVER_OBJ)
-	@mkdir -p $(BUILD_DIR)
-	@echo "Linking Solver..."
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
 # ---------- UI ----------
