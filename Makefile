@@ -113,7 +113,7 @@ $(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(TEST_DIR)/test_helpers.c $(TEST_OBJ) $(NN
 $(BUILD_DIR)/test_solver_tests: $(TEST_DIR)/solver_tests.c $(TEST_DIR)/test_helpers.c src/solver.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Building solver test: $@"
-	$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
+	@$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
 
 LINE_DET_TEST      = $(BUILD_DIR)/test_line_detection_tests
 LINE_DET_TEST_SRC  = $(TEST_DIR)/line_detection_tests.c
