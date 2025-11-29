@@ -15,6 +15,7 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
   - `neural_network.c`
   - `solver.c`
   - `ui.c`
+  - `dataset.c`
 - `include`: Header files
   - `image`
     - `image.h`
@@ -27,6 +28,7 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
   - `solver.h`
   - `test_helpers.h`
   - `ui.h`
+  - `dataset.h`
 - `build`: Compiled objects & executables  
 - `tests`: Unit tests
   - `image_processing_tests.c`
@@ -34,7 +36,6 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
   - `image_slice_tests.c`
   - `line_detection_tests.c`
   - `neural_network_tests.c`
-  - `solver_grid_sample.txt`
   - `solver_tests.c`
   - `test_helpers.c`
 - `docs`: Documentation (reports, documents...)
@@ -44,7 +45,6 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 ## Build
 - `make`          → builds everything except the tests.
 - `make test`     → builds build/test from src/*.c + tests/*.c, then runs it.
-- `make solver`   → builds src/solver.c
 - `make ui`       → builds src/ui.c
 - `make image`    → builds src/image/*.c
 - `make pipeline` → builds src/line_detection.c
@@ -61,8 +61,6 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
     - `./image slice_from <image_path> <x> <y> <direction> <optional:output1> <optional:output2>`
     - `./image slice_in_n <image_path> <n_slice> <optional:output_prefix>`
     - `./image crop <image_path> <x1> <y1> <x2> <y2> <optional:output>`
-
-- `./solver <grid_path> <word>`: Attempts to solve the given word `<word>` in the grid `<grid_path>` by finding its coordinates in the grid
 
 - `./ui <optional:image_path>`: Launches UI and loads `<image_path>` (default: level_1_image_1.png)
 
