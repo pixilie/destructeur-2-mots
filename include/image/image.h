@@ -4,3 +4,4 @@
 #include "image_processing.h"
 #include "image_rotation.h"
 #include "image_slice.h"
+#include "image_filter.h"

@@ -90,14 +90,15 @@ void on_grayscale_clicked(GtkButton *button, gpointer user_data)
 }
 
 /**
- * on_binarize_clicked:
+ * on_convert_to_black_and_white_clicked:
  * GTK callback for the "Black & White" button.
  *
  * Parameters:
  *  - button   : the clicked GtkButton (unused).
  *  - user_data: pointer to struct AppData.
  */
-void on_binarize_clicked(GtkButton *button, gpointer user_data)
+void on_convert_to_black_and_white_clicked(GtkButton *button,
+                                           gpointer user_data)
 {
     (void)button;
     struct AppData *data = user_data;
@@ -113,6 +114,31 @@ void on_binarize_clicked(GtkButton *button, gpointer user_data)
     apply_transformations(data);
 
     printf("Image converted to black and white with threshold %i\n", threshold);
+}
+
+/**
+ * on_filter_clicked:
+ * GTK callback for the "Filter" button.
+ *
+ * Parameters:
+ *  - button   : the clicked GtkButton (unused).
+ *  - user_data: pointer to struct AppData.
+ */
+void on_filter_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    struct AppData *data = user_data;
+
+    if (!data->transformed)
+    {
+        return;
+    }
+
+    median_filter_3x3(data->transformed);
+
+    apply_transformations(data);
+
+    printf("Image filtered with a median filter\n");
 }
 
 /**
@@ -293,9 +319,10 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *window;
     GtkWidget *vertical_box;
     GtkWidget *horizontal_box;
-
+    
     GtkWidget *grayscale_button;
-    GtkWidget *binarize_button;
+    GtkWidget *convert_to_black_and_white_button;
+    GtkWidget *filter_button;
     GtkWidget *rotate_button;
     GtkWidget *draw_rectangle_button;
     GtkWidget *reset_button;
@@ -364,7 +391,9 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     grayscale_button =
         gtk_button_new_with_label("Conversion en niveaux de gris");
-    binarize_button = gtk_button_new_with_label("Conversion en noir et blanc");
+    convert_to_black_and_white_button =
+        gtk_button_new_with_label("Conversion en noir et blanc");
+    filter_button = gtk_button_new_with_label("Filtrer l'image");
     rotate_button = gtk_button_new_with_label("Rotation automatique");
     draw_rectangle_button = gtk_button_new_with_label("Dessiner un rectangle rouge");
     save_button = gtk_button_new_with_label("Sauvegarder l'image");
@@ -372,7 +401,9 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     gtk_box_pack_start(GTK_BOX(horizontal_box), grayscale_button, TRUE, TRUE,
                        5);
-    gtk_box_pack_start(GTK_BOX(horizontal_box), binarize_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box),
+                       convert_to_black_and_white_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), filter_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), rotate_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), draw_rectangle_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
@@ -390,8 +421,10 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     g_signal_connect(grayscale_button, "clicked",
                      G_CALLBACK(on_grayscale_clicked), data);
-    g_signal_connect(binarize_button, "clicked",
-                     G_CALLBACK(on_binarize_clicked), data);
+    g_signal_connect(convert_to_black_and_white_button, "clicked",
+                     G_CALLBACK(on_convert_to_black_and_white_clicked), data);
+    g_signal_connect(filter_button, "clicked",
+                     G_CALLBACK(on_filter_clicked), data);
     g_signal_connect(rotate_button, "clicked", G_CALLBACK(on_rotate_clicked),
                      data);
     g_signal_connect(draw_rectangle_button, "clicked", G_CALLBACK(on_draw_rectangle_clicked), data);

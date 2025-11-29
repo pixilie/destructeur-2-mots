@@ -1,3 +1,4 @@
 #pragma once
 
-void solve(char filename[], char word[], int *x1, int *y1, int *x2, int *y2);
+void solve(int rows, int cols, char tab[rows][cols], char word[], int *x1,
+           int *y1, int *x2, int *y2);

@@ -1,74 +1,63 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-// Draws a red line from (x1, y1) to (x2, y2) in the UI colored image
-void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
-{
+
+// Draws a red pixel of size thickness * thickness
+void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness)
+{ 
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
-    // Make coordinates in image bounds
-    if (x1 < 0)
-        x1 = 0;
-    if (x2 < 0)
-        x2 = 0;
-    if (y1 < 0)
-        y1 = 0;
-    if (y2 < 0)
-        y2 = 0;
-    if (x1 >= width)
-        x1 = width - 1;
-    if (x2 >= width)
-        x2 = width - 1;
-    if (y1 >= height)
-        y1 = height - 1;
-    if (y2 >= height)
-        y2 = height - 1;
-
-    // Horizontal line
-    if (y1 == y2)
+    for (int dy = - thickness / 2; dy <= thickness / 2; dy++)
     {
-        for (int y = y1 - thickness / 2; y <= y1 + thickness / 2; y++)
+        for (int dx = - thickness / 2; dx <= thickness / 2; dx++)
         {
-            // Out of bounds -> Skip line
-            if (y < 0 || y >= height)
+            int new_x = x + dx;
+            int new_y = y + dy;
+            if (new_x < 0 || new_x >= width || new_y < 0 || new_y >= height)
             {
                 continue;
             }
-
-            guchar *row = pixels + y * rowstride;
-
-            for (int x = x1; x <= x2; x++)
-            {
-                guchar *pixel = row + x * n_channels;
-                pixel[0] = 255; // Red
-                pixel[1] = 0;
-                pixel[2] = 0;
-            }
+            
+            guchar *pixel = pixels + new_y * rowstride + new_x * n_channels;
+            pixel[0] = 255; // Red
+            pixel[1] = 0;
+            pixel[2] = 0;
         }
     }
+}
 
-    // Vertical line
-    if (x1 == x2)
+// Draws a red line from (x1, y1) to (x2, y2) in the UI colored image
+// Uses Bresenham's line algorithm to draw the ideal straight line
+void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
+{
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int error_term = dx - dy;
+
+    while (1)
     {
-        for (int x = x1 - thickness / 2; x <= x1 + thickness / 2; x++)
+        draw_pixel(pixbuf, x1, y1, thickness);
+        
+        if (x1 == x2 && y1 == y2)
         {
-            // Out of bounds -> Skip column
-            if (x < 0 || x >= width)
-            {
-                continue;
-            }
+            break; // Reached the end of the line
+        }
 
-            for (int y = y1; y <= y2; y++)
-            {
-                guchar *row = pixels + y * rowstride;
-                guchar *pixel = row + x * n_channels;
-                pixel[0] = 255; // Red
-                pixel[1] = 0;
-                pixel[2] = 0;
-            }
+        int error_term2 = 2 * error_term;
+
+        if (error_term2 > - dy) // Move horizontally
+        {
+            error_term -= dy;
+            x1 += 1;
+        }
+
+        if (error_term2 < dx) // Move vertically
+        {
+            error_term += dx;
+            y1 += 1;
         }
     }
 }
@@ -82,6 +71,9 @@ void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2,
     draw_line(pixbuf, x1, y1, x1, y2, thickness); // Left
     draw_line(pixbuf, x2, y1, x2, y2, thickness); // Right
 }
+
+// Return a 
+int[][4] get_all_words_coordinates()
 
 void find_solved_word() {}
 
