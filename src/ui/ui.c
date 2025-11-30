@@ -193,17 +193,27 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
         return;
     }
 
-    int x1 = 200;
-    int y1 = 200;
-    int x2 = 400;
-    int y2 = 300;
+    // Straight rectangle
+    int x1 = 200, y1 = 100;
+    int x2 = 300, y2 = 100;
+    int x3 = 300, y3 = 300;
+    int x4 = 200, y4 = 300;
+
     int thickness = 5;
     
-    draw_rectangle(data->transformed, x1, y1, x2, y2, thickness);
+    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4, thickness);
+
+    // Diagonal rectangle
+    x1 = 500, y1 = 300;
+    x2 = 600, y2 = 300;
+    x3 = 700, y3 = 400;
+    x4 = 600, y4 = 400;
+
+    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4, thickness);
     
     apply_transformations(data);
 
-    printf("Red rectangle drawn from (%i, %i) to (%i, %i) with thickness %i\n", x1, y1, x2, y2, thickness);
+    printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) with thickness %i\n", x1, y1, x2, y2, x3, y3, x4, y4, thickness);
 }
 
 /**

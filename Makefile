@@ -6,6 +6,7 @@ LDFLAGS  = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0) -fsanitize=add
 # ===================== Directories =====================
 SRC_DIR      = src
 IMG_DIR      = $(SRC_DIR)/image
+UI_SRC_DIR   = $(SRC_DIR)/ui
 INCLUDE_DIR  = include
 TEST_DIR     = tests
 BUILD_DIR    = build
@@ -20,6 +21,7 @@ PIPELINE_BIN = $(BUILD_DIR)/pipeline
 # ===================== Source Files =====================
 SRC_FILES    = $(wildcard $(SRC_DIR)/*.c)
 IMG_FILES    = $(wildcard $(IMG_DIR)/*.c)
+UI_FILES     = $(wildcard $(UI_SRC_DIR)/*.c)
 TEST_FILES   = $(filter-out $(TEST_DIR)/test_helpers.c, $(wildcard $(TEST_DIR)/*.c))
 
 MAIN_SRC = $(filter-out \
@@ -33,11 +35,16 @@ IMG_UI_SRC   = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
 IMG_PIPE_SRC = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
 
 # ===================== Object Files =====================
-MAIN_OBJ     = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-UI_OBJ       = $(BUILD_DIR)/ui.o $(IMG_UI_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
-IMG_OBJ      = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
-PIPELINE_OBJ = $(BUILD_DIR)/line_detection.o
-PIPELINE_IMG_OBJ = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
+MAIN_OBJ          = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+CORE_OBJ = $(filter-out $(BUILD_DIR)/image_main.o, \
+              $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)) \
+            $(BUILD_DIR)/dataset.o \
+            $(BUILD_DIR)/solver.o \
+            $(BUILD_DIR)/neural_network.o
+UI_OBJ = $(CORE_OBJ) build/ui.o build/ui_solve_grid.o
+IMG_OBJ           = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
+PIPELINE_OBJ      = $(BUILD_DIR)/line_detection.o
+PIPELINE_IMG_OBJ  = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 SOLVER_OBJ        = $(BUILD_DIR)/solver.o
 NEURAL_NET_OBJ    = $(BUILD_DIR)/neural_network.o
 
@@ -56,9 +63,9 @@ $(UI_BIN): $(UI_OBJ)
 	@echo "Linking UI..."
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/ui.o: $(SRC_DIR)/ui.c
+$(BUILD_DIR)/%.o: $(UI_SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling src/ui.c..."
+	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 # ---------- Image Program ----------
