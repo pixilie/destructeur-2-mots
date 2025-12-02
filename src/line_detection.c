@@ -345,7 +345,7 @@ GridLetter* generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
                 grid_letter.y1 = coo[index_coo][1];
                 grid_letter.x2 = coo[index_coo][2];
                 grid_letter.y2 = coo[index_coo][3];
-                letters[letter_grid_index] = grid_letter;
+                printf("Detected letter %i inside grid : (%i, %i)(%i, %i)\n", letter_grid_index, grid_letter.x1, grid_letter.y1, grid_letter.x2, grid_letter.y2);                letters[letter_grid_index] = grid_letter;
                 letter_grid_index++;
             }
             
@@ -655,12 +655,6 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     GridLetter *grid_letters_list = generate_letter(pixbuf_to_slice, grid_coo, coo, output_letter_file, nb_letter);
     GridLetter **grid_letters_array = build_grid_from_image(grid_letters_list, nb_letter, &nb_rows, &nb_cols);
     char **grid_array = build_grid_array(pixbuf_to_slice, grid_letters_array, nb_rows, nb_cols);
-    free(grid_letters_list);
-    for (int i = 0; i < nb_rows; i++)
-    {
-        free(grid_letters_array[i]);
-    }
-    free(grid_letters_array);
     
     Grid final_grid;
     final_grid.grid = grid_array;

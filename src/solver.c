@@ -5,6 +5,7 @@
 #include "../include/image/image.h"
 #include "../include/neural_network.h"
 #include "../include/line_detection.h"
+#include "solver.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <string.h>
 
@@ -147,11 +148,11 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
         if (abs(center_y_current - center_y_prev) <= row_threshold)
         {
             temp_rows[row_count - 1][row_sizes[row_count - 1]] = letters[i];
+            row_sizes[row_count - 1]++;
             if (row_sizes[row_count - 1] > col_count)
             {
                 col_count = row_sizes[row_count - 1];
             }
-            row_sizes[row_count - 1]++;
         }
         // Start new row
         else
@@ -166,7 +167,7 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
     // Sort every row by x value
     for (int row = 0; row < row_count; row++)
     {
-        qsort(temp_rows[row], sizeof(GridLetter), row_sizes[row], compare_x);
+        qsort(temp_rows[row], row_sizes[row], sizeof(GridLetter), compare_x);
     }
 
     // Create the sorted grid
@@ -174,7 +175,7 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
     for (int row = 0; row < row_count; row++)
     {
         grid[row] = malloc(col_count * sizeof(GridLetter));
-        memcpy(grid[row], temp_rows[row], col_count * sizeof(GridLetter));
+        memcpy(grid[row], temp_rows[row], row_sizes[row] * sizeof(GridLetter));
     }
 
     for (int i = 0; i < row_count; i++)
@@ -186,6 +187,8 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
 
     *rows_out = row_count;
     *cols_out = col_count;
+
+    free(letters);
 
     return grid;
 }
