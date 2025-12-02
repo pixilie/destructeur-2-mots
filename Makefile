@@ -75,7 +75,7 @@ $(PIPELINE_BIN): $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ)
 
 $(BUILD_DIR)/line_detection.o: $(SRC_DIR)/line_detection.c
 	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling src/line_detection.c..."
+	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 # ===================== Generic Compilation =====================
@@ -85,6 +85,11 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(NN_OBJ): $(SRC_DIR)/neural_network.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
@@ -113,8 +118,13 @@ $(BUILD_DIR)/test_solver_tests: $(TEST_DIR)/solver_tests.c $(TEST_DIR)/test_help
 	@echo "Building test: $@"
 	@$(CC) $(CFLAGS) -DTESTING -o $@ $^ $(LDFLAGS)
 
+LINE_DET_TEST      = $(BUILD_DIR)/test_line_detection_tests
+LINE_DET_TEST_SRC  = $(TEST_DIR)/line_detection_tests.c
+LINE_DET_HELPERS   = $(TEST_DIR)/test_helpers.c
+LINE_DET_OBJ       = $(BUILD_DIR)/test_line_detection.o
+
 tests/line_detection_tests: $(LINE_DET_TEST)
-	@echo "Running line detection test..."
+	@echo "Running test: $@"
 	@./$(LINE_DET_TEST)
 
 $(LINE_DET_TEST): $(LINE_DET_TEST_SRC) $(LINE_DET_HELPERS) $(PIPELINE_IMG_OBJ)
