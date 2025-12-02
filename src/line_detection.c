@@ -312,8 +312,8 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
  *  - output_file    : directory path where letter images will be saved (created
  * if necessary).
  */
-GridLetter* generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
-                     char *output_file, int nb_letters)
+GridLetter *generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
+                            char *output_file, int nb_letters)
 {
     g_mkdir_with_parents(output_file, 0777);
 
@@ -345,10 +345,13 @@ GridLetter* generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
                 grid_letter.y1 = coo[index_coo][1];
                 grid_letter.x2 = coo[index_coo][2];
                 grid_letter.y2 = coo[index_coo][3];
+                printf("Detected letter %i : (%i, %i)(%i, %i)\n",
+                       letter_grid_index, grid_letter.x1, grid_letter.y1,
+                       grid_letter.x2, grid_letter.y2);
                 letters[letter_grid_index] = grid_letter;
                 letter_grid_index++;
             }
-            
+
             GdkPixbuf *letter = crop(
                 pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
                 coo[index_coo][2] + os, coo[index_coo][3] + os);
@@ -652,16 +655,20 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     int nb_rows;
     int nb_cols;
-    GridLetter *grid_letters_list = generate_letter(pixbuf_to_slice, grid_coo, coo, output_letter_file, nb_letter);
-    GridLetter **grid_letters_array = build_grid_from_image(grid_letters_list, nb_letter, &nb_rows, &nb_cols);
-    char **grid_array = build_grid_array(pixbuf_to_slice, grid_letters_array, nb_rows, nb_cols);
+    GridLetter *grid_letters_list = generate_letter(
+        pixbuf_to_slice, grid_coo, coo, output_letter_file, nb_letter);
+    
+    GridLetter **grid_letters_array =
+        build_grid_from_image(grid_letters_list, nb_letter, &nb_rows, &nb_cols);
     free(grid_letters_list);
+    char **grid_array =
+        build_grid_array(pixbuf_to_slice, grid_letters_array, nb_rows, nb_cols);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);
     }
     free(grid_letters_array);
-    
+
     Grid final_grid;
     final_grid.grid = grid_array;
     final_grid.nb_rows = nb_rows;
