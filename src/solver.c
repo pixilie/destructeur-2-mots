@@ -217,6 +217,11 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
             GridLetter grid_letter = grid_letters[row][col];
             GdkPixbuf *letter = crop(pixbuf, grid_letter.x1, grid_letter.y1,
                                      grid_letter.x2, grid_letter.y2);
+            if (!letter)
+            {
+                printf("No letter found at row : %i, col %i\n", row, col);
+                continue;
+            }
             GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
 
             char predicted_letter = predict_letter(nn, scaled_letter);
