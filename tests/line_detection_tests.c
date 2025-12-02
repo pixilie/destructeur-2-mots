@@ -60,7 +60,7 @@ int test_pipeline(char *test_name, char *filename, char *output_gw_file,
 
     int result = 1;
 
-    pipelineResult pipelineResult =
+    PipelineResult pipelineResult =
         pipeline(filename, output_gw_file, output_letter_file);
 
     result &=

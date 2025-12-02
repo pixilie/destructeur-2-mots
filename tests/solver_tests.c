@@ -1,5 +1,6 @@
 #include "../include/solver.h"
 #include "../include/test_helpers.h"
+#include "../include/line_detection.h"
 #include <stdio.h>
 
 static int rows = 9;
@@ -131,6 +132,98 @@ int test_diagonal()
     return res;
 }
 
+void print_grid_array(char **grid_array, int rows, int cols)
+{
+    printf("[");
+    for (int i = 0; i < rows; i++)
+    {
+        printf("[");
+        for (int j = 0; j < cols; j++)
+        {
+            printf("%c", grid_array[i][j]);
+            if (j < cols - 1)
+            {
+                printf(" ");
+            }
+        }
+        printf("]");
+        if (i < rows - 1)
+        {
+            printf("\n");
+        }
+    }
+    printf("]\n");
+}
+
+
+int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
+{
+    if (expected_grid.nb_rows != actual_grid.nb_rows)
+    {
+        print_fail();
+        printf("Expected %i rows in the grid array, got %i\n", expected_grid.nb_cols, actual_grid.nb_cols);
+        return 0;
+    }
+    if (expected_grid.nb_cols != actual_grid.nb_cols)
+    {
+        print_fail();
+        printf("Expected %i columns in the grid array, got %i\n", expected_grid.nb_cols, actual_grid.nb_cols);
+        return 0;
+    }
+    int rows = expected_grid.nb_rows;
+    int cols = expected_grid.nb_cols;
+    char **expected_grid_array = expected_grid.grid;
+    char **actual_grid_array = actual_grid.grid;
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            if (expected_grid_array[i][j] != actual_grid_array[i][j])
+            {
+                print_fail();
+                printf("The grid arrays are different, expected \n");
+                print_grid_array(expected_grid_array, rows, cols);
+                printf("got\n");
+                print_grid_array(actual_grid_array, rows, cols);
+                return 0;
+            }
+        }
+    }
+    print_success();
+    printf("Got array of %i rows and %i columns :\n", rows, cols);
+    print_grid_array(actual_grid_array, rows, cols);
+    return 1;
+}
+
+int test_build_grid_array()
+{
+    print_test_subcategory("Grid Array Tests");
+    
+    PipelineResult pipelineResult = pipeline("../assets/level_1_image_1.png", "gw", "letters");
+
+    Grid expected_grid;
+    expected_grid.nb_rows = 17;
+    expected_grid.nb_cols = 17;
+    
+    char expected_grid_array[17][17] =
+    {
+    {'P','X','U','T','S','I','N','I','U','P','R','V', 'G', 'B', 'M', 'D', 'D'},
+    {'D','X','R','A','H','C','L','B','G','A'},
+    {'D','I','K','C','I','L','E','O','K','C'},
+    {'I','G','A','J','H','Y','L','Y','H','I'},
+    {'H','G','F','G','O','D','T','I','O','T'},
+    {'G','D','L','R','O','W','K','B','F','R'},
+    {'P','L','N','R','D','N','E','R','G','E'},
+    {'J','H','A','I','D','U','A','J','G','V'},
+    {'U','K','G','F','F','O','L','L','E','H'}
+    };
+
+    expected_grid.grid = (char **) expected_grid_array;
+    
+    Grid actual_grid = pipelineResult.grid;
+    return are_grid_arrays_equal(expected_grid, actual_grid);
+}
+
 int main()
 {
     print_test_category("Solver Tests");
@@ -142,6 +235,8 @@ int main()
     if (!test_vertical())
         passed = 0;
     if (!test_diagonal())
+        passed = 0;
+    if (!test_build_grid_array())
         passed = 0;
 
     if (passed)

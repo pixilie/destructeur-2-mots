@@ -38,13 +38,13 @@ void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
         draw_pixel(pixbuf, x1, y1, thickness);
         return;
     }
-    
+
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
 
     int step_x = (x1 < x2) ? 1 : -1; // The direction of the horizontal movement
     int step_y = (y1 < y2) ? 1 : -1;
-        
+
     int error_term = dx - dy;
 
     while (1)
@@ -87,56 +87,3 @@ void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
     draw_line(pixbuf, x3, y3, x4, y4, thickness);
     draw_line(pixbuf, x4, y4, x1, y1, thickness);
 }
-
-// Return an array of the solved words' coordinates in the grid
-int **get_all_words_coordinates(int rows, int cols, char tab[rows][cols],
-                                int words_count, char **words)
-{
-    int **result = malloc(words_count * sizeof(int *));
-    for (int word_index = 0; word_index < words_count; word_index++)
-    {
-        result[word_index] = malloc(4 * sizeof(int));
-
-        int x1 = 0;
-        int y1 = 0;
-        int x2 = 0;
-        int y2 = 0;
-        char *word = words[word_index];
-        solve(rows, cols, tab, word, &x1, &y1, &x2, &y2);
-        result[word_index][0] = x1;
-        result[word_index][1] = y1;
-        result[word_index][2] = x2;
-        result[word_index][3] = y2;
-    }
-    return result;
-}
-
-// Takes a solved word coordinates in the grid and returns its coordinates in
-// the image
-int *get_word_image_coordinates(int grid_coos[4], int rows, int cols, int x1,
-                                int y1, int x2, int y2)
-{
-    int grid_width = grid_coos[2] - grid_coos[0];
-    int grid_height = grid_coos[3] - grid_coos[1];
-
-    int width_per_letter = grid_width / cols;
-    int height_per_letter = grid_height / rows;
-
-    int *result = calloc(8, sizeof(int));
-
-    result[0] = grid_coos[0] + x1 * width_per_letter;
-    result[1] = grid_coos[0] + x1 * height_per_letter;
-
-    result[2] = grid_coos[0] + y1 * width_per_letter;
-    result[3] = grid_coos[0] + y1 * height_per_letter;
-
-    result[4] = grid_coos[0] + x2 * width_per_letter;
-    result[5] = grid_coos[0] + x2 * height_per_letter;
-
-    result[6] = grid_coos[0] + y2 * width_per_letter;
-    result[7] = grid_coos[0] + y2 * height_per_letter;
-
-    return result;
-}
-
-void solve_grid() {}
