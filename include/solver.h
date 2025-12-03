@@ -21,4 +21,4 @@ int compare_y(const void *letter1, const void *letter2);
 GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
                                    int *rows_out, int *cols_out);
 char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
-                        int cols);
+                        int cols, int *rows_out, int *cols_out);

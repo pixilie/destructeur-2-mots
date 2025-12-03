@@ -657,8 +657,10 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     GridLetter **grid_letters_array =
         build_grid_from_image(grid_letters_list, nb_letter, &nb_rows, &nb_cols);
     free(grid_letters_list);
+    int rows;
+    int cols;
     char **grid_array =
-        build_grid_array(pixbuf_to_slice, grid_letters_array, nb_rows, nb_cols);
+        build_grid_array(pixbuf_to_slice, grid_letters_array, nb_rows, nb_cols, &rows, & cols);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);
@@ -667,8 +669,8 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     Grid final_grid;
     final_grid.grid = grid_array;
-    final_grid.nb_rows = nb_rows;
-    final_grid.nb_cols = nb_cols;
+    final_grid.nb_rows = rows;
+    final_grid.nb_cols = cols;
     pipelineResult.grid = final_grid;
 
     int **word_list = malloc(nb_words * sizeof(int *));
@@ -724,8 +726,9 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     g_object_unref(words);
 
     // #ifndef TESTING
-    printf("Best rotation angle : %.2f°\n", best_angle);
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Best rotation angle : %.2f°\n", best_angle);
 
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Built grid of rows %i and %i columns\n", pipelineResult.grid.nb_rows, pipelineResult.grid.nb_cols);
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected grid coordinates : (%i, %i)(%i, %i)\n",
            pipelineResult.grid_coo[0], pipelineResult.grid_coo[1],

@@ -149,10 +149,6 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
         {
             temp_rows[row_count - 1][row_sizes[row_count - 1]] = letters[i];
             row_sizes[row_count - 1]++;
-            if (row_sizes[row_count - 1] > col_count)
-            {
-                col_count = row_sizes[row_count - 1];
-            }
         }
         // Start new row
         else
@@ -162,6 +158,15 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
             temp_rows[row_count - 1] = malloc(nb_letters * sizeof(GridLetter));
             temp_rows[row_count - 1][0] = letters[i];
             row_sizes[row_count - 1] = 1;
+        }
+    }
+
+    // Number of columns = Row with the maximum number of letters
+    for (int row = 0; row < row_count; row++)
+    {
+        if (row_sizes[row] > col_count)
+        {
+            col_count = row_sizes[row];
         }
     }
 
@@ -196,14 +201,13 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
 
     *rows_out = row_count;
     *cols_out = col_count;
-    printf("Rows : %i, cols : %i\n", row_count, col_count);
 
     return grid;
 }
 
 // Builds the array of the grid with the letters found in the grid in the image
 char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
-                        int cols)
+                        int cols, int *rows_out, int *cols_out)
 {
     NeuralNetwork *nn = load_network(MODEL_PATH);
     if (!nn)
@@ -216,7 +220,7 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
     char **grid_array = malloc(rows * sizeof(char *));
     for (int row = 0; row < rows; row++)
     {
-        grid_array[row] = malloc(cols * sizeof(char));
+        grid_array[row] = calloc(cols, sizeof(char));
     }
 
     int nb_letter = 0;
@@ -227,7 +231,7 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
     // it to the grid array
     for (int row = 0; row < rows; row++)
     {
-        printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols + cols);
+        //printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols + cols);
         for (int col = 0; col < cols; col++)
         {
             GridLetter grid_letter = grid_letters[row][col];
@@ -240,13 +244,13 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
                                      grid_letter.x2, grid_letter.y2);
             if (!letter)
             {
-                printf("No letter found at row : %i, col %i\n", row, col);
+                //printf("No letter found at row : %i, col %i\n", row, col);
                 continue;
             }
             GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
 
             char predicted_letter = predict_letter(nn, scaled_letter);
-            printf("%c ", predicted_letter);
+            //printf("%c ", predicted_letter);
             grid_array[row][col] = predicted_letter;
 
             g_object_unref(letter);
@@ -254,44 +258,91 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
 
             nb_letter++;
         }
-        printf("\n");
+        //printf("\n");
     }
 
     int start_row = -1;
-    int final_row = -1;
+    int end_row = -1;
     int col_count = 0;
 
-    for (int row = 0; row < rows; row++)
-    {
-        if (start_row == -1 && grid_array[row][0] < 'A' && grid_array[row][0] > 'Z')
-        {
-            start_row = row;
-        }
-        else if (start_row != -1 && final_row == -1 && grid_array[row][0] < 'A' && grid_array[row][0] > 'Z')
-        {
-            final_row = row - 1;
-        }
-    }
-
+    // Find first and last rows that are not empty
     for (int row = 0; row < rows; row++)
     {
         for (int col = 0; col < cols; col++)
         {
             if (grid_array[row][col] >= 'A' && grid_array[row][col] <= 'Z')
             {
-                if(col > col_count)
+                if (start_row == -1)
+                {
+                    start_row = row;
+                }
+                end_row = row; 
+            }
+        }
+    }
+
+    
+    // Find number of cols that are not empty
+    for (int row = 0; row < rows; row++)
+    {
+        for (int col = 0; col < cols; col++)
+        {
+            if (grid_array[row][col] >= 'A' && grid_array[row][col] <= 'Z')
+            {
+                if(col + 1 > col_count)
                 {
                     col_count = col + 1;
                 }
             }
         }
     }
+    
+    
 
-    printf("Start row = %i, final row = %i, col = %i\n", start_row, final_row, col_count);
+    // Remove last row if row with very few letters (trash rows)
+    int min_letters_per_row = 5;
+    int last_row_count = 0;
+    for (int col = 0; col < col_count; col++)
+    {
+        if (grid_array[end_row][col] >= 'A' && grid_array[end_row][col] <= 'Z')
+        {
+            last_row_count++;
+        }
+    }
+
+    if (last_row_count < min_letters_per_row)
+    {
+        end_row--; // Remove trash empty last row
+    }
+    
+    int row_count = end_row - start_row + 1;
+    
+    printf("Built grid with %i rows and %i columns\n", row_count, col_count);
+
+    char **new_grid_array = malloc(row_count * sizeof(char *));
+    for (int row = 0; row < row_count; row++)
+    {  
+        printf("Row %i : \t ", row);
+        new_grid_array[row] = malloc(col_count * sizeof(char));
+        for (int col = 0; col < col_count; col++)
+        {
+            new_grid_array[row][col] = grid_array[start_row + row][col];
+            printf("%c ", new_grid_array[row][col]);
+        }
+        printf("\n");
+    }
+
+    *rows_out = row_count;
+    *cols_out = col_count;
+    for (int row = 0; row < rows; row++)
+    {
+        free(grid_array[row]);
+    }
+    free(grid_array);
 
     free_network(nn);
 
-    return grid_array;
+    return new_grid_array;
 }
 
 /*

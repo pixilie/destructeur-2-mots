@@ -158,6 +158,8 @@ clean:
 	@find $(BUILD_DIR) -mindepth 1 ! -name ".__afs*" -exec rm -rf {} + 2>/dev/null || true
 	@rm -rf $(RESULTS_DIR) 2>/dev/null || true
 	@rm -f tests/model
+	@rm -f image.png bw.png filtered.png
+	@rm -rf gw/ letters/
 	@echo "Clean complete."
 
 .PHONY: all clean tests

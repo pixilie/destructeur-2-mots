@@ -134,7 +134,6 @@ int test_diagonal()
 
 void print_grid_array(char **grid_array, int rows, int cols)
 {
-    printf("[");
     for (int i = 0; i < rows; i++)
     {
         printf("[");
@@ -152,7 +151,7 @@ void print_grid_array(char **grid_array, int rows, int cols)
             printf("\n");
         }
     }
-    printf("]\n");
+    printf("\n");
 }
 
 
@@ -161,7 +160,7 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
     if (expected_grid.nb_rows != actual_grid.nb_rows)
     {
         print_fail();
-        printf("Expected %i rows in the grid array, got %i\n", expected_grid.nb_cols, actual_grid.nb_cols);
+        printf("Expected %i rows in the grid array, got %i\n", expected_grid.nb_rows, actual_grid.nb_rows);
         return 0;
     }
     if (expected_grid.nb_cols != actual_grid.nb_cols)
@@ -218,10 +217,18 @@ int test_build_grid_array()
     {'U','K','G','F','F','O','L','L','E','H'}
     };
 
-    expected_grid.grid = (char **) expected_grid_array;
+    char **expected_grid_ptr = malloc(expected_grid.nb_rows * sizeof(char *));
+    for (int i = 0; i < expected_grid.nb_rows; i++)
+    {
+        expected_grid_ptr[i] = expected_grid_array[i];
+    }
+
+    expected_grid.grid = expected_grid_ptr;
     
     Grid actual_grid = pipelineResult.grid;
-    return are_grid_arrays_equal(expected_grid, actual_grid);
+    int result = are_grid_arrays_equal(expected_grid, actual_grid);
+    free(expected_grid_ptr);
+    return result;
 }
 
 int main()
