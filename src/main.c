@@ -78,6 +78,8 @@ void apply_transformations(struct AppData *data)
  * Parameters:
  *  - user_data: pointer to struct Appdata
  */
+
+/*
 void greyscale(gpointer user_data)
 {
     struct AppData *data = user_data;
@@ -94,6 +96,9 @@ void greyscale(gpointer user_data)
     
     printf("Image converted to greyscale\n");
 }
+*/
+
+
 
 /*
  * Gtk callback for "White and Black"
@@ -101,6 +106,7 @@ void greyscale(gpointer user_data)
  * Parameters :
  *  -user_data : pointer to struct AppData
  */
+/*
 void binarize_image(gpointer user_data)
 {
     struct AppData *data = user_data;
@@ -116,6 +122,8 @@ void binarize_image(gpointer user_data)
 
     printf("Image converted to black and white with treshold = %i\n", threshold);
 }
+*/
+
 
 /**
  * on_reset_clicked:
@@ -228,12 +236,15 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    greyscale(data);
-    binarize_image(data);
-    data->transformed = median_filter_3x3(data->transformed);
+    if(!data->transformed)
+	    return;
+
+    convert_to_grayscale(data->transformed);
+    int treshold = convert_to_black_and_white(data->transformed);
+    median_filter_3x3(data->transformed);
     data->transformed = rotate_image_automatic(data->transformed);
 
-    apply_transformation(data);
+    apply_transformations(data);
 }
 
 /*
@@ -266,14 +277,19 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *window;
     GtkWidget *vertical_box;
     GtkWidget *horizontal_box;
-    GtkWidget *grayscale_button;
-    GtkWidget *binarize_button;
-    GtkWidget *rotate_button;
+//    GtkWidget *grayscale_button;
+//    GtkWidget *binarize_button;
+//    GtkWidget *rotate_button;
     GtkWidget *reset_button;
     GtkWidget *save_button;
     GtkWidget *close_button;
     GtkWidget *image;
     GtkWidget *scrolled;
+    GtkWidget *treatement_button;
+    GtkWidget *solver_button;
+    GtkWidget *training_button;
+    GtkWidget *load_button;
+    GtkWidget *save_neural_button;
 
    // Load image
     char *filename = (char *)user_data;
@@ -308,13 +324,31 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     vertical_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), vertical_box);
 
+
+
+    //Create vertical box for header
+    GtkWidget *top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_box_pack_start(GTK_BOX(vertical_box),top_bar, FALSE, FALSE, 0);
+
+    //label
+    GtkWidget *title = gtk_label_new("Destructeur 2 mots");
+    gtk_box_pack_start(GTK_BOX(top_bar), title, FALSE, FALSE, 0);
+    //space between title and quit
+    GtkWidget *space = gtk_label_new(NULL);
+    gtk_box_pack_start(GTK_BOX(top_bar), space, TRUE, TRUE, 0);
+    //Quit button
+    close_button = gtk_button_new_with_label("Quitter");
+    g_signal_connect_swapped(close_button, "clicked", G_CALLBACK(gtk_window_close), window);
+    gtk_box_pack_start(GTK_BOX(top_bar), close_button, TRUE, TRUE, 15);
+
+
+
     GdkPixbuf *scaled =
         gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
 
     scrolled = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_box_pack_start(GTK_BOX(vertical_box), scrolled, TRUE, TRUE, 5);
 
     image = gtk_image_new_from_pixbuf(scaled);
     if (!gtk_image_get_pixbuf(GTK_IMAGE(image)))
@@ -324,24 +358,44 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     }
     gtk_container_add(GTK_CONTAINER(scrolled), image);
 
+
+    //Create box for neural training
+    GtkWidget *center = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_box_pack_start(GTK_BOX(vertical_box), center, TRUE, TRUE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(center), scrolled, TRUE, TRUE, 0);
+    
+    //right button for neural
+    GtkWidget *right_button = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_box_pack_start(GTK_BOX(center), right_button, FALSE, FALSE, 0);
+
+
     horizontal_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
     gtk_box_pack_start(GTK_BOX(vertical_box), horizontal_box, FALSE, FALSE, 5);
+   //Create new buttons for image action
 
-
-   //Create new buttons
-   close_button = gtk_button_new_with_label("Quitter");
-   g_signal_connect_swapped(close_button, "clicked", G_CALLBACK(gtk_window_close), window);
-
-   save_button = gtk_button_new_with_label("Sauvegarde");
-   reset_button = gtk_button_new_with_label("Réinitialiser");
    treatement_button = gtk_button_new_with_label("Traiter");
+   reset_button = gtk_button_new_with_label("Réinitialiser");
+   save_button = gtk_button_new_with_label("Sauvegarde");
    solver_button = gtk_button_new_with_label("Resoudre");
 
-   gtk_box_pack_start(GTK_BOX(horizontal_box), close_button, TRUE, TRUE, 5);
-   gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
-   gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
-   gtk_box_pack_start(GTK_BOX(horizontal_box), solver_button, TRUE, TRUE, 5);
+   GtkWidget *description = gtk_label_new("Image :");
+   gtk_box_pack_start(GTK_BOX(horizontal_box), description, FALSE, FALSE, 5);
+
    gtk_box_pack_start(GTK_BOX(horizontal_box), treatement_button, TRUE, TRUE, 5);
+   gtk_box_pack_start(GTK_BOX(horizontal_box), solver_button, TRUE, TRUE, 5);
+   gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
+   gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
+
+
+   //Create new button for neural training
+   training_button = gtk_button_new_with_label("Entraîner");
+   load_button = gtk_button_new_with_label("Charger");
+   save_neural_button = gtk_button_new_with_label("Sauvegarder l'entraînement");
+
+   gtk_box_pack_start(GTK_BOX(right_button), training_button, TRUE, TRUE, 5);
+   gtk_box_pack_start(GTK_BOX(right_button), load_button, TRUE, TRUE, 5);
+   gtk_box_pack_start(GTK_BOX(right_button), save_neural_button, TRUE, TRUE, 5);
 
    // Initialize AppData
     struct AppData *data = g_new(struct AppData, 1);
@@ -352,9 +406,9 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->rotation_angle = 0.0;
     data->save_index = 1;
 
-    g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
-    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked), data);
     g_signal_connect(treatement_button, "clicked", G_CALLBACK(automatic_treatement), data);
+    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked), data);
+    g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
     g_signal_connect(solver_button, "clicked", G_CALLBACK(solver), data);
 
     //Show all widgets

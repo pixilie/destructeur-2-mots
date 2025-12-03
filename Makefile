@@ -56,7 +56,7 @@ $(UI_BIN): $(UI_OBJ)
 	@echo "Linking UI..."
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/ui.o: $(SRC_DIR)/ui.c
+$(BUILD_DIR)/ui.o: $(SRC_DIR)/main.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling src/ui.c..."
 	@$(CC) $(CFLAGS) -c $< -o $@
