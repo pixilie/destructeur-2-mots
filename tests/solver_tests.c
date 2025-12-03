@@ -192,12 +192,6 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
     print_success();
     printf("Got array of %i rows and %i columns :\n", rows, cols);
     print_grid_array(actual_grid_array, rows, cols);
-    
-    for (int i = 0; i < rows; i++)
-    {
-        free(actual_grid_array[i]);
-    }
-    free(actual_grid_array);
     return 1;
 }
 
@@ -227,17 +221,7 @@ int test_build_grid_array()
     expected_grid.grid = (char **) expected_grid_array;
     
     Grid actual_grid = pipelineResult.grid;
-    int is_equal = 0;
-    if (are_grid_arrays_equal(expected_grid, actual_grid) == 1)
-    {
-        is_equal = 1;
-    }
-    for (int i = 0; i < actual_grid.nb_rows; i++)
-    {
-        free(actual_grid.grid[i]);
-    }
-    free(actual_grid.grid);
-    return is_equal;
+    return are_grid_arrays_equal(expected_grid, actual_grid);
 }
 
 int main()
