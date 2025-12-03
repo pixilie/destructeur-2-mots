@@ -127,7 +127,7 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
     // Sort letters by y value
     qsort(letters, nb_letters, sizeof(GridLetter), compare_y);
 
-    int row_threshold = 10; // The tolerance between 2 y letter values to group
+    int row_threshold = 12; // The tolerance between 2 y letter values to group
                            // them in the same row
     GridLetter **temp_rows = malloc(nb_letters * sizeof(GridLetter *));
     int *row_sizes = calloc(nb_letters, sizeof(int));
@@ -138,9 +138,10 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
     int row_count = 1; // The number of rows in the grid
     int col_count = 1; // The number of columns in the grid
 
+    int first_letter_in_row = 0;
     for (int i = 1; i < nb_letters; i++)
     {
-        int center_y_prev = center_y(&letters[i - 1]);
+        int center_y_prev = center_y(&letters[first_letter_in_row]);
         int center_y_current = center_y(&letters[i]);
 
         // Same row
@@ -156,10 +157,11 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
         // Start new row
         else
         {
-            temp_rows[row_count] = malloc(nb_letters * sizeof(GridLetter));
-            temp_rows[row_count][0] = letters[i];
-            row_sizes[row_count] = 1;
             row_count++;
+            first_letter_in_row = i;
+            temp_rows[row_count - 1] = malloc(nb_letters * sizeof(GridLetter));
+            temp_rows[row_count - 1][0] = letters[i];
+            row_sizes[row_count - 1] = 1;
         }
     }
 
@@ -173,7 +175,8 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
     GridLetter **grid = malloc(row_count * sizeof(GridLetter *));
     for (int row = 0; row < row_count; row++)
     {
-        grid[row] = malloc(col_count * sizeof(GridLetter));
+        grid[row] = malloc(col_count * sizeof(GridLetter));    
+        memcpy(grid[row], temp_rows[row], row_sizes[row] * sizeof(GridLetter));
 
         for (int col = row_sizes[row]; col < col_count; col++)
         {
@@ -182,9 +185,6 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
             grid[row][col].x2 = 0;
             grid[row][col].y2 = 0;
         }
-        
-        memcpy(grid[row], temp_rows[row], col_count * sizeof(GridLetter));
-
     }
 
     for (int i = 0; i < row_count; i++)
@@ -196,6 +196,7 @@ GridLetter **build_grid_from_image(GridLetter *letters, int nb_letters,
 
     *rows_out = row_count;
     *cols_out = col_count;
+    printf("Rows : %i, cols : %i\n", row_count, col_count);
 
     return grid;
 }
@@ -222,12 +223,12 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
     int height = gdk_pixbuf_get_height(pixbuf);
     // For each letter, determine the character with the Neural Network and add
     // it to the grid array
-    for (int row = 1; row < rows; row++)
+    for (int row = 0; row < rows; row++)
     {
         for (int col = 0; col < cols; col++)
         {
             GridLetter grid_letter = grid_letters[row][col];
-            if (grid_letter.x1 < 0 || grid_letter.y1 < 0 || grid_letter.x2 >= width || grid_letter.y2 >= height)
+            if (grid_letter.x1 <= 0 || grid_letter.y1 <= 0 || grid_letter.x2 >= width || grid_letter.y2 >= height)
             {
                 continue;
             }
@@ -241,7 +242,7 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
             GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
 
             char predicted_letter = predict_letter(nn, scaled_letter);
-            printf("Letter row : %i, col : %i : %c\n", row - 1, col, predicted_letter);
+            printf("Letter row : %i, col : %i : %c\n", row, col, predicted_letter);
             grid_array[row][col] = predicted_letter;
 
             g_object_unref(letter);

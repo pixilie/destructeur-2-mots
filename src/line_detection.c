@@ -270,7 +270,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
             {
                 guchar *p = pixels + y * rowstride + x * n_channels;
 
-                if (p[0] == 255)
+                if (p[0] > 200)
                 {
                     coo[index_coo][0] = coo[index_coo][2] = x;
                     coo[index_coo][1] = coo[index_coo][3] = y;
@@ -320,12 +320,11 @@ GridLetter *generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
     int os = 3;
     char full_path[512];
 
-    int index_coo = 0;
     int letter_grid_index = 0;
 
     GridLetter *letters = malloc(nb_letters * sizeof(GridLetter));
 
-    while (coo[index_coo][0] != 0)
+    for (int index_coo = 0; index_coo < nb_letters; index_coo++)
     {
         if (coo[index_coo][0] < coo[index_coo][2] &&
             coo[index_coo][1] < coo[index_coo][3] &&
@@ -345,9 +344,9 @@ GridLetter *generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
                 grid_letter.y1 = coo[index_coo][1];
                 grid_letter.x2 = coo[index_coo][2];
                 grid_letter.y2 = coo[index_coo][3];
-                printf("Detected letter %i : (%i, %i)(%i, %i)\n",
-                       letter_grid_index, grid_letter.x1, grid_letter.y1,
-                       grid_letter.x2, grid_letter.y2);
+                // printf("Detected letter %i : (%i, %i)(%i, %i)\n",
+                // letter_grid_index, grid_letter.x1, grid_letter.y1,
+                // grid_letter.x2, grid_letter.y2);
                 letters[letter_grid_index] = grid_letter;
                 letter_grid_index++;
             }
@@ -360,7 +359,6 @@ GridLetter *generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
             save_pixbuf_as_png(letter, full_path);
             g_object_unref(letter);
         }
-        index_coo++;
     }
 
     return letters;
@@ -657,7 +655,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int nb_cols;
     GridLetter *grid_letters_list = generate_letter(
         pixbuf_to_slice, grid_coo, coo, output_letter_file, nb_letter);
-    
+
     GridLetter **grid_letters_array =
         build_grid_from_image(grid_letters_list, nb_letter, &nb_rows, &nb_cols);
     free(grid_letters_list);
