@@ -1,22 +1,20 @@
+#include "../include/line_detection.h"
 #include "../include/solver.h"
 #include "../include/test_helpers.h"
-#include "../include/line_detection.h"
 #include <stdio.h>
 
 static int rows = 9;
 static int cols = 10;
 
-char tab[9][10] = {
-    {'H','O','R','I','Z','O','N','T','A','L'},
-    {'D','X','R','A','H','C','L','B','G','A'},
-    {'D','I','K','C','I','L','E','O','K','C'},
-    {'I','G','A','J','H','Y','L','Y','H','I'},
-    {'H','G','F','G','O','D','T','I','O','T'},
-    {'G','D','L','R','O','W','K','B','F','R'},
-    {'P','L','N','R','D','N','E','R','G','E'},
-    {'J','H','A','I','D','U','A','J','G','V'},
-    {'U','K','G','F','F','O','L','L','E','H'}
-};
+char tab[9][10] = {{'H', 'O', 'R', 'I', 'Z', 'O', 'N', 'T', 'A', 'L'},
+                   {'D', 'X', 'R', 'A', 'H', 'C', 'L', 'B', 'G', 'A'},
+                   {'D', 'I', 'K', 'C', 'I', 'L', 'E', 'O', 'K', 'C'},
+                   {'I', 'G', 'A', 'J', 'H', 'Y', 'L', 'Y', 'H', 'I'},
+                   {'H', 'G', 'F', 'G', 'O', 'D', 'T', 'I', 'O', 'T'},
+                   {'G', 'D', 'L', 'R', 'O', 'W', 'K', 'B', 'F', 'R'},
+                   {'P', 'L', 'N', 'R', 'D', 'N', 'E', 'R', 'G', 'E'},
+                   {'J', 'H', 'A', 'I', 'D', 'U', 'A', 'J', 'G', 'V'},
+                   {'U', 'K', 'G', 'F', 'F', 'O', 'L', 'L', 'E', 'H'}};
 
 int solve_word(char *word, int x1_out, int y1_out, int x2_out, int y2_out)
 {
@@ -154,21 +152,27 @@ void print_grid_array(char **grid_array, int rows, int cols)
     printf("\n");
 }
 
-
 int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
 {
     if (expected_grid.nb_rows != actual_grid.nb_rows)
     {
         print_fail();
-        printf("Expected %i rows in the grid array, got %i\n", expected_grid.nb_rows, actual_grid.nb_rows);
+        printf("Expected %i rows in the grid array, got %i\n",
+               expected_grid.nb_rows, actual_grid.nb_rows);
         return 0;
     }
     if (expected_grid.nb_cols != actual_grid.nb_cols)
     {
         print_fail();
-        printf("Expected %i columns in the grid array, got %i\n", expected_grid.nb_cols, actual_grid.nb_cols);
+        printf("Expected %i columns in the grid array, got %i\n",
+               expected_grid.nb_cols, actual_grid.nb_cols);
         return 0;
     }
+
+    print_success();
+    printf("Built grid of %i rows and %i columns\n", expected_grid.nb_rows,
+           expected_grid.nb_cols);
+
     int rows = expected_grid.nb_rows;
     int cols = expected_grid.nb_cols;
     char **expected_grid_array = expected_grid.grid;
@@ -180,6 +184,10 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
             if (expected_grid_array[i][j] != actual_grid_array[i][j])
             {
                 print_fail();
+                printf("First letter difference detected on row %i, column %i, "
+                       "expected %c, got %c\n",
+                       i, j, expected_grid_array[i][j],
+                       actual_grid_array[i][j]);
                 printf("The grid arrays are different, expected \n");
                 print_grid_array(expected_grid_array, rows, cols);
                 printf("got\n");
@@ -197,24 +205,32 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
 int test_build_grid_array()
 {
     print_test_subcategory("Grid Array Tests");
-    
-    PipelineResult pipelineResult = pipeline("../assets/level_1_image_1.png", "gw", "letters");
+
+    PipelineResult pipelineResult =
+        pipeline("../assets/level_1_image_1.png", "gw", "letters");
 
     Grid expected_grid;
     expected_grid.nb_rows = 17;
     expected_grid.nb_cols = 17;
-    
-    char expected_grid_array[17][17] =
-    {
-    {'P','X','U','T','S','I','N','I','U','P','R','V', 'G', 'B', 'M', 'D', 'D'},
-    {'D','X','R','A','H','C','L','B','G','A'},
-    {'D','I','K','C','I','L','E','O','K','C'},
-    {'I','G','A','J','H','Y','L','Y','H','I'},
-    {'H','G','F','G','O','D','T','I','O','T'},
-    {'G','D','L','R','O','W','K','B','F','R'},
-    {'P','L','N','R','D','N','E','R','G','E'},
-    {'J','H','A','I','D','U','A','J','G','V'},
-    {'U','K','G','F','F','O','L','L','E','H'}
+
+    char expected_grid_array[17][17] = {
+        {'P', 'X', 'U', 'T', 'S', 'I', 'N', 'I', 'U', 'P', 'R', 'V', 'G', 'B', 'M', 'D', 'D'},
+        {'E', 'H', 'A', 'A', 'S', 'P', 'O', 'J', 'P', 'E', 'T', 'B', 'E', 'Q', 'Z', 'L', 'C'},
+        {'A', 'U', 'N', 'T', 'E', 'G', 'Q', 'T', 'L', 'H', 'R', 'Z', 'F', 'A', 'T', 'O', 'P'},
+        {'S', 'H', 'X', 'F', 'N', 'G', 'U', 'A', 'X', 'E', 'A', 'A', 'Y', 'P', 'O', 'M', 'H'},
+        {'Y', 'O', 'Y', 'Y', 'L', 'D', 'X', 'L', 'A', 'K', 'Y', 'U', 'Z', 'L', 'B', 'S', 'K'},
+        {'J', 'X', 'M', 'U', 'U', 'G', 'Q', 'T', 'R', 'I', 'M', 'A', 'G', 'J', 'N', 'E', 'B'},
+        {'H', 'F', 'N', 'W', 'F', 'X', 'H', 'D', 'P', 'B', 'B', 'B', 'T', 'N', 'V', 'S', 'K'},
+        {'H', 'I', 'I', 'H', 'D', 'E', 'S', 'Q', 'F', 'U', 'M', 'Y', 'E', 'R', 'N', 'S', 'X'},
+        {'R', 'P', 'B', 'Z', 'N', 'H', 'S', 'D', 'S', 'L', 'H', 'O', 'N', 'B', 'S', 'S', 'S'},
+        {'E', 'H', 'X', 'A', 'I', 'Z', 'I', 'H', 'A', 'H', 'O', 'E', 'S', 'Q', 'F', 'E', 'F'},
+        {'C', 'W', 'Z', 'I', 'M', 'V', 'D', 'C', 'J', 'V', 'S', 'S', 'I', 'M', 'G', 'R', 'W'},
+        {'L', 'A', 'I', 'I', 'R', 'Z', 'Q', 'Q', 'H', 'X', 'D', 'Z', 'O', 'Z', 'Q', 'T', 'R'},
+        {'W', 'C', 'A', 'X', 'E', 'Z', 'R', 'G', 'H', 'A', 'I', 'Z', 'N', 'E', 'C', 'S', 'E'},
+        {'B', 'R', 'H', 'F', 'O', 'T', 'G', 'N', 'I', 'T', 'S', 'E', 'R', 'E', 'O', 'V', 'Z'},
+        {'M', 'W', 'V', 'W', 'Q', 'D', 'U', 'I', 'H', 'W', 'Q', 'T', 'S', 'B', 'I', 'M', 'L'},
+        {'T', 'D', 'T', 'O', 'N', 'Z', 'C', 'X', 'X', 'P', 'G', 'E', 'L', 'K', 'H', 'F', 'Q'},
+        {'Q', 'N', 'E', 'K', 'S', 'V', 'M', 'O', 'T', 'F', 'A', 'L', 'A', 'A', 'E', 'W', 'B'}
     };
 
     char **expected_grid_ptr = malloc(expected_grid.nb_rows * sizeof(char *));
@@ -224,7 +240,7 @@ int test_build_grid_array()
     }
 
     expected_grid.grid = expected_grid_ptr;
-    
+
     Grid actual_grid = pipelineResult.grid;
     int result = are_grid_arrays_equal(expected_grid, actual_grid);
     free(expected_grid_ptr);

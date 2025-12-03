@@ -728,7 +728,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     // #ifndef TESTING
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Best rotation angle : %.2f°\n", best_angle);
 
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Built grid of rows %i and %i columns\n", pipelineResult.grid.nb_rows, pipelineResult.grid.nb_cols);
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Built grid with %i rows and %i columns\n", pipelineResult.grid.nb_rows, pipelineResult.grid.nb_cols);
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected grid coordinates : (%i, %i)(%i, %i)\n",
            pipelineResult.grid_coo[0], pipelineResult.grid_coo[1],
