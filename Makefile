@@ -82,7 +82,7 @@ $(PIPELINE_BIN): $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_
 
 $(BUILD_DIR)/line_detection.o: $(SRC_DIR)/line_detection.c
 	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling src/line_detection.c..."
+	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 # ===================== Generic Compilation =====================
@@ -92,6 +92,11 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(NN_OBJ): $(SRC_DIR)/neural_network.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
