@@ -344,7 +344,7 @@ GridLetter *generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
                 grid_letter.y1 = coo[index_coo][1];
                 grid_letter.x2 = coo[index_coo][2];
                 grid_letter.y2 = coo[index_coo][3];
-                printf("Detected letter %i : (%i, %i)(%i, %i)\n", letter_grid_index, grid_letter.x1, grid_letter.y1, grid_letter.x2, grid_letter.y2);
+                //printf("Detected letter %i : (%i, %i)(%i, %i)\n", letter_grid_index, grid_letter.x1, grid_letter.y1, grid_letter.x2, grid_letter.y2);
                 letters[letter_grid_index] = grid_letter;
                 letter_grid_index++;
             }

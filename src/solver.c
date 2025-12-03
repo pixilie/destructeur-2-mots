@@ -219,17 +219,21 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
         grid_array[row] = malloc(cols * sizeof(char));
     }
 
+    int nb_letter = 0;
+
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     // For each letter, determine the character with the Neural Network and add
     // it to the grid array
     for (int row = 0; row < rows; row++)
     {
+        printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols + cols);
         for (int col = 0; col < cols; col++)
         {
             GridLetter grid_letter = grid_letters[row][col];
             if (grid_letter.x1 <= 0 || grid_letter.y1 <= 0 || grid_letter.x2 >= width || grid_letter.y2 >= height)
             {
+                //printf("Failed to detect letter %i : Row : %i, col : %i\n", nb_letter, row, col);
                 continue;
             }
             GdkPixbuf *letter = crop(pixbuf, grid_letter.x1, grid_letter.y1,
@@ -242,13 +246,48 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
             GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
 
             char predicted_letter = predict_letter(nn, scaled_letter);
-            printf("Letter row : %i, col : %i : %c\n", row, col, predicted_letter);
+            printf("%c ", predicted_letter);
             grid_array[row][col] = predicted_letter;
 
             g_object_unref(letter);
             g_object_unref(scaled_letter);
+
+            nb_letter++;
+        }
+        printf("\n");
+    }
+
+    int start_row = -1;
+    int final_row = -1;
+    int col_count = 0;
+
+    for (int row = 0; row < rows; row++)
+    {
+        if (start_row == -1 && grid_array[row][0] < 'A' && grid_array[row][0] > 'Z')
+        {
+            start_row = row;
+        }
+        else if (start_row != -1 && final_row == -1 && grid_array[row][0] < 'A' && grid_array[row][0] > 'Z')
+        {
+            final_row = row - 1;
         }
     }
+
+    for (int row = 0; row < rows; row++)
+    {
+        for (int col = 0; col < cols; col++)
+        {
+            if (grid_array[row][col] >= 'A' && grid_array[row][col] <= 'Z')
+            {
+                if(col > col_count)
+                {
+                    col_count = col + 1;
+                }
+            }
+        }
+    }
+
+    printf("Start row = %i, final row = %i, col = %i\n", start_row, final_row, col_count);
 
     free_network(nn);
 
