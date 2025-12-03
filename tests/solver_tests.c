@@ -3,6 +3,12 @@
 #include "../include/test_helpers.h"
 #include <stdio.h>
 
+// Terminal colors
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[31m"
+#define COLOR_GREEN "\033[32m"
+#define COLOR_YELLOW "\033[33m"
+
 static int rows = 9;
 static int cols = 10;
 
@@ -130,6 +136,36 @@ int test_diagonal()
     return res;
 }
 
+void print_grid_array_differences(char **expected_grid_array, char **actual_grid_array, int rows, int cols)
+{
+    for (int i = 0; i < rows; i++)
+    {
+        printf("[");
+        for (int j = 0; j < cols; j++)
+        {
+            if (actual_grid_array[i][j] == expected_grid_array[i][j]) // Letters equal
+            {
+                printf(COLOR_GREEN "%c" COLOR_RESET, actual_grid_array[i][j]);
+            }
+            else // Letters different
+            {
+                printf(COLOR_RED "%c" COLOR_RESET, actual_grid_array[i][j]);
+            }
+            if (j < cols - 1)
+            {
+                printf(" ");
+            }
+        }
+        printf("]");
+        if (i < rows - 1)
+        {
+            printf("\n");
+        }
+    }
+    printf("\n");
+    
+}
+
 void print_grid_array(char **grid_array, int rows, int cols)
 {
     for (int i = 0; i < rows; i++)
@@ -191,7 +227,7 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
                 printf("The grid arrays are different, expected \n");
                 print_grid_array(expected_grid_array, rows, cols);
                 printf("got\n");
-                print_grid_array(actual_grid_array, rows, cols);
+                print_grid_array_differences(expected_grid_array, actual_grid_array, rows, cols);
                 return 0;
             }
         }
@@ -219,7 +255,7 @@ int test_build_grid_array()
         {'A', 'U', 'N', 'T', 'E', 'G', 'Q', 'T', 'L', 'H', 'R', 'Z', 'F', 'A', 'T', 'O', 'P'},
         {'S', 'H', 'X', 'F', 'N', 'G', 'U', 'A', 'X', 'E', 'A', 'A', 'Y', 'P', 'O', 'M', 'H'},
         {'Y', 'O', 'Y', 'Y', 'L', 'D', 'X', 'L', 'A', 'K', 'Y', 'U', 'Z', 'L', 'B', 'S', 'K'},
-        {'J', 'X', 'M', 'U', 'U', 'G', 'Q', 'T', 'R', 'I', 'M', 'A', 'G', 'J', 'N', 'E', 'B'},
+        {'J', 'X', 'M', 'U', 'U', 'G', 'Q', 'T', 'R', 'I', 'M', 'A', 'G', 'I', 'N', 'E', 'B'},
         {'H', 'F', 'N', 'W', 'F', 'X', 'H', 'D', 'P', 'B', 'B', 'B', 'T', 'N', 'V', 'S', 'K'},
         {'H', 'I', 'I', 'H', 'D', 'E', 'S', 'Q', 'F', 'U', 'M', 'Y', 'E', 'R', 'N', 'S', 'X'},
         {'R', 'P', 'B', 'Z', 'N', 'H', 'S', 'D', 'S', 'L', 'H', 'O', 'N', 'B', 'S', 'S', 'S'},
@@ -229,7 +265,7 @@ int test_build_grid_array()
         {'W', 'C', 'A', 'X', 'E', 'Z', 'R', 'G', 'H', 'A', 'I', 'Z', 'N', 'E', 'C', 'S', 'E'},
         {'B', 'R', 'H', 'F', 'O', 'T', 'G', 'N', 'I', 'T', 'S', 'E', 'R', 'E', 'O', 'V', 'Z'},
         {'M', 'W', 'V', 'W', 'Q', 'D', 'U', 'I', 'H', 'W', 'Q', 'T', 'S', 'B', 'I', 'M', 'L'},
-        {'T', 'D', 'T', 'O', 'N', 'Z', 'C', 'X', 'X', 'P', 'G', 'E', 'L', 'K', 'H', 'F', 'Q'},
+        {'T', 'D', 'T', 'O', 'N', 'Z', 'C', 'X', 'X', 'R', 'G', 'E', 'L', 'K', 'H', 'F', 'Q'},
         {'Q', 'N', 'E', 'K', 'S', 'V', 'M', 'O', 'T', 'F', 'A', 'L', 'A', 'A', 'E', 'W', 'B'}
     };
 
