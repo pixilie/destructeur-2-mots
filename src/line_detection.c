@@ -252,8 +252,8 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     int nb_letter = 0;
     int min_letter_width = 1;
     int min_letter_height = 10;
-    int max_letter_width = 200;
-    int max_letter_height = 200;
+    int max_letter_width = 70;
+    int max_letter_height = 70;
 
     int *is_visited =
         malloc(width * height * sizeof(int)); // 0 if False 1 if True
@@ -367,21 +367,27 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
     int box1 = 0;
     int box2 = 0;
 
-    int seuil = 40;
+    int threshold_b1_x;
+    int threshold_b1_y;
+    int threshold_b2_x;
+    int threshold_b2_y;
+
     for (int i = 0; i < nb_letter; i++)
     {
         if (box1 == 0)
         {
+            threshold_b1_x = (coo[i][2] - coo[i][0]) * 1.5;
+            threshold_b1_y = (coo[i][3] - coo[i][1]) * 1.2;
             box1_coo[0] = coo[i][0];
             box1_coo[1] = coo[i][1];
             box1_coo[2] = coo[i][2];
             box1_coo[3] = coo[i][3];
             box1++;
         }
-        else if (!(coo[i][2] < box1_coo[0] - seuil ||
-                   coo[i][0] > box1_coo[2] + seuil ||
-                   coo[i][3] < box1_coo[1] - seuil ||
-                   coo[i][1] > box1_coo[3] + seuil))
+        else if (!(coo[i][2] < box1_coo[0] - threshold_b1_x ||
+                   coo[i][0] > box1_coo[2] + threshold_b1_x ||
+                   coo[i][3] < box1_coo[1] - threshold_b1_y ||
+                   coo[i][1] > box1_coo[3] + threshold_b1_y))
         {
             box1_coo[0] = (box1_coo[0] < coo[i][0]) ? box1_coo[0] : coo[i][0];
             box1_coo[1] = (box1_coo[1] < coo[i][1]) ? box1_coo[1] : coo[i][1];
@@ -391,16 +397,18 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
         }
         else if (box2 == 0)
         {
+            threshold_b2_x = (coo[i][2] - coo[i][0]) * 1.5;
+            threshold_b2_y = (coo[i][3] - coo[i][1]) * 1.2;
             box2_coo[0] = coo[i][0];
             box2_coo[1] = coo[i][1];
             box2_coo[2] = coo[i][2];
             box2_coo[3] = coo[i][3];
             box2++;
         }
-        else if (!(coo[i][2] < box2_coo[0] - seuil ||
-                   coo[i][0] > box2_coo[2] + seuil ||
-                   coo[i][3] < box2_coo[1] - seuil ||
-                   coo[i][1] > box2_coo[3] + seuil))
+        else if (!(coo[i][2] < box2_coo[0] - threshold_b2_x ||
+                   coo[i][0] > box2_coo[2] + threshold_b2_x ||
+                   coo[i][3] < box2_coo[1] - threshold_b2_y ||
+                   coo[i][1] > box2_coo[3] + threshold_b2_y))
         {
             box2_coo[0] = (box2_coo[0] < coo[i][0]) ? box2_coo[0] : coo[i][0];
             box2_coo[1] = (box2_coo[1] < coo[i][1]) ? box2_coo[1] : coo[i][1];
