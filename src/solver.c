@@ -316,12 +316,12 @@ char **build_grid_array(GdkPixbuf *pixbuf, GridLetter **grid_letters, int rows,
     }
     
     int row_count = end_row - start_row + 1;
-    
     printf("Built grid with %i rows and %i columns\n", row_count, col_count);
-
+    
     char **new_grid_array = malloc(row_count * sizeof(char *));
     for (int row = 0; row < row_count; row++)
-    {  
+    {
+        
         printf("Row %i : \t ", row);
         new_grid_array[row] = malloc(col_count * sizeof(char));
         for (int col = 0; col < col_count; col++)

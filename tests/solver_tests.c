@@ -238,36 +238,15 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
     return 1;
 }
 
-int test_build_grid_array()
+int test_build_grid_array(char *test_image_name, char *filename, int nb_rows, int nb_cols, char expected_grid_array[nb_rows][nb_cols])
 {
-    print_test_subcategory("Grid Array Tests");
-
-    PipelineResult pipelineResult =
-        pipeline("../assets/level_1_image_1.png", "gw", "letters");
-
+    print_test_subsubcategory(test_image_name);
+    
+    PipelineResult pipelineResult = pipeline(filename, "gw", "letters");
+    
     Grid expected_grid;
-    expected_grid.nb_rows = 17;
-    expected_grid.nb_cols = 17;
-
-    char expected_grid_array[17][17] = {
-        {'P', 'X', 'U', 'T', 'S', 'I', 'N', 'I', 'U', 'P', 'R', 'V', 'G', 'B', 'M', 'D', 'D'},
-        {'E', 'H', 'A', 'A', 'S', 'P', 'O', 'J', 'P', 'E', 'T', 'B', 'E', 'Q', 'Z', 'L', 'C'},
-        {'A', 'U', 'N', 'T', 'E', 'G', 'Q', 'T', 'L', 'H', 'R', 'Z', 'F', 'A', 'T', 'O', 'P'},
-        {'S', 'H', 'X', 'F', 'N', 'G', 'U', 'A', 'X', 'E', 'A', 'A', 'Y', 'P', 'O', 'M', 'H'},
-        {'Y', 'O', 'Y', 'Y', 'L', 'D', 'X', 'L', 'A', 'K', 'Y', 'U', 'Z', 'L', 'B', 'S', 'K'},
-        {'J', 'X', 'M', 'U', 'U', 'G', 'Q', 'T', 'R', 'I', 'M', 'A', 'G', 'I', 'N', 'E', 'B'},
-        {'H', 'F', 'N', 'W', 'F', 'X', 'H', 'D', 'P', 'B', 'B', 'B', 'T', 'N', 'V', 'S', 'K'},
-        {'H', 'I', 'I', 'H', 'D', 'E', 'S', 'Q', 'F', 'U', 'M', 'Y', 'E', 'R', 'N', 'S', 'X'},
-        {'R', 'P', 'B', 'Z', 'N', 'H', 'S', 'D', 'S', 'L', 'H', 'O', 'N', 'B', 'S', 'S', 'S'},
-        {'E', 'H', 'X', 'A', 'I', 'Z', 'I', 'H', 'A', 'H', 'O', 'E', 'S', 'Q', 'F', 'E', 'F'},
-        {'C', 'W', 'Z', 'I', 'M', 'V', 'D', 'C', 'J', 'V', 'S', 'S', 'I', 'M', 'G', 'R', 'W'},
-        {'L', 'A', 'I', 'I', 'R', 'Z', 'Q', 'Q', 'H', 'X', 'D', 'Z', 'O', 'Z', 'Q', 'T', 'R'},
-        {'W', 'C', 'A', 'X', 'E', 'Z', 'R', 'G', 'H', 'A', 'I', 'Z', 'N', 'E', 'C', 'S', 'E'},
-        {'B', 'R', 'H', 'F', 'O', 'T', 'G', 'N', 'I', 'T', 'S', 'E', 'R', 'E', 'O', 'V', 'Z'},
-        {'M', 'W', 'V', 'W', 'Q', 'D', 'U', 'I', 'H', 'W', 'Q', 'T', 'S', 'B', 'I', 'M', 'L'},
-        {'T', 'D', 'T', 'O', 'N', 'Z', 'C', 'X', 'X', 'R', 'G', 'E', 'L', 'K', 'H', 'F', 'Q'},
-        {'Q', 'N', 'E', 'K', 'S', 'V', 'M', 'O', 'T', 'F', 'A', 'L', 'A', 'A', 'E', 'W', 'B'}
-    };
+    expected_grid.nb_rows = nb_rows;
+    expected_grid.nb_cols = nb_cols;
 
     char **expected_grid_ptr = malloc(expected_grid.nb_rows * sizeof(char *));
     for (int i = 0; i < expected_grid.nb_rows; i++)
@@ -283,6 +262,61 @@ int test_build_grid_array()
     return result;
 }
 
+
+int tests_build_grid_array()
+{
+    print_test_subcategory("Grid Array Tests");
+
+    char expected_grid_array1[17][17] = {
+    {'P', 'X', 'U', 'T', 'S', 'I', 'N', 'I', 'U', 'P', 'R', 'V', 'G', 'B', 'M', 'D', 'D'},
+    {'E', 'H', 'A', 'A', 'S', 'P', 'O', 'J', 'P', 'E', 'T', 'B', 'E', 'Q', 'Z', 'L', 'C'},
+    {'A', 'U', 'N', 'T', 'E', 'G', 'Q', 'T', 'L', 'H', 'R', 'Z', 'F', 'A', 'T', 'O', 'P'},
+    {'S', 'H', 'X', 'F', 'N', 'G', 'U', 'A', 'X', 'E', 'A', 'A', 'Y', 'P', 'O', 'M', 'H'},
+    {'Y', 'O', 'Y', 'Y', 'L', 'D', 'X', 'L', 'A', 'K', 'Y', 'U', 'Z', 'L', 'B', 'S', 'K'},
+    {'J', 'X', 'M', 'U', 'U', 'G', 'Q', 'T', 'R', 'I', 'M', 'A', 'G', 'I', 'N', 'E', 'B'},
+    {'H', 'F', 'N', 'W', 'F', 'X', 'H', 'D', 'P', 'B', 'B', 'B', 'T', 'N', 'V', 'S', 'K'},
+    {'H', 'I', 'I', 'H', 'D', 'E', 'S', 'Q', 'F', 'U', 'M', 'Y', 'E', 'R', 'N', 'S', 'X'},
+    {'R', 'P', 'B', 'Z', 'N', 'H', 'S', 'D', 'S', 'L', 'H', 'O', 'N', 'B', 'S', 'S', 'S'},
+    {'E', 'H', 'X', 'A', 'I', 'Z', 'I', 'H', 'A', 'H', 'O', 'E', 'S', 'Q', 'F', 'E', 'F'},
+    {'C', 'W', 'Z', 'I', 'M', 'V', 'D', 'C', 'J', 'V', 'S', 'S', 'I', 'M', 'G', 'R', 'W'},
+    {'L', 'A', 'I', 'I', 'R', 'Z', 'Q', 'Q', 'H', 'X', 'D', 'Z', 'O', 'Z', 'Q', 'T', 'R'},
+    {'W', 'C', 'A', 'X', 'E', 'Z', 'R', 'G', 'H', 'A', 'I', 'Z', 'N', 'E', 'C', 'S', 'E'},
+    {'B', 'R', 'H', 'F', 'O', 'T', 'G', 'N', 'I', 'T', 'S', 'E', 'R', 'E', 'O', 'V', 'Z'},
+    {'M', 'W', 'V', 'W', 'Q', 'D', 'U', 'I', 'H', 'W', 'Q', 'T', 'S', 'B', 'I', 'M', 'L'},
+    {'T', 'D', 'T', 'O', 'N', 'Z', 'C', 'X', 'X', 'R', 'G', 'E', 'L', 'K', 'H', 'F', 'Q'},
+    {'Q', 'N', 'E', 'K', 'S', 'V', 'M', 'O', 'T', 'F', 'A', 'L', 'A', 'A', 'E', 'W', 'B'}
+};
+
+    char expected_grid_array2[12][12] = {
+    {'H', 'C', 'A', 'M', 'P', 'A', 'I', 'G', 'N', 'S', 'L', 'Z'},
+    {'Y', 'C', 'P', 'H', 'Q', 'M', 'L', 'C', 'A', 'B', 'E', 'E'},
+    {'U', 'W', 'O', 'R', 'K', 'D', 'R', 'I', 'V', 'E', 'K', 'T'},
+    {'K', 'O', 'Y', 'O', 'D', 'Q', 'U', 'G', 'Y', 'E', 'A', 'F'},
+    {'S', 'A', 'L', 'E', 'S', 'I', 'Q', 'P', 'R', 'W', 'S', 'Q'},
+    {'E', 'T', 'U', 'M', 'B', 'L', 'J', 'P', 'E', 'Z', 'X', 'C'},
+    {'D', 'M', 'A', 'I', 'L', 'C', 'A', 'Y', 'N', 'U', 'O', 'R'},
+    {'P', 'R', 'K', 'Y', 'U', 'G', 'P', 'E', 'O', 'P', 'L', 'E'},
+    {'H', 'U', 'H', 'G', 'B', 'O', 'A', 'V', 'J', 'L', 'M', 'A'},
+    {'P', 'K', 'Y', 'H', 'A', 'D', 'C', 'R', 'M', 'R', 'S', 'T'},
+    {'A', 'L', 'M', 'U', 'L', 'A', 'A', 'U', 'X', 'S', 'T', 'O'},
+    {'K', 'R', 'U', 'B', 'O', 'O', 'K', 'S', 'A', 'T', 'O', 'R'}
+};
+
+    int result = 1;
+    
+    if (!test_build_grid_array("Level 1 Image 1", "level_1_image_1.png", 17, 17, expected_grid_array1))
+    {
+        result = 0;
+    }
+    
+    if (!test_build_grid_array("Level 1 Image 2", "level_1_image_2.png", 12, 12, expected_grid_array2))
+    {
+        result = 0;
+    }
+    
+    return result;
+}
+
 int main()
 {
     print_test_category("Solver Tests");
@@ -295,7 +329,7 @@ int main()
         passed = 0;
     if (!test_diagonal())
         passed = 0;
-    if (!test_build_grid_array())
+    if (!tests_build_grid_array())
         passed = 0;
 
     if (passed)

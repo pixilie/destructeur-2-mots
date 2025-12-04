@@ -6,6 +6,7 @@
 #define COLOR_GREEN "\033[32m"
 #define COLOR_YELLOW "\033[33m"
 #define COLOR_BLUE "\033[34m"
+#define COLOR_MAGENTA "\033[35m"
 
 void print_fail() { printf(COLOR_RED "[FAIL] " COLOR_RESET); }
 
@@ -39,5 +40,14 @@ void print_test_subcategory(const char *test_subcategory)
     printf(COLOR_YELLOW "--- ");
     printf("%s", test_subcategory);
     printf(" ---\n" COLOR_RESET);
+    printf("\n");
+}
+
+void print_test_subsubcategory(const char *test_subsubcategory)
+{
+    printf("\n");
+    printf(COLOR_MAGENTA "- ");
+    printf("%s", test_subsubcategory);
+    printf(" -\n" COLOR_RESET);
     printf("\n");
 }
