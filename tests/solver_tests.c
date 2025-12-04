@@ -190,29 +190,46 @@ void print_grid_array(char **grid_array, int rows, int cols)
 
 int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
 {
+    int is_dimension_correct = 1;
     if (expected_grid.nb_rows != actual_grid.nb_rows)
     {
         print_fail();
         printf("Expected %i rows in the grid array, got %i\n",
                expected_grid.nb_rows, actual_grid.nb_rows);
-        return 0;
+        is_dimension_correct = 0;
     }
     if (expected_grid.nb_cols != actual_grid.nb_cols)
     {
         print_fail();
         printf("Expected %i columns in the grid array, got %i\n",
                expected_grid.nb_cols, actual_grid.nb_cols);
-        return 0;
+        is_dimension_correct = 0;
     }
-
-    print_success();
-    printf("Built grid of %i rows and %i columns\n", expected_grid.nb_rows,
-           expected_grid.nb_cols);
 
     int rows = expected_grid.nb_rows;
     int cols = expected_grid.nb_cols;
     char **expected_grid_array = expected_grid.grid;
     char **actual_grid_array = actual_grid.grid;
+
+    if (is_dimension_correct == 1)
+    {
+        print_success();
+        printf("Built grid of %i rows and %i columns\n", expected_grid.nb_rows,
+               expected_grid.nb_cols);
+    }
+    else
+    {
+        print_fail();
+        
+        printf("Expected grid :\n");
+        print_grid_array(expected_grid_array, rows, cols);
+        
+        printf("Got grid :\n");
+        print_grid_array(actual_grid_array, rows, cols);
+        
+        return 0;
+    }
+    
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
@@ -220,14 +237,17 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
             if (expected_grid_array[i][j] != actual_grid_array[i][j])
             {
                 print_fail();
-                printf("First letter difference detected on row %i, column %i, "
+                printf("The grid arrays are different, got first letter difference detected on row %i, column %i, "
                        "expected %c, got %c\n",
                        i, j, expected_grid_array[i][j],
                        actual_grid_array[i][j]);
-                printf("The grid arrays are different, expected \n");
+                
+                printf("Expected grid :\n");
                 print_grid_array(expected_grid_array, rows, cols);
-                printf("got\n");
+                
+                printf("Got grid :\n");
                 print_grid_array_differences(expected_grid_array, actual_grid_array, rows, cols);
+                
                 return 0;
             }
         }
@@ -302,6 +322,16 @@ int tests_build_grid_array()
     {'K', 'R', 'U', 'B', 'O', 'O', 'K', 'S', 'A', 'T', 'O', 'R'}
 };
 
+    char expected_grid_array3[7][8] = {
+    {'S', 'U', 'M', 'M', 'E', 'R', 'L', 'H'},
+    {'C', 'I', 'P', 'O', 'R', 'T', 'N', 'O'},
+    {'B', 'S', 'U', 'N', 'B', 'A', 'L', 'L'},
+    {'R', 'E', 'L', 'A', 'X', 'E', 'P', 'I'},
+    {'T', 'D', 'A', 'Q', 'S', 'A', 'N', 'D'},
+    {'A', 'Y', 'B', 'C', 'A', 'Z', 'I', 'A'},
+    {'N', 'F', 'U', 'N', 'H', 'R', 'S', 'Y'},
+   };
+
     char expected_grid_array4[14][14] = {
     {'A', 'A', 'S', 'S', 'E', 'M', 'B', 'L', 'Y', 'O', 'O', 'Y', 'H', 'O'},
     {'H', 'D', 'I', 'B', 'O', 'V', 'P', 'D', 'S', 'H', 'T', 'Y', 'H', 'B'},
@@ -327,6 +357,11 @@ int tests_build_grid_array()
     }
     
     if (!test_build_grid_array("Level 1 Image 2", "level_1_image_2.png", 12, 12, expected_grid_array2))
+    {
+        result = 0;
+    }
+    
+    if (!test_build_grid_array("Level 2 Image 1", "level_2_image_1.png", 7, 8, expected_grid_array3))
     {
         result = 0;
     }
