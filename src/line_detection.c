@@ -346,6 +346,36 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
     }
 }
 
+
+int compare_x(const void* a, const void* b)
+{
+    return (((int*)a)[0]) - (((int*)b)[0]);
+}
+
+int compare_y(const void* a, const void* b)
+{
+    return (((int*)a)[1]) - (((int*)b)[1]);
+}
+
+void sort_letter(int **coo, int nb_letter)
+{
+    qsort(coo, nb_letter, sizeof(int*), compare_x);
+    int i = 1;
+    while(i < nb_letter)
+    {
+        size_t j = i -1;
+        size_t tmp = 1;
+        while(i < nb_letter && abs(coo[i][0]-coo[i-1][0]) < 5)
+        {
+            tmp ++;
+            i ++;
+        }
+        
+        qsort(coo+j, tmp, sizeof(int*), compare_y);
+        i ++;
+    }
+}
+
 /**
  * find_grid_and_words:
  * Heuristically group detected letter bounding boxes into two clusters:
@@ -360,7 +390,7 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
  */
 void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
 {
-
+    sort_letter(coo, nb_letter);
     int *box1_coo = malloc(4 * sizeof(int));
     int *box2_coo = malloc(4 * sizeof(int));
 
@@ -376,8 +406,8 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
     {
         if (box1 == 0)
         {
-            threshold_b1_x = (coo[i][2] - coo[i][0]) * 1.5;
-            threshold_b1_y = (coo[i][3] - coo[i][1]) * 1.2;
+            threshold_b1_x = 50;//(coo[i][2] - coo[i][0]) * 3.5;
+            threshold_b1_y = 50;//(coo[i][3] - coo[i][1]) * 1.2;
             box1_coo[0] = coo[i][0];
             box1_coo[1] = coo[i][1];
             box1_coo[2] = coo[i][2];
@@ -397,8 +427,8 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
         }
         else if (box2 == 0)
         {
-            threshold_b2_x = (coo[i][2] - coo[i][0]) * 1.5;
-            threshold_b2_y = (coo[i][3] - coo[i][1]) * 1.2;
+            threshold_b2_x = 50;//(coo[i][2] - coo[i][0]) * 3.5;
+            threshold_b2_y = 50;//(coo[i][3] - coo[i][1]) * 1.2;
             box2_coo[0] = coo[i][0];
             box2_coo[1] = coo[i][1];
             box2_coo[2] = coo[i][2];
@@ -631,6 +661,7 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
     int nb_letter =
         find_letter(pixbuf, coo); // Number of letters in the grid + words list
     pipelineResult.nb_letters = nb_letter;
+
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
 
