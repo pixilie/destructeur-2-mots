@@ -302,6 +302,23 @@ int tests_build_grid_array()
     {'K', 'R', 'U', 'B', 'O', 'O', 'K', 'S', 'A', 'T', 'O', 'R'}
 };
 
+    char expected_grid_array4[14][14] = {
+    {'A', 'A', 'S', 'S', 'E', 'M', 'B', 'L', 'Y', 'O', 'O', 'Y', 'H', 'O'},
+    {'H', 'D', 'I', 'B', 'O', 'V', 'P', 'D', 'S', 'H', 'T', 'Y', 'H', 'B'},
+    {'J', 'L', 'L', 'M', 'M', 'T', 'D', 'Y', 'L', 'E', 'O', 'P', 'R', 'L'},
+    {'L', 'B', 'O', 'R', 'S', 'A', 'C', 'O', 'P', 'L', 'Y', 'C', 'U', 'A'},
+    {'V', 'A', 'A', 'M', 'O', 'J', 'O', 'I', 'P', 'Y', 'O', 'Y', 'S', 'Y'},
+    {'T', 'S', 'M', 'A', 'I', 'W', 'S', 'M', 'S', 'T', 'L', 'R', 'T', 'A'},
+    {'P', 'L', 'M', 'L', 'H', 'Y', 'S', 'J', 'S', 'A', 'L', 'O', 'A', 'V'},
+    {'P', 'H', 'P', 'H', 'I', 'P', 'T', 'B', 'U', 'W', 'B', 'T', 'H', 'A'},
+    {'R', 'W', 'M', 'R', 'H', 'T', 'M', 'L', 'T', 'J', 'P', 'Y', 'S', 'J'},
+    {'H', 'A', 'T', 'L', 'T', 'T', 'D', 'E', 'S', 'L', 'H', 'O', 'M', 'A'},
+    {'O', 'U', 'S', 'L', 'L', 'B', 'J', 'A', 'O', 'J', 'O', 'Y', 'O', 'B'},
+    {'O', 'O', 'S', 'O', 'S', 'H', 'M', 'L', 'M', 'H', 'S', 'L', 'T', 'T'},
+    {'S', 'R', 'T', 'A', 'P', 'Y', 'T', 'H', 'O', 'N', 'Y', 'A', 'A', 'L'},
+    {'P', 'N', 'N', 'H', 'E', 'L', 'L', 'O', 'H', 'M', 'O', 'O', 'L', 'V'}
+};
+
     int result = 1;
     
     if (!test_build_grid_array("Level 1 Image 1", "level_1_image_1.png", 17, 17, expected_grid_array1))
@@ -310,6 +327,11 @@ int tests_build_grid_array()
     }
     
     if (!test_build_grid_array("Level 1 Image 2", "level_1_image_2.png", 12, 12, expected_grid_array2))
+    {
+        result = 0;
+    }
+    
+    if (!test_build_grid_array("Level 2 Image 2", "level_2_image_2.png", 14, 14, expected_grid_array4))
     {
         result = 0;
     }
