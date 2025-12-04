@@ -318,12 +318,13 @@ static void on_activate(GtkApplication *app, gpointer user_data)
    // Create a new window
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Image");
-    gtk_window_set_default_size(GTK_WINDOW(window), 2000, 1000);
+    //Size of window, check if size-auto possible
+    gtk_window_set_default_size(GTK_WINDOW(window), 1920, 1000);
+    
 
     // Create a vertical box
     vertical_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), vertical_box);
-
 
 
     //Create vertical box for header
@@ -336,6 +337,10 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     //space between title and quit
     GtkWidget *space = gtk_label_new(NULL);
     gtk_box_pack_start(GTK_BOX(top_bar), space, TRUE, TRUE, 0);
+    GtkWidget *space2 = gtk_label_new(NULL);
+    gtk_box_pack_start(GTK_BOX(top_bar), space2, TRUE, TRUE, 0);
+    GtkWidget *space3 = gtk_label_new(NULL);
+    gtk_box_pack_start(GTK_BOX(top_bar), space3, TRUE, TRUE, 0);
     //Quit button
     close_button = gtk_button_new_with_label("Quitter");
     g_signal_connect_swapped(close_button, "clicked", G_CALLBACK(gtk_window_close), window);
@@ -360,7 +365,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
 
     //Create box for neural training
-    GtkWidget *center = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    GtkWidget *center = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start(GTK_BOX(vertical_box), center, TRUE, TRUE, 0);
     
     gtk_box_pack_start(GTK_BOX(center), scrolled, TRUE, TRUE, 0);
@@ -388,6 +393,9 @@ static void on_activate(GtkApplication *app, gpointer user_data)
    gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
 
 
+   //label
+   GtkWidget *title_neural = gtk_label_new("Réseau de neurone :");
+   gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
    //Create new button for neural training
    training_button = gtk_button_new_with_label("Entraîner");
    load_button = gtk_button_new_with_label("Charger");
