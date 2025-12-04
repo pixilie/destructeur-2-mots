@@ -1,7 +1,7 @@
 #pragma once
 
-#include <gdk-pixbuf/gdk-pixbuf.h>
 #include "solver.h"
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 typedef struct
 {
@@ -30,9 +30,13 @@ void remove_lines(GdkPixbuf *pixbuf);
 void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y, int *is_visited,
                               int index_coo, int **coo);
 int find_letter(GdkPixbuf *pixbuf, int **coo);
-GridLetter* generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo, char *output_file, int nb_letters);
+void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo, int **coo,
+                     char *output_file, int nb_letters,
+                     Letter **grid_letters_out,
+                     Letter **words_letters_out);
 void find_grid_and_words(int *grid_coo, int *word_coo, int **coo,
                          int nb_letter);
-int find_word_by_word(int **coo, int **word_list, int *words_coo,
-                       int nb_letter, int nb_words);
-PipelineResult pipeline(char *filename, char *output_gw_file, char *output_letter_file);
+int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
+                      int nb_words);
+PipelineResult pipeline(char *filename, char *output_gw_file,
+                        char *output_letter_file);

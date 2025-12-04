@@ -312,17 +312,22 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
  *  - output_file    : directory path where letter images will be saved (created
  * if necessary).
  */
-GridLetter *generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
-                            char *output_file, int nb_letters)
+void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
+                     int **coo, char *output_file, int nb_letters,
+                     Letter **grid_letters_out,
+                     Letter **words_letters_out)
 {
     g_mkdir_with_parents(output_file, 0777);
 
     int os = 3;
     char full_path[512];
 
-    int letter_grid_index = 0;
+    int letter_grid_count = 0;
+    int letter_word_count = 0;
 
-    GridLetter *letters = malloc(nb_letters * sizeof(GridLetter));
+    Letter *grid_letters = malloc(nb_letters * sizeof(Letter));
+    Letter *words_letters =
+        malloc(nb_letters * sizeof(Letter));
 
     for (int index_coo = 0; index_coo < nb_letters; index_coo++)
     {
@@ -339,14 +344,35 @@ GridLetter *generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
                 coo[index_coo][2] <= grid_coo[2] &&
                 coo[index_coo][3] <= grid_coo[3])
             {
-                GridLetter grid_letter;
+                Letter grid_letter;
                 grid_letter.x1 = coo[index_coo][0];
                 grid_letter.y1 = coo[index_coo][1];
                 grid_letter.x2 = coo[index_coo][2];
                 grid_letter.y2 = coo[index_coo][3];
-                //printf("Detected letter %i : (%i, %i)(%i, %i)\n", letter_grid_index, grid_letter.x1, grid_letter.y1, grid_letter.x2, grid_letter.y2);
-                letters[letter_grid_index] = grid_letter;
-                letter_grid_index++;
+                // printf("Detected letter %i : (%i, %i)(%i, %i)\n",
+                // letter_grid_index, grid_letter.x1, grid_letter.y1,
+                // grid_letter.x2, grid_letter.y2);
+                grid_letters[letter_grid_count] = grid_letter;
+                letter_grid_count++;
+            }
+
+            // If the letter is in the words list : add it to the list of words
+            // list letters
+            else if (coo[index_coo][0] >= words_coo[0] &&
+                     coo[index_coo][1] >= words_coo[1] &&
+                     coo[index_coo][2] <= words_coo[2] &&
+                     coo[index_coo][3] <= words_coo[3])
+            {
+                Letter word_letter;
+                word_letter.x1 = coo[index_coo][0];
+                word_letter.y1 = coo[index_coo][1];
+                word_letter.x2 = coo[index_coo][2];
+                word_letter.y2 = coo[index_coo][3];
+                // printf("Detected letter %i : (%i, %i)(%i, %i)\n",
+                // letter_grid_index, grid_letter.x1, grid_letter.y1,
+                // grid_letter.x2, grid_letter.y2);
+                words_letters[letter_word_count] = word_letter;
+                letter_word_count++;
             }
 
             GdkPixbuf *letter = crop(
@@ -359,7 +385,8 @@ GridLetter *generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int **coo,
         }
     }
 
-    return letters;
+    *grid_letters_out = grid_letters;
+    *words_letters_out = words_letters;
 }
 
 /**
@@ -651,16 +678,20 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     int nb_rows;
     int nb_cols;
-    GridLetter *grid_letters_list = generate_letter(
-        pixbuf_to_slice, grid_coo, coo, output_letter_file, nb_letter);
+    Letter *grid_letters = NULL;
+    Letter *words_letters = NULL;
+    generate_letter(
+        pixbuf_to_slice, grid_coo, words_coo, coo, output_letter_file, nb_letter, &grid_letters, &words_letters);
 
-    GridLetter **grid_letters_array =
-        build_grid_from_image(grid_letters_list, nb_letter, &nb_rows, &nb_cols);
-    free(grid_letters_list);
+    Letter **grid_letters_array =
+        build_grid_from_image(grid_letters, nb_letter, &nb_rows, &nb_cols);
+
+    free(grid_letters);
+    free(words_letters);
     int rows;
     int cols;
-    char **grid_array =
-        build_grid_array(pixbuf_to_slice, grid_letters_array, nb_rows, nb_cols, &rows, & cols);
+    char **grid_array = build_grid_array(pixbuf_to_slice, grid_letters_array,
+                                         nb_rows, nb_cols, &rows, &cols);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);
@@ -726,9 +757,12 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     g_object_unref(words);
 
     // #ifndef TESTING
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Best rotation angle : %.2f°\n", best_angle);
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Best rotation angle : %.2f°\n",
+           best_angle);
 
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Built grid with %i rows and %i columns\n", pipelineResult.grid.nb_rows, pipelineResult.grid.nb_cols);
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
+                        " Built grid with %i rows and %i columns\n",
+           pipelineResult.grid.nb_rows, pipelineResult.grid.nb_cols);
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected grid coordinates : (%i, %i)(%i, %i)\n",
            pipelineResult.grid_coo[0], pipelineResult.grid_coo[1],
