@@ -127,7 +127,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     Letter **temp_rows = malloc(nb_letters * sizeof(Letter *));
     int *row_sizes = calloc(nb_letters, sizeof(int));
 
-    temp_rows[0] = malloc(nb_letters * sizeof(Letter));
+    temp_rows[0] = calloc(nb_letters, sizeof(Letter));
     temp_rows[0][0] = grid_letters[0];
     row_sizes[0] = 1;
     int row_count = 1; // The number of rows in the grid
@@ -151,7 +151,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
         {
             row_count++;
             first_letter_in_row = i;
-            temp_rows[row_count - 1] = malloc(nb_letters * sizeof(Letter));
+            temp_rows[row_count - 1] = calloc(nb_letters, sizeof(Letter));
             temp_rows[row_count - 1][0] = grid_letters[i];
             row_sizes[row_count - 1] = 1;
         }
@@ -176,7 +176,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     Letter **grid = malloc(row_count * sizeof(Letter *));
     for (int row = 0; row < row_count; row++)
     {
-        grid[row] = malloc(col_count * sizeof(Letter));
+        grid[row] = calloc(col_count, sizeof(Letter));
         memcpy(grid[row], temp_rows[row], row_sizes[row] * sizeof(Letter));
 
         for (int col = row_sizes[row]; col < col_count; col++)
@@ -317,7 +317,7 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
     for (int row = 0; row < row_count; row++)
     {
         printf("Row %i : \t ", row);
-        new_grid_array[row] = malloc(col_count * sizeof(char));
+        new_grid_array[row] = calloc(col_count, sizeof(char));
         for (int col = 0; col < col_count; col++)
         {
             new_grid_array[row][col] = grid_array[start_row + row][col];
@@ -342,7 +342,7 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
 Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
                                      int **words_size_out, int *row_count_out)
 {
-    if (nb_letters <= 0)
+    if (nb_letters <= 0 || !words_letters)
     {
         printf("No letters were detected while trying to build the words list "
                "!\n");
@@ -357,7 +357,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     Letter **temp_rows = malloc(nb_letters * sizeof(Letter *));
     int *row_sizes = calloc(nb_letters, sizeof(int));
 
-    temp_rows[0] = malloc(nb_letters * sizeof(Letter));
+    temp_rows[0] = calloc(nb_letters, sizeof(Letter));
     temp_rows[0][0] = words_letters[0];
     row_sizes[0] = 1;
     int words_count = 1; // The number of rows in the grid
@@ -383,7 +383,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
         else
         {
             words_count++;
-            temp_rows[words_count - 1] = malloc(nb_letters * sizeof(Letter));
+            temp_rows[words_count - 1] = calloc(nb_letters, sizeof(Letter));
             temp_rows[words_count - 1][0] = words_letters[i];
             row_sizes[words_count - 1] = 1;
         }
@@ -407,7 +407,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     Letter **words_list = malloc(words_count * sizeof(Letter *));
     for (int word_index = 0; word_index < words_count; word_index++)
     {
-        words_list[word_index] = malloc(row_sizes[word_index] * sizeof(Letter));
+        words_list[word_index] = calloc(row_sizes[word_index], sizeof(Letter));
         memcpy(words_list[word_index], temp_rows[word_index],
                row_sizes[word_index] * sizeof(Letter));
     }
@@ -438,6 +438,22 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     {
         printf("Neural network could not be loaded, check if a model exists in "
                "tests/model\n");
+        return NULL;
+    }
+
+    if (nb_words == 0)
+    {
+        printf("No words were detected !\n");
+        return NULL;
+    }
+    if (!*words_letters)
+    {
+        printf("No word letters detected !\n");
+        return NULL;
+    }
+    if (!words_size)
+    {
+        printf("Failed to get the size of each word !\n");
         return NULL;
     }
 

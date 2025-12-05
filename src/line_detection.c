@@ -323,9 +323,8 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
 
     int letter_grid_count = 0;
     int letter_word_count = 0;
-
-    Letter *grid_letters = malloc(nb_letters * sizeof(Letter));
-    Letter *words_letters = malloc(nb_letters * sizeof(Letter));
+    Letter *grid_letters = calloc(nb_letters, sizeof(Letter));
+    Letter *words_letters = calloc(nb_letters, sizeof(Letter));
 
     for (int index_coo = 0; index_coo < nb_letters; index_coo++)
     {
@@ -714,9 +713,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int **word_list = malloc(nb_words * sizeof(int *));
     for (int i = 0; i < nb_words; i++)
     {
-        word_list[i] = malloc(4 * sizeof(int));
-        word_list[i][0] = word_list[i][1] = word_list[i][2] = word_list[i][3] =
-            0;
+        word_list[i] = calloc(4, sizeof(int));
     }
 
     int nb_detected_words =
