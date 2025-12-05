@@ -165,6 +165,7 @@ clean:
 	@rm -f tests/model
 	@rm -f image.png bw.png filtered.png
 	@rm -rf gw/ letters/
+	@rm -rd helpers/generate_dataset/fonts helpers/generate_dataset/dataset
 	@echo "Clean complete."
 
 .PHONY: all clean tests
