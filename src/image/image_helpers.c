@@ -132,21 +132,50 @@ int save_pixbuf_as_png(GdkPixbuf *pixbuf, const char *filename)
 
 GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
 {
+    if (!src)
+    {
+        fprintf(stderr, "scale_pixbuf_to_28x28: src == NULL\n");
+        return NULL;
+    }
+
     int src_w = gdk_pixbuf_get_width(src);
     int src_h = gdk_pixbuf_get_height(src);
-    int src_has_alpha = gdk_pixbuf_get_has_alpha(src);
+
+    if (src_w <= 0 || src_h <= 0)
+    {
+        fprintf(stderr, "scale_pixbuf_to_28x28: invalid size %dx%d\n", src_w,
+                src_h);
+        return NULL;
+    }
+
+    int has_alpha = gdk_pixbuf_get_has_alpha(src);
     int max_side = src_w > src_h ? src_w : src_h;
 
-    GdkPixbuf *square = gdk_pixbuf_new(GDK_COLORSPACE_RGB, src_has_alpha, 8,
-                                       max_side, max_side);
+    if (max_side < 1)
+        max_side = 1;
+
+    GdkPixbuf *square =
+        gdk_pixbuf_new(GDK_COLORSPACE_RGB, has_alpha, 8, max_side, max_side);
     gdk_pixbuf_fill(square, 0xFFFFFFFF);
 
     double padding_ratio = 0.90;
     int new_w = (int)(src_w * padding_ratio);
     int new_h = (int)(src_h * padding_ratio);
 
+    if (new_w < 1)
+        new_w = 1;
+    if (new_h < 1)
+        new_h = 1;
+
     GdkPixbuf *scaled_src =
         gdk_pixbuf_scale_simple(src, new_w, new_h, GDK_INTERP_BILINEAR);
+
+    if (!scaled_src)
+    {
+        fprintf(stderr, "scaled_src creation failed\n");
+        g_object_unref(square);
+        return NULL;
+    }
 
     int offset_x = (max_side - new_w) / 2;
     int offset_y = (max_side - new_h) / 2;
@@ -160,13 +189,6 @@ GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
         gdk_pixbuf_scale_simple(square, 28, 28, GDK_INTERP_BILINEAR);
 
     g_object_unref(square);
-
-    // guint32 r = g_random_int();
-    // time_t t = time(NULL);
-    // char *filename = g_strdup_printf("temp/img_%ld_%u.png", (long)t, r);
-
-    // save_pixbuf_as_png(final_28, filename);
-    // g_free(filename);
 
     return final_28;
 }
