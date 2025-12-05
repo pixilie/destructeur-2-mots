@@ -41,7 +41,9 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 - `docs`: Documentation (reports, documents...)
   - `ocr_word_search_solver_fr.pdf`
   - `destructeur_2_mots_rapport_n1.pdf`
-
+- `helpers`: Complementary programs we used
+  -  `generate_dataset`: Python program to create a dataset
+  
 ## Build
 - `make`          → builds everything except the tests.
 - `make test`     → builds build/test from src/*.c + tests/*.c, then runs it.
