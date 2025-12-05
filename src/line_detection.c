@@ -311,7 +311,9 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
  *  - output_file    : directory path where letter images will be saved (created
  * if necessary).
  */
-void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
+void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, int **grid_coo,
+                     int **words_coo, char *output_file,
+                     int *nb_letters_grid_out, int *nb_letters_words_out)
 {
     g_mkdir_with_parents(output_file, 0777);
 
@@ -338,7 +340,7 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
             // Convert letter to 28x28 pixbuf for the neural network
             GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
             save_pixbuf_as_png(scaled_letter, full_path);
-            
+
             g_object_unref(letter);
             g_object_unref(scaled_letter);
         }
@@ -346,33 +348,32 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
     }
 }
 
-
-int compare_x(const void* a, const void* b)
+int compare_x(const void *a, const void *b)
 {
-    return (((int*)a)[0]) - (((int*)b)[0]);
+    return (((int *)a)[0]) - (((int *)b)[0]);
 }
 
-int compare_y(const void* a, const void* b)
+int compare_y(const void *a, const void *b)
 {
-    return (((int*)a)[1]) - (((int*)b)[1]);
+    return (((int *)a)[1]) - (((int *)b)[1]);
 }
 
 void sort_letter(int **coo, int nb_letter)
 {
-    qsort(coo, nb_letter, sizeof(int*), compare_x);
+    qsort(coo, nb_letter, sizeof(int *), compare_x);
     int i = 1;
-    while(i < nb_letter)
+    while (i < nb_letter)
     {
-        size_t j = i -1;
+        size_t j = i - 1;
         size_t tmp = 1;
-        while(i < nb_letter && abs(coo[i][0]-coo[i-1][0]) < 5)
+        while (i < nb_letter && abs(coo[i][0] - coo[i - 1][0]) < 5)
         {
-            tmp ++;
-            i ++;
+            tmp++;
+            i++;
         }
-        
-        qsort(coo+j, tmp, sizeof(int*), compare_y);
-        i ++;
+
+        qsort(coo + j, tmp, sizeof(int *), compare_y);
+        i++;
     }
 }
 
@@ -406,8 +407,8 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
     {
         if (box1 == 0)
         {
-            threshold_b1_x = 50;//(coo[i][2] - coo[i][0]) * 3.5;
-            threshold_b1_y = 50;//(coo[i][3] - coo[i][1]) * 1.2;
+            threshold_b1_x = 50; //(coo[i][2] - coo[i][0]) * 3.5;
+            threshold_b1_y = 50; //(coo[i][3] - coo[i][1]) * 1.2;
             box1_coo[0] = coo[i][0];
             box1_coo[1] = coo[i][1];
             box1_coo[2] = coo[i][2];
@@ -427,8 +428,8 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
         }
         else if (box2 == 0)
         {
-            threshold_b2_x = 50;//(coo[i][2] - coo[i][0]) * 3.5;
-            threshold_b2_y = 50;//(coo[i][3] - coo[i][1]) * 1.2;
+            threshold_b2_x = 50; //(coo[i][2] - coo[i][0]) * 3.5;
+            threshold_b2_y = 50; //(coo[i][3] - coo[i][1]) * 1.2;
             box2_coo[0] = coo[i][0];
             box2_coo[1] = coo[i][1];
             box2_coo[2] = coo[i][2];
@@ -624,7 +625,7 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
         GdkPixbuf *rotated = rotate_image(pixbuf, best_angle);
         g_object_unref(pixbuf);
         pixbuf = rotated;
-        
+
         GdkPixbuf *rotated_slice = rotate_image(pixbuf_to_slice, best_angle);
         g_object_unref(pixbuf_to_slice);
         pixbuf_to_slice = rotated_slice;
@@ -661,7 +662,6 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
     int nb_letter =
         find_letter(pixbuf, coo); // Number of letters in the grid + words list
     pipelineResult.nb_letters = nb_letter;
-
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
 
@@ -768,7 +768,7 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
     free(grid_path);
     free(word_path);
     free(words_path);
-        
+
     g_object_unref(pixbuf);
     g_object_unref(pixbuf_to_slice);
 
