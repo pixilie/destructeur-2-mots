@@ -397,13 +397,11 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     }
     
     *row_count_out = row_count;
-    *words_size_out = malloc(row_count * sizeof(int));
 
     // Sort every row by x value
     for (int row = 0; row < row_count; row++)
     {
         qsort(temp_rows[row], row_sizes[row], sizeof(Letter), compare_x);
-        *words_size_out[row] = row_sizes[row];
     }
 
     // Create the sorted grid
@@ -427,6 +425,13 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     {
         free(temp_rows[i]);
     }
+
+    *words_size_out = calloc(row_count, sizeof(int));
+    for (int i = 0; i < row_count; i++)
+    {
+        *words_size_out[i] = row_sizes[i];
+    }
+    
     free(temp_rows);
     free(row_sizes);
 
@@ -444,10 +449,14 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
         return NULL;
     }
 
+    printf("Number of detected words : %i\n", nb_words);
+
     char **words_list = malloc(nb_words * sizeof(char *));
     for (int row = 0; row < nb_words; row++)
     {
-        words_list[row] = calloc(words_size[row], sizeof(char));
+        int word_size = words_size[row];
+        printf("Word %i : Size %i\n", row, word_size);
+        (words_list[row]) = calloc(word_size, sizeof(char));
     }
 
     int nb_letter = 0;
@@ -461,6 +470,7 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
         // printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols
         // + cols);
         int word_size = words_size[row];
+        printf("Word %i : size %i\n", row, word_size);
         for (int col = 0; col < word_size; col++)
         {
             Letter word_letter = words_letters[row][col];

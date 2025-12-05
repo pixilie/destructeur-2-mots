@@ -368,9 +368,7 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
                 word_letter.y1 = coo[index_coo][1];
                 word_letter.x2 = coo[index_coo][2];
                 word_letter.y2 = coo[index_coo][3];
-                // printf("Detected letter %i : (%i, %i)(%i, %i)\n",
-                // letter_grid_index, grid_letter.x1, grid_letter.y1,
-                // grid_letter.x2, grid_letter.y2);
+                printf("Detected letter in words list %i : (%i, %i)(%i, %i)\n",letter_word_count, word_letter.x1, word_letter.y1, word_letter.x2, word_letter.y2);
                 words_letters[letter_word_count] = word_letter;
                 letter_word_count++;
             }
