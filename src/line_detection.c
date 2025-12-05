@@ -686,6 +686,11 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     Letter **grid_letters_array =
         build_grid_from_image(grid_letters, nb_letter, &nb_rows, &nb_cols);
 
+    int *words_size = NULL;
+    int detected_rows = 0;
+    Letter **words_letters_final = build_words_list_from_image(words_letters, nb_letter, &words_size, &detected_rows);
+    char **words_letters_list = build_words_list(pixbuf_to_slice, words_letters_final, detected_rows, words_size);
+
     free(grid_letters);
     free(words_letters);
     int rows;
@@ -703,6 +708,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     final_grid.nb_rows = rows;
     final_grid.nb_cols = cols;
     pipelineResult.grid = final_grid;
+    pipelineResult.words = words_letters_list;
 
     int **word_list = malloc(nb_words * sizeof(int *));
     for (int i = 0; i < nb_words; i++)

@@ -22,3 +22,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
                                    int *rows_out, int *cols_out);
 char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
                         int cols, int *rows_out, int *cols_out);
+
+Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
+                               int **words_size_out, int *words_count_out);
+char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words, int *words_size);

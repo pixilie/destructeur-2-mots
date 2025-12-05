@@ -258,7 +258,49 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
     return 1;
 }
 
-int test_build_grid_array(char *test_image_name, char *filename, int nb_rows, int nb_cols, char expected_grid_array[nb_rows][nb_cols])
+void print_words_list(char **words_list, int words_count)
+{
+    for (int i = 0; i < words_count; i++)
+    {
+        printf("Word %i :\t %s\n", i, words_list[i]);
+    }
+}
+
+int are_words_list_equal(int expected_words_count, char **expected_words_list, int actual_words_count, char **actual_words_list)
+{
+    if (expected_words_count != actual_words_count)
+    {
+        print_fail();
+        printf("Detected words count is incorrect, expected %i, got %i\n", expected_words_count, actual_words_count);
+        return 0;
+    }
+    else
+    {
+        print_success();
+        printf("Detected %i words in the words list\n", actual_words_count);
+    }
+    
+    for (int i = 0; i < expected_words_count; i++)
+    {
+        if (strcmp(expected_words_list[i], actual_words_list[i]) != 0) // Words not equal
+        {
+            print_fail();
+            printf("Words are incorrect, first word incorrect : word %i, expected %s, got %s\n", i, expected_words_list[i], actual_words_list[i]);
+            printf("Expected words list :\n");
+            print_words_list(expected_words_list, expected_words_count);
+            printf("Got words list :\n");
+            print_words_list(actual_words_list, actual_words_count);
+            return 0;
+        }
+    }
+    
+    print_success();
+    printf("Words list is correct, got :\n");
+    print_words_list(actual_words_list, actual_words_count);
+    return 1;
+}
+
+int test_solver(char *test_image_name, char *filename, int nb_rows, int nb_cols, char expected_grid_array[nb_rows][nb_cols], int nb_words, char **expected_words_list)
 {
     print_test_subsubcategory(test_image_name);
     
@@ -277,13 +319,31 @@ int test_build_grid_array(char *test_image_name, char *filename, int nb_rows, in
     expected_grid.grid = expected_grid_ptr;
 
     Grid actual_grid = pipelineResult.grid;
-    int result = are_grid_arrays_equal(expected_grid, actual_grid);
+
+    char **actual_words_list = malloc(pipelineResult.nb_words * sizeof(char *));
+    for (int i = 0; i < pipelineResult.nb_words; i++)
+    {
+        actual_words_list[i] = pipelineResult.words[i];
+    }
+
+    int result = 1;
+    if (!are_grid_arrays_equal(expected_grid, actual_grid))
+    {
+        result = 0;
+    }
+
+    if (!are_words_list_equal(nb_words, expected_words_list, pipelineResult.nb_words, actual_words_list))
+    {
+        result = 0;
+    }
+    
     free(expected_grid_ptr);
+    free(actual_words_list);
     return result;
 }
 
 
-int tests_build_grid_array()
+int tests_solver()
 {
     print_test_subcategory("Grid Array Tests");
 
@@ -349,24 +409,30 @@ int tests_build_grid_array()
     {'P', 'N', 'N', 'H', 'E', 'L', 'L', 'O', 'H', 'M', 'O', 'O', 'L', 'V'}
 };
 
+    char *expected_words_list_1[] = {"IMAGINE", "RELAX", "COOL", "RESTING", "BREATHE", "EASY", "TENSION", "STRESS", "CALM"};
+    char *expected_words_list2[] = {"CAMPAIGNS", "ULAA", "CRM", "ONE", "DESK", "SURVEY", "CREATOR",
+                                    "BOOKS", "PEOPLE", "MAIL", "SALESIQ", "WORKDRIVE", "CLIQ"};
+    char *expected_words_list3[] = {"TROPIC", "BEACH", "SUMMER", "HOLIDAY", "SAND", "BALL", "TAN", "RELAX", "SUN", "FUN"};
+    char *expected_words_list4[] = {"HELLO", "WORLD", "RUST", "PHP", "JAVA", "ASSEMBLY", "PYTHON", "HTML", "MOJO", "BASIC"};
+
     int result = 1;
     
-    if (!test_build_grid_array("Level 1 Image 1", "level_1_image_1.png", 17, 17, expected_grid_array1))
+    if (!test_solver("Level 1 Image 1", "level_1_image_1.png", 17, 17, expected_grid_array1, 9, expected_words_list_1))
     {
         result = 0;
     }
     
-    if (!test_build_grid_array("Level 1 Image 2", "level_1_image_2.png", 12, 12, expected_grid_array2))
+    if (!test_solver("Level 1 Image 2", "level_1_image_2.png", 12, 12, expected_grid_array2, 13, expected_words_list2))
     {
         result = 0;
     }
     
-    if (!test_build_grid_array("Level 2 Image 1", "level_2_image_1.png", 7, 8, expected_grid_array3))
+    if (!test_solver("Level 2 Image 1", "level_2_image_1.png", 7, 8, expected_grid_array3, 10, expected_words_list3))
     {
         result = 0;
     }
     
-    if (!test_build_grid_array("Level 2 Image 2", "level_2_image_2.png", 14, 14, expected_grid_array4))
+    if (!test_solver("Level 2 Image 2", "level_2_image_2.png", 14, 14, expected_grid_array4, 10, expected_words_list4))
     {
         result = 0;
     }
@@ -386,7 +452,7 @@ int main()
         passed = 0;
     if (!test_diagonal())
         passed = 0;
-    if (!tests_build_grid_array())
+    if (!tests_solver())
         passed = 0;
 
     if (passed)

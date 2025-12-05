@@ -20,7 +20,7 @@ typedef struct
     int nb_words;
 
     Grid grid;
-    int **words;
+    char **words;
 } PipelineResult;
 
 void sobel_filter(GdkPixbuf *pixbuf);
