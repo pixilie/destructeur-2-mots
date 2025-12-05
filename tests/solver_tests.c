@@ -351,11 +351,12 @@ int test_solver(char *test_image_name, char *filename, int nb_rows, int nb_cols,
     expected_grid.grid = expected_grid_ptr;
 
     Grid actual_grid = pipelineResult.grid;
-
-    char **actual_words_list = malloc(pipelineResult.nb_words * sizeof(char *));
-    for (int i = 0; i < pipelineResult.nb_words; i++)
+    Words actual_words = pipelineResult.words;
+    
+    char **actual_words_list = malloc(actual_words.detected_words_count * sizeof(char *));
+    for (int i = 0; i < actual_words.detected_words_count; i++)
     {
-        actual_words_list[i] = pipelineResult.words[i];
+        actual_words_list[i] = actual_words.words[i];
     }
 
     int result = 1;
@@ -364,7 +365,7 @@ int test_solver(char *test_image_name, char *filename, int nb_rows, int nb_cols,
         result = 0;
     }
 
-    if (!are_words_list_equal(nb_words, expected_words_list, pipelineResult.nb_words, actual_words_list))
+    if (!are_words_list_equal(nb_words, expected_words_list, actual_words.detected_words_count, actual_words_list))
     {
         result = 0;
     }

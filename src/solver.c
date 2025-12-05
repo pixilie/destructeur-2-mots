@@ -340,12 +340,14 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
 }
 
 Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
-                                     int **words_size_out, int *row_count_out)
+                                     int **words_size_out, int *words_count_out)
 {
     if (nb_letters <= 0 || !words_letters)
     {
         printf("No letters were detected while trying to build the words list "
                "!\n");
+        *words_count_out = 0;
+        *words_size_out = NULL;
         return NULL;
     }
 
@@ -361,6 +363,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     temp_rows[0][0] = words_letters[0];
     row_sizes[0] = 1;
     int words_count = 1; // The number of rows in the grid
+    int first_letter_in_row = 0;
 
     printf("Sorted word letter 0 in word 0 at index 0, with "
            "coordinates (%i, %i)(%i, %i)\n",
@@ -369,7 +372,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 
     for (int i = 1; i < nb_letters; i++)
     {
-        int center_y_prev = center_y(&temp_rows[words_count - 1][0]);
+        int center_y_prev = center_y(&words_letters[first_letter_in_row]);
         int center_y_current = center_y(&words_letters[i]);
 
         // Same row
@@ -382,7 +385,15 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
         // Start new row
         else
         {
+            first_letter_in_row = i;
             words_count++;
+
+            if (words_count > nb_letters)
+            {
+                printf("Too many rows detected in words list, got %i\n", words_count);
+                words_count = nb_letters;
+                break;
+            }
             temp_rows[words_count - 1] = calloc(nb_letters, sizeof(Letter));
             temp_rows[words_count - 1][0] = words_letters[i];
             row_sizes[words_count - 1] = 1;
@@ -395,7 +406,10 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
                words_letters[i].y2);
     }
 
-    *row_count_out = words_count;
+    if (words_count > nb_letters)
+    {
+        words_count = nb_letters;
+    }
 
     // Sort every row by x value
     for (int row = 0; row < words_count; row++)
@@ -404,7 +418,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     }
 
     // Create the sorted grid
-    Letter **words_list = malloc(words_count * sizeof(Letter *));
+    Letter **words_list = calloc(words_count, sizeof(Letter *));
     for (int word_index = 0; word_index < words_count; word_index++)
     {
         words_list[word_index] = calloc(row_sizes[word_index], sizeof(Letter));
@@ -425,6 +439,8 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 
     free(temp_rows);
     free(row_sizes);
+
+    *words_count_out = words_count;
 
     return words_list;
 }

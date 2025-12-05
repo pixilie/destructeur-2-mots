@@ -12,6 +12,12 @@ typedef struct
 
 typedef struct
 {
+    int detected_words_count;
+    char **words;
+} Words;
+
+typedef struct
+{
     int grid_coo[4];
     int words_coo[4];
     int nb_letters;
@@ -20,7 +26,7 @@ typedef struct
     int nb_words;
 
     Grid grid;
-    char **words;
+    Words words;
 } PipelineResult;
 
 void sobel_filter(GdkPixbuf *pixbuf);
