@@ -246,14 +246,13 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
                 // printf("No letter found at row : %i, col %i\n", row, col);
                 continue;
             }
-            GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
+            //GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
 
-            char predicted_letter = predict_letter(nn, scaled_letter);
+            char predicted_letter = predict_letter(nn, letter);
             // printf("%c ", predicted_letter);
             grid_array[row][col] = predicted_letter;
 
             g_object_unref(letter);
-            g_object_unref(scaled_letter);
 
             nb_letter++;
         }
@@ -408,17 +407,9 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     Letter **words_list = malloc(words_count * sizeof(Letter *));
     for (int word_index = 0; word_index < words_count; word_index++)
     {
-        words_list[word_index] = malloc(words_count * sizeof(Letter));
+        words_list[word_index] = malloc(row_sizes[word_index] * sizeof(Letter));
         memcpy(words_list[word_index], temp_rows[word_index],
                row_sizes[word_index] * sizeof(Letter));
-
-        for (int col = row_sizes[word_index]; col < words_count; col++)
-        {
-            words_list[word_index][col].x1 = 0;
-            words_list[word_index][col].y1 = 0;
-            words_list[word_index][col].x2 = 0;
-            words_list[word_index][col].y2 = 0;
-        }
     }
 
     for (int i = 0; i < words_count; i++)
@@ -488,14 +479,14 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                 printf("No letter found at row : %i, col %i\n", row, col);
                 continue;
             }
-            GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
+            //GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
 
-            char predicted_letter = predict_letter(nn, scaled_letter);
+            char predicted_letter = predict_letter(nn, letter);
             printf("%c ", predicted_letter);
             words_list[row][col] = predicted_letter;
 
             g_object_unref(letter);
-            g_object_unref(scaled_letter);
+            //g_object_unref(scaled_letter);
 
             nb_letter++;
         }
