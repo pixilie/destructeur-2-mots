@@ -314,8 +314,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
  */
 void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
                      int **coo, char *output_file, int nb_letters,
-                     Letter **grid_letters_out,
-                     Letter **words_letters_out)
+                     Letter **grid_letters_out, Letter **words_letters_out)
 {
     g_mkdir_with_parents(output_file, 0777);
 
@@ -326,8 +325,7 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
     int letter_word_count = 0;
 
     Letter *grid_letters = malloc(nb_letters * sizeof(Letter));
-    Letter *words_letters =
-        malloc(nb_letters * sizeof(Letter));
+    Letter *words_letters = malloc(nb_letters * sizeof(Letter));
 
     for (int index_coo = 0; index_coo < nb_letters; index_coo++)
     {
@@ -368,7 +366,9 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
                 word_letter.y1 = coo[index_coo][1];
                 word_letter.x2 = coo[index_coo][2];
                 word_letter.y2 = coo[index_coo][3];
-                printf("Detected letter in words list %i : (%i, %i)(%i, %i)\n",letter_word_count, word_letter.x1, word_letter.y1, word_letter.x2, word_letter.y2);
+                // printf("Detected letter in words list %i : (%i, %i)(%i,
+                // %i)\n",letter_word_count, word_letter.x1, word_letter.y1,
+                // word_letter.x2, word_letter.y2);
                 words_letters[letter_word_count] = word_letter;
                 letter_word_count++;
             }
@@ -678,16 +678,19 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int nb_cols;
     Letter *grid_letters = NULL;
     Letter *words_letters = NULL;
-    generate_letter(
-        pixbuf_to_slice, grid_coo, words_coo, coo, output_letter_file, nb_letter, &grid_letters, &words_letters);
+    generate_letter(pixbuf_to_slice, grid_coo, words_coo, coo,
+                    output_letter_file, nb_letter, &grid_letters,
+                    &words_letters);
 
     Letter **grid_letters_array =
         build_grid_from_image(grid_letters, nb_letter, &nb_rows, &nb_cols);
 
     int *words_size = NULL;
     int detected_rows = 0;
-    Letter **words_letters_final = build_words_list_from_image(words_letters, nb_letter, &words_size, &detected_rows);
-    char **words_letters_list = build_words_list(pixbuf_to_slice, words_letters_final, detected_rows, words_size);
+    Letter **words_letters_final = build_words_list_from_image(
+        words_letters, nb_letter_words, &words_size, &detected_rows);
+    char **words_letters_list = build_words_list(
+        pixbuf_to_slice, words_letters_final, detected_rows, words_size);
 
     free(grid_letters);
     free(words_letters);

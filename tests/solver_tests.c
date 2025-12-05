@@ -266,6 +266,38 @@ void print_words_list(char **words_list, int words_count)
     }
 }
 
+void print_words_list_differences(char **expected_words_list, char **actual_words_list, int words_count)
+{
+    for (int i = 0; i < words_count; i++)
+    {
+        int expected_word_length = strlen(expected_words_list[i]);
+        int actual_word_length = strlen(actual_words_list[i]);
+        int min_word_length = expected_word_length < actual_word_length ? expected_word_length : actual_word_length;
+        printf("Word %i :\t ", i);
+        int actual_word_index = 0;
+        for (int j = 0; j < min_word_length; j++)
+        {
+            if (expected_words_list[i][j] == actual_words_list[i][j]) // Word letter is equal
+            {
+                printf(COLOR_GREEN "%c" COLOR_RESET, expected_words_list[i][j]);
+            }
+            else // Word letter is different
+            {
+                printf(COLOR_RED "%c" COLOR_RESET, actual_words_list[i][j]);
+            }
+            actual_word_index++;
+        }
+        if (actual_word_length > expected_word_length)
+        {
+            for (int k = actual_word_index; k < actual_word_length; k++)
+            {
+                printf(COLOR_RED "%c" COLOR_RESET, actual_words_list[i][k]);
+            }
+        }
+        printf("\n");
+    }
+}
+
 int are_words_list_equal(int expected_words_count, char **expected_words_list, int actual_words_count, char **actual_words_list)
 {
     if (expected_words_count != actual_words_count)
@@ -289,7 +321,7 @@ int are_words_list_equal(int expected_words_count, char **expected_words_list, i
             printf("Expected words list :\n");
             print_words_list(expected_words_list, expected_words_count);
             printf("Got words list :\n");
-            print_words_list(actual_words_list, actual_words_count);
+            print_words_list_differences(expected_words_list, actual_words_list, actual_words_count);
             return 0;
         }
     }
