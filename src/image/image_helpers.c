@@ -130,18 +130,45 @@ int save_pixbuf_as_png(GdkPixbuf *pixbuf, const char *filename)
     return 1;
 }
 
-/**
- * Resize the input pixbuf to 28x28 using bilinear interpolation.
- *
- * Parameters:
- *  - src : original GdkPixbuf
- *
- * Returns:
- *  - new 28x28 GdkPixbuf
- */
 GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
 {
-    return gdk_pixbuf_scale_simple(src, 28, 28, GDK_INTERP_BILINEAR);
+    int src_w = gdk_pixbuf_get_width(src);
+    int src_h = gdk_pixbuf_get_height(src);
+    int src_has_alpha = gdk_pixbuf_get_has_alpha(src);
+    int max_side = src_w > src_h ? src_w : src_h;
+
+    GdkPixbuf *square = gdk_pixbuf_new(GDK_COLORSPACE_RGB, src_has_alpha, 8,
+                                       max_side, max_side);
+    gdk_pixbuf_fill(square, 0xFFFFFFFF);
+
+    double padding_ratio = 0.90;
+    int new_w = (int)(src_w * padding_ratio);
+    int new_h = (int)(src_h * padding_ratio);
+
+    GdkPixbuf *scaled_src =
+        gdk_pixbuf_scale_simple(src, new_w, new_h, GDK_INTERP_BILINEAR);
+
+    int offset_x = (max_side - new_w) / 2;
+    int offset_y = (max_side - new_h) / 2;
+
+    gdk_pixbuf_copy_area(scaled_src, 0, 0, new_w, new_h, square, offset_x,
+                         offset_y);
+
+    g_object_unref(scaled_src);
+
+    GdkPixbuf *final_28 =
+        gdk_pixbuf_scale_simple(square, 28, 28, GDK_INTERP_BILINEAR);
+
+    g_object_unref(square);
+
+    // guint32 r = g_random_int();
+    // time_t t = time(NULL);
+    // char *filename = g_strdup_printf("temp/img_%ld_%u.png", (long)t, r);
+
+    // save_pixbuf_as_png(final_28, filename);
+    // g_free(filename);
+
+    return final_28;
 }
 
 /**
