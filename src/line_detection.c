@@ -821,6 +821,11 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
            nb_detected_words);
     for (int i = 0; i < pipelineResult.words.detected_words_count; i++)
     {
+        if (!pipelineResult.words.solved_words_grid_coos)
+        {
+            break;
+        }
+        
         printf("Word %i : %s     \t: Grid coos : (%i, %i)(%i, %i), Image coos "
                ": (%i, %i) "
                "(%i, %i) (%i, %i) (%i, %i)\n",

@@ -1,8 +1,25 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "../include/ui.h"
 #include "../include/image/image.h"
 #include "line_detection.h"
 
 #include <gtk/gtk.h>
+
+#include <libgen.h>
+#include <unistd.h>
+
+char *get_executable_dir()
+{
+    static char buffer[4096];
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+    if (len == -1)
+    {
+        return NULL;
+    }
+    buffer[len] = '\0';
+    return dirname(buffer);
+}
 
 /**
  * update_image:
@@ -172,6 +189,13 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
     }
 
     Words words = data->pipelineResult.words;
+    if (!words.solved_words_image_coos)
+    {
+        printf("No solved words image coordinates found to draw around solved "
+               "words !\n");
+        return;
+    }
+
     for (int i = 0; i < words.detected_words_count; i++)
     {
         int x1 = words.solved_words_image_coos[i][0];
@@ -446,7 +470,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
-    data->pipelineResult = pipeline(filename, "grid", "letters");
+    data->pipelineResult = pipeline(filename, "tests/results/ui_output/grid",
+                                    "tests/results/ui_output/letters");
 
     g_signal_connect(grayscale_button, "clicked",
                      G_CALLBACK(on_grayscale_clicked), data);

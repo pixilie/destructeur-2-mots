@@ -7,8 +7,8 @@
 #include "image/image_helpers.h"
 #include "solver.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <string.h>
 #include <math.h>
+#include <string.h>
 
 // Path to the model useb by the neural network to recognise letters
 #define MODEL_PATH "assets/model"
@@ -283,9 +283,10 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
                 crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 - os,
                      grid_letter.x2 + os, grid_letter.y2 + os);
             char letter_path[256];
-            snprintf(letter_path, sizeof(letter_path), "%.*s/letter_%i__%i__%i_%i_%i.png",
-                     200, row_path, nb_letter, grid_letter.x1, grid_letter.y1,
-                     grid_letter.x2, grid_letter.y2);
+            snprintf(letter_path, sizeof(letter_path),
+                     "%.*s/letter_%i__%i__%i_%i_%i.png", 200, row_path,
+                     nb_letter, grid_letter.x1, grid_letter.y1, grid_letter.x2,
+                     grid_letter.y2);
             save_pixbuf_as_png(letter, letter_path);
             if (!letter)
             {
@@ -493,8 +494,8 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 }
 
 // Builds the list of the words
-char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words, int index,
-                        int *words_size)
+char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
+                        int index, int *words_size)
 {
     NeuralNetwork *nn = load_network(get_image_path(MODEL_PATH));
     if (!nn)
@@ -537,7 +538,7 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
 
     char words_path[256];
     snprintf(words_path, 256, "tests/results/solver_output/words%i", index);
-    
+
     ensure_dir("tests/results/solver_output");
     ensure_dir(words_path);
 
@@ -548,7 +549,8 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     for (int row = 0; row < nb_words; row++)
     {
         char word_path[256];
-        snprintf(word_path, sizeof(word_path), "%.*s/word_%i", 200, words_path, row);
+        snprintf(word_path, sizeof(word_path), "%.*s/word_%i", 200, words_path,
+                 row);
         ensure_dir(word_path);
         int word_size = words_size[row];
         printf("Word %i of length %i : Letters %i to %i :\t ", row, word_size,
@@ -577,9 +579,10 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
             // GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
             //
             char letter_path[256];
-            snprintf(letter_path, sizeof(letter_path), "%.*s/letter_%i__%i__%i_%i_%i.png",
-                     200, word_path, nb_letter, word_letter.x1, word_letter.y1,
-                     word_letter.x2, word_letter.y2);
+            snprintf(letter_path, sizeof(letter_path),
+                     "%.*s/letter_%i__%i__%i_%i_%i.png", 200, word_path,
+                     nb_letter, word_letter.x1, word_letter.y1, word_letter.x2,
+                     word_letter.y2);
             save_pixbuf_as_png(letter, letter_path);
 
             char predicted_letter = predict_letter(nn, letter);
@@ -612,6 +615,12 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
 int **get_solved_words_grid_coos(char **words, int words_count, char **grid,
                                  int rows, int cols)
 {
+    if (!words)
+    {
+        printf("No solved words found !\n");
+        return NULL;
+    }
+
     int **words_coos = calloc(words_count, sizeof(int *));
     for (int word_index = 0; word_index < words_count; word_index++)
     {
@@ -638,8 +647,14 @@ int **get_solved_words_image_coos_drawing(int **words_grid_coos,
                                           int words_count, int grid_coos[4],
                                           int rows, int cols)
 {
+    if (!words_grid_coos)
+    {
+        printf("No solved words grid coordinates found !\n");
+        return NULL;
+    }
+
     int **words_coos_image = calloc(words_count, sizeof(int *));
-    
+
     int grid_width = grid_coos[2] - grid_coos[0];
     int grid_height = grid_coos[3] - grid_coos[1];
 
@@ -671,10 +686,14 @@ int **get_solved_words_image_coos_drawing(int **words_grid_coos,
         }
 
         // Start and end in pixel coordinates (center of letters)
-        float x1 = start_x + x1_grid * width_per_letter + width_per_letter / 2.0f;
-        float y1 = start_y + y1_grid * height_per_letter + height_per_letter / 2.0f;
-        float x2 = start_x + x2_grid * width_per_letter + width_per_letter / 2.0f;
-        float y2 = start_y + y2_grid * height_per_letter + height_per_letter / 2.0f;
+        float x1 =
+            start_x + x1_grid * width_per_letter + width_per_letter / 2.0f;
+        float y1 =
+            start_y + y1_grid * height_per_letter + height_per_letter / 2.0f;
+        float x2 =
+            start_x + x2_grid * width_per_letter + width_per_letter / 2.0f;
+        float y2 =
+            start_y + y2_grid * height_per_letter + height_per_letter / 2.0f;
 
         float dx = x2 - x1;
         float dy = y2 - y1;
