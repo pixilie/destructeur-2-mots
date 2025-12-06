@@ -677,7 +677,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int nb_cols;
     Letter *grid_letters = NULL;
     Letter *words_letters = NULL;
-    generate_letter(pixbuf_to_slice, grid_coo, words_coo, coo,
+    generate_letter(pixbuf, grid_coo, words_coo, coo,
                     output_letter_file, nb_letter, &grid_letters,
                     &words_letters);
 
@@ -690,7 +690,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     Letter **words_letters_final = build_words_list_from_image(
         words_letters, nb_letter_words, &words_size, &detected_words_count);
     char **words_letters_list = build_words_list(
-        pixbuf_to_slice, words_letters_final, detected_words_count, words_size);
+        pixbuf, words_letters_final, detected_words_count, words_size);
 
     pipelineResult.words.detected_words_count = detected_words_count;
     pipelineResult.words.words = words_letters_list;

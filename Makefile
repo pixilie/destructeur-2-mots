@@ -101,6 +101,11 @@ $(NN_OBJ): $(SRC_DIR)/neural_network.c
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
 
+$(SOLVER_OBJ): $(SRC_DIR)/solver.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $(SRC_DIR)/solver.c -o $(SOLVER_OBJ)
+
 # ===================== Tests Compilation =====================
 TEST_OBJ = $(filter-out $(BUILD_DIR)/main.o,$(MAIN_OBJ)) $(SOLVER_OBJ) $(NEURAL_NET_OBJ)
 TEST_BINS = $(TEST_FILES:$(TEST_DIR)/%.c=$(BUILD_DIR)/test_%)
@@ -162,10 +167,11 @@ clean:
 	@echo "Cleaning build files..."
 	@find $(BUILD_DIR) -mindepth 1 ! -name ".__afs*" -exec rm -rf {} + 2>/dev/null || true
 	@rm -rf $(RESULTS_DIR) 2>/dev/null || true
-	@rm -f tests/model
+	#@rm -f tests/model
+	@rm -rf solver_output/
 	@rm -f image.png bw.png filtered.png
 	@rm -rf gw/ letters/
-	@rm -rd helpers/generate_dataset/fonts helpers/generate_dataset/dataset
+	@rm -rf helpers/generate_dataset/fonts helpers/generate_dataset/dataset
 	@echo "Clean complete."
 
 .PHONY: all clean tests

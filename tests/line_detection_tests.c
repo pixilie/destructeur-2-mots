@@ -98,6 +98,8 @@ int main()
         result = 0;
     }
 
+    /*
+
     // Level 1 Image 2
     int grid_coo2[4] = {31, 33, 638, 643};
     int words_coo2[4] = {713, 54, 876, 641};
@@ -142,6 +144,7 @@ int main()
     {
         result = 0;
     }
+    */
 
     if (result == 1)
     {

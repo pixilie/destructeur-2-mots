@@ -136,8 +136,9 @@ int test_diagonal()
     return res;
 }
 
-void print_grid_array_differences(char **expected_grid_array, char **actual_grid_array, int rows, int cols)
+void print_grid_array_differences(char **expected_grid_array, char **actual_grid_array, int rows, int cols, int *nb_errors_out)
 {
+    int nb_errors = 0;
     for (int i = 0; i < rows; i++)
     {
         printf("[");
@@ -150,6 +151,7 @@ void print_grid_array_differences(char **expected_grid_array, char **actual_grid
             else // Letters different
             {
                 printf(COLOR_RED "%c" COLOR_RESET, actual_grid_array[i][j]);
+                nb_errors++;
             }
             if (j < cols - 1)
             {
@@ -163,6 +165,8 @@ void print_grid_array_differences(char **expected_grid_array, char **actual_grid
         }
     }
     printf("\n");
+
+    *nb_errors_out = nb_errors;
     
 }
 
@@ -229,6 +233,8 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
         
         return 0;
     }
+
+    int nb_errors = 0;
     
     for (int i = 0; i < rows; i++)
     {
@@ -246,7 +252,8 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
                 print_grid_array(expected_grid_array, rows, cols);
                 
                 printf("Got grid :\n");
-                print_grid_array_differences(expected_grid_array, actual_grid_array, rows, cols);
+                print_grid_array_differences(expected_grid_array, actual_grid_array, rows, cols, &nb_errors);
+                printf("Found %i incorrect letters in the grid\n", nb_errors);
                 
                 return 0;
             }
@@ -266,8 +273,9 @@ void print_words_list(char **words_list, int words_count)
     }
 }
 
-void print_words_list_differences(char **expected_words_list, char **actual_words_list, int words_count)
+void print_words_list_differences(char **expected_words_list, char **actual_words_list, int words_count, int *nb_errors_out)
 {
+    int nb_errors = 0;
     for (int i = 0; i < words_count; i++)
     {
         int expected_word_length = strlen(expected_words_list[i]);
@@ -284,6 +292,7 @@ void print_words_list_differences(char **expected_words_list, char **actual_word
             else // Word letter is different
             {
                 printf(COLOR_RED "%c" COLOR_RESET, actual_words_list[i][j]);
+                nb_errors++;
             }
             actual_word_index++;
         }
@@ -292,10 +301,13 @@ void print_words_list_differences(char **expected_words_list, char **actual_word
             for (int k = actual_word_index; k < actual_word_length; k++)
             {
                 printf(COLOR_RED "%c" COLOR_RESET, actual_words_list[i][k]);
+                nb_errors++;
             }
         }
         printf("\n");
     }
+
+    *nb_errors_out = nb_errors;
 }
 
 int are_words_list_equal(int expected_words_count, char **expected_words_list, int actual_words_count, char **actual_words_list)
@@ -311,6 +323,8 @@ int are_words_list_equal(int expected_words_count, char **expected_words_list, i
         print_success();
         printf("Detected %i words in the words list\n", actual_words_count);
     }
+
+    int nb_errors = 0;
     
     for (int i = 0; i < expected_words_count; i++)
     {
@@ -321,7 +335,8 @@ int are_words_list_equal(int expected_words_count, char **expected_words_list, i
             printf("Expected words list :\n");
             print_words_list(expected_words_list, expected_words_count);
             printf("Got words list :\n");
-            print_words_list_differences(expected_words_list, actual_words_list, actual_words_count);
+            print_words_list_differences(expected_words_list, actual_words_list, actual_words_count, &nb_errors);
+            printf("Found %i incorrect letters in the words list\n", nb_errors);
             return 0;
         }
     }
@@ -454,6 +469,7 @@ int tests_solver()
     {
         result = 0;
     }
+
     
     if (!test_solver("Level 1 Image 2", "level_1_image_2.png", 12, 12, expected_grid_array2, 13, expected_words_list2))
     {
@@ -469,6 +485,7 @@ int tests_solver()
     {
         result = 0;
     }
+    
     
     return result;
 }

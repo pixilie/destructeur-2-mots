@@ -3,13 +3,26 @@
 #include <stdlib.h>
 
 #include "../include/image/image.h"
-#include "../include/line_detection.h"
 #include "../include/neural_network.h"
+#include "image/image_helpers.h"
 #include "solver.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <string.h>
 
-#define MODEL_PATH "tests/model"
+// Path to the model useb by the neural network to recognise letters
+#define MODEL_PATH "assets/model"
+#define SOLVED_GRID_LETTERS_PATH "solver_output/grid"
+#define SOLVED_WORDS_LETTERS_PATH "solver_output/words"
+
+#include <sys/stat.h>
+#include <sys/types.h>
+
+void ensure_dir(const char *path)
+{
+    struct stat st = {0};
+    if (stat(path, &st) == -1)
+        mkdir(path, 0700);
+}
 
 /**
  * Return the length of a string (no strlen allowed).
@@ -107,6 +120,31 @@ int compare_y(const void *letter_1, const void *letter_2)
     const Letter *letter2 = letter_2;
 
     return center_y(letter1) - center_y(letter2);
+}
+
+/**
+ * invert_color:
+ * Invert the grayscale color values of a pixbuf in-place (black↔white).
+ *
+ * Parameters:
+ *  - pixbuf: pointer to a GdkPixbuf expected to be grayscale (R==G==B).
+ */
+static void invert_color(GdkPixbuf *pixbuf)
+{
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
+    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            guchar *p = pixels + y * rowstride + x * n_channels;
+            p[0] = p[1] = p[2] = 255 - p[0];
+        }
+    }
 }
 
 Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
@@ -223,6 +261,12 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
 
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
+
+    int os = 3;
+
+    ensure_dir("solver_output");
+    ensure_dir("solver_output/grid");
+
     // For each letter, determine the character with the Neural Network and add
     // it to the grid array
     for (int row = 0; row < rows; row++)
@@ -239,8 +283,11 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
                 // nb_letter, row, col);
                 continue;
             }
-            GdkPixbuf *letter = crop(pixbuf, grid_letter.x1, grid_letter.y1,
-                                     grid_letter.x2, grid_letter.y2);
+            GdkPixbuf *letter = crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 -os,
+                                     grid_letter.x2 + os, grid_letter.y2 + os);
+            char letter_path[100];
+            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png", SOLVED_GRID_LETTERS_PATH, nb_letter, grid_letter.x1, grid_letter.y1, grid_letter.x2, grid_letter.y2);
+            save_pixbuf_as_png(letter, letter_path);
             if (!letter)
             {
                 // printf("No letter found at row : %i, col %i\n", row, col);
@@ -487,6 +534,12 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
 
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
+
+    ensure_dir("solver_output");
+    ensure_dir("solver_output/words");
+
+    int os = 3;
+
     // For each letter, determine the character with the Neural Network and add
     // it to the grid array
     for (int row = 0; row < nb_words; row++)
@@ -504,14 +557,20 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                        nb_letter, row, col);
                 continue;
             }
-            GdkPixbuf *letter = crop(pixbuf, word_letter.x1, word_letter.y1,
-                                     word_letter.x2, word_letter.y2);
+            GdkPixbuf *letter = crop(pixbuf, word_letter.x1 - os, word_letter.y1 - os,
+                                     word_letter.x2 + os, word_letter.y2 + os);
             if (!letter)
             {
                 printf("No letter found at row : %i, col %i\n", row, col);
                 continue;
             }
+
+            invert_color(letter);
             //GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
+            // 
+            char letter_path[100];
+            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png", SOLVED_WORDS_LETTERS_PATH, nb_letter, word_letter.x1, word_letter.y1, word_letter.x2, word_letter.y2);
+            save_pixbuf_as_png(letter, letter_path);
 
             char predicted_letter = predict_letter(nn, letter);
             printf("%c ", predicted_letter);

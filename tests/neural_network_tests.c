@@ -75,6 +75,7 @@ int main()
     printf("Network created: %d-%d-%d\n", nn->input_size, nn->hidden_size,
            nn->output_size);
 
+    /*
     print_test_subcategory("Training Neural Network");
     train(nn, data.inputs, data.targets, data.samples, 0.01, 1000);
     print_success();
@@ -84,7 +85,8 @@ int main()
     save_network(nn, MODEL_PATH);
     print_success();
     printf("Model saved to %s\n", MODEL_PATH);
-
+    */
+    
     print_test_subcategory("Evaluating on Training Dataset (Vectors)");
     int correct = 0;
     for (int i = 0; i < data.samples; i++)
