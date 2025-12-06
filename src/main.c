@@ -9,6 +9,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "../include/neural_network.h" 
+#include "../include/dataset.h"
+
 /**
  * AppData:
  * Small container for application state passed to callbacks.
@@ -32,12 +35,14 @@ struct AppData
     int save_index;
 };
 
+NeuralNetwork *neural;
+
 /**
  * update_image:
  * Update the GTK image widget to display data->current and request redraw.
  *
  * Parameters:
- *  - data: pointer to application state (must have data->image and
+   - data: pointer to application state (must have data->image and
  * data->current).
  */
 void update_image(struct AppData *data)
@@ -400,6 +405,77 @@ void get_path_image(GtkWidget *widget, gpointer user_data)
 }
 
 
+void load_neural(const char *filename)
+{
+    printf("neural to load is here : %s\n", filename);
+    neural = load_network(filename);
+}
+
+void get_neural_load_path(GtkWidget *widget)
+{
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(
+		    "Choisir le fichier :",
+		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+		    GTK_FILE_CHOOSER_ACTION_OPEN,
+		    "_Annuler", GTK_RESPONSE_CANCEL,
+		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
+		    NULL);
+
+    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    {
+	char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	if(filename)
+	{
+	    printf("Neural choisi : %s\n", filename);
+
+	    load_neural(filename);
+	    g_free(filename);
+	}
+	else
+	{
+	    g_printerr("Erreur : aucun fichier selectionné\n");
+	}
+    }
+    gtk_widget_destroy(dialog);
+}
+
+
+void train_neural(const char *filename)
+{
+    Dataset data = load_dataset(filename);
+    train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
+}
+
+void get_neural_train_path(GtkWidget *widget)
+{
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(
+		    "Choisir le Dataset",
+		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+		    GTK_FILE_CHOOSER_ACTION_OPEN,
+		    "_Annuler", GTK_RESPONSE_CANCEL,
+		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
+		    NULL);
+
+    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    {
+	char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	if(filename)
+	{
+	    printf("Neural choisi : %s\n", filename);
+
+	    train_neural(filename);
+	    g_free(filename);
+	}
+	else
+	{
+	    g_printerr("Erreur : aucun fichier selectionné\n");
+	}
+    }
+
+    gtk_widget_destroy(dialog);
+}
+
+
 
 
 /*
@@ -429,14 +505,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *load_button;
     GtkWidget *save_neural_button;
 
-/*   // Load image
-
-    char *filename = (char *)user_data;
-    if (!filename)
-    {
-        filename = "level_1_image_1.png";
-    }
-*/
     char **filename = (char**)user_data;
     printf("Fichier à charger : %s\n", *filename);
 
@@ -554,7 +622,11 @@ static void on_activate(GtkApplication *app, gpointer user_data)
    gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
    //Create new button for neural training
    training_button = gtk_button_new_with_label("Entraîner");
+   g_signal_connect(training_button, "clicked", G_CALLBACK(get_neural_train_path), NULL); //check NULL
+
    load_button = gtk_button_new_with_label("Charger");
+   g_signal_connect(load_button, "clicked", G_CALLBACK(get_neural_load_path), NULL);
+
    save_neural_button = gtk_button_new_with_label("Sauvegarder l'entraînement");
 
 
