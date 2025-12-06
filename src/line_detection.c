@@ -696,7 +696,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     int rows;
     int cols;
-    char **grid_array = build_grid_array(pixbuf_to_slice, grid_letters_array,
+    char **grid_array = build_grid_array(pixbuf, grid_letters_array,
                                          nb_rows, nb_cols, &rows, &cols);
     for (int i = 0; i < nb_rows; i++)
     {

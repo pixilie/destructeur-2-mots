@@ -123,31 +123,6 @@ int compare_y(const void *letter_1, const void *letter_2)
     return center_y(letter1) - center_y(letter2);
 }
 
-/**
- * invert_color:
- * Invert the grayscale color values of a pixbuf in-place (black↔white).
- *
- * Parameters:
- *  - pixbuf: pointer to a GdkPixbuf expected to be grayscale (R==G==B).
- */
-static void invert_color(GdkPixbuf *pixbuf)
-{
-    int width = gdk_pixbuf_get_width(pixbuf);
-    int height = gdk_pixbuf_get_height(pixbuf);
-    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
-    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            guchar *p = pixels + y * rowstride + x * n_channels;
-            p[0] = p[1] = p[2] = 255 - p[0];
-        }
-    }
-}
-
 Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
                                int *rows_out, int *cols_out)
 {
@@ -592,7 +567,6 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                 continue;
             }
 
-            invert_color(letter);
             // GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
             //
             char letter_path[100];
