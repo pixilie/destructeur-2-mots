@@ -382,6 +382,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *image;
     GtkWidget *scrolled;
 
+    char *exe_dir = get_executable_dir();
+
     // Load image
     char *filename = (char *)user_data;
     if (!filename)
@@ -470,8 +472,15 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
-    data->pipelineResult = pipeline(filename, "tests/results/ui_output/grid",
-                                    "tests/results/ui_output/letters");
+
+    char grid_path[512];
+    char letters_path[512];
+    snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
+             exe_dir);
+    snprintf(letters_path, sizeof(letters_path),
+             "%s/tests/results/ui_output/letters", exe_dir);
+
+    data->pipelineResult = pipeline(filename, grid_path, letters_path);
 
     g_signal_connect(grayscale_button, "clicked",
                      G_CALLBACK(on_grayscale_clicked), data);
