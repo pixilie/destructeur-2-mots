@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIPELINE_OUTPUT "tests/results/pipeline_output"
+
 /**
  * sobel_filter:
  * Apply a Sobel edge-detection filter to a grayscale GdkPixbuf in-place.
@@ -608,6 +610,8 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     g_mkdir_with_parents(output_gw_file, 0777);
     g_mkdir_with_parents(output_letter_file, 0777);
 
+    g_mkdir_with_parents(PIPELINE_OUTPUT, 0777);
+
     int nb_words =
         50; // we state that there will not be more than 50 words in an exercise
 
@@ -616,7 +620,24 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
 
-    save_pixbuf_as_png(pixbuf, "image.png");
+    int index = 1;
+    if (strcmp(filename, "level_1_image_2.png") == 0)
+    {
+        index = 2;
+    }
+    else if (strcmp(filename, "level_2_image_1.png") == 0)
+    {
+        index = 3;
+    }
+    else if (strcmp(filename, "level_2_image_2.png") == 0)
+    {
+        index = 4;
+    }
+
+    char output_image[256];
+    snprintf(output_image, sizeof(output_image), "%s/image%i.png",
+             PIPELINE_OUTPUT, index);
+    save_pixbuf_as_png(pixbuf, output_image);
 
     convert_to_grayscale(pixbuf);
 
@@ -634,7 +655,10 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     convert_to_black_and_white(pixbuf);
 
-    save_pixbuf_as_png(pixbuf, "bw.png");
+    char output_bw[256];
+    snprintf(output_bw, sizeof(output_bw), "%s/bw%i.png", PIPELINE_OUTPUT,
+             index);
+    save_pixbuf_as_png(pixbuf, output_bw);
 
     invert_color(pixbuf);
 
@@ -644,21 +668,10 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
         median_filter_3x3(pixbuf); // Only filter level 2 images
     }
 
-    save_pixbuf_as_png(pixbuf, "filtered.png");
-
-    int index = 1;
-    if (strcmp(filename, "level_1_image_2.png") == 0)
-    {
-        index = 2;
-    }
-    else if (strcmp(filename, "level_2_image_1.png") == 0)
-    {
-        index = 3;
-    }
-    else if (strcmp(filename, "level_2_image_2.png") == 0)
-    {
-        index = 4;
-    }
+    char output_filtered[256];
+    snprintf(output_filtered, sizeof(output_filtered), "%s/filtered%i.png",
+             PIPELINE_OUTPUT, index);
+    save_pixbuf_as_png(pixbuf, output_filtered);
 
     // dilate_3x3(pixbuf);
 

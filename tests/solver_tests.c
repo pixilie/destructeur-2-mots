@@ -482,7 +482,9 @@ int test_solver(char *test_image_name, char *filename, int nb_rows, int nb_cols,
 {
     print_test_subsubcategory(test_image_name);
 
-    PipelineResult pipelineResult = pipeline(filename, "gw", "letters");
+    PipelineResult pipelineResult =
+        pipeline(filename, "tests/results/pipeline_output/gw",
+                 "tests/results/pipeline_output/letters");
 
     Grid expected_grid;
     expected_grid.nb_rows = nb_rows;
@@ -663,9 +665,9 @@ int tests_solver()
         {11, 1, 5, 4},   {0, 1, 0, 4},  {12, 6, 12, 12}, {15, 12, 15, 7},
         {15, 12, 15, 7}, {7, 10, 10, 7}};
     int expected_solved_words_grid_coos4[10][4] = {
-        {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},
-        {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
-        {12, 6, 12, 12}, {15, 12, 15, 7}, {15, 12, 15, 7}, {7, 10, 10, 7}};
+        {9, 5, 15, 5},   {10, 0, 6, 4}, {16, 1, 13, 4},  {12, 13, 6, 13},
+        {11, 1, 5, 4},   {0, 1, 0, 4},  {12, 6, 12, 12}, {15, 12, 15, 7},
+        {15, 12, 15, 7}, {7, 10, 10, 7}};
 
     int result = 1;
 

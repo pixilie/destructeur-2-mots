@@ -175,8 +175,7 @@ clean:
 	@rm -rf $(RESULTS_DIR) 2>/dev/null || true
 	#@rm -f tests/model
 	@rm -rf tests/results/solver_output/
-	@rm -f image.png bw.png filtered.png
-	@rm -rf gw/ letters/
+	@rm -rf tests/results/pipeline_output/
 	@rm -rf helpers/generate_dataset/fonts helpers/generate_dataset/dataset
 	@echo "Clean complete."
 
