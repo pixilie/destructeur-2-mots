@@ -88,8 +88,13 @@ int test_pipeline(char *test_name, char *filename, char *output_gw_file,
     for (int i = 0; i < words_count; i++)
     {
         free(words.words[i]);
+        free(words.solved_words_grid_coos[i]);
+        free(words.solved_words_image_coos[i]);
     }
+
     free(words.words);
+    free(words.solved_words_grid_coos);
+    free(words.solved_words_image_coos);
 
     return result;
 }
