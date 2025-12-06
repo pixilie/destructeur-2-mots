@@ -373,8 +373,7 @@ int are_words_list_equal(int expected_words_count, char **expected_words_list,
     return 1;
 }
 
-int are_coos_equal(int nb_coos, int expected_coos[4],
-                   int actual_coos[4])
+int are_coos_equal(int nb_coos, int expected_coos[4], int actual_coos[4])
 {
     for (int i = 0; i < nb_coos; i++)
     {
@@ -398,8 +397,8 @@ void print_all_words_grid_coos(char **expected_words, char **actual_words,
             if (strcmp(expected_words[i], actual_words[i]) == 0) // Words equal
             {
                 printf("Word %i : \t " COLOR_GREEN "%s" COLOR_RESET
-                       "     \t : got " COLOR_GREEN "(%i, %i)(%i, %i)" COLOR_RESET
-                       "\n",
+                       "     \t : got " COLOR_GREEN
+                       "(%i, %i)(%i, %i)" COLOR_RESET "\n",
                        i, actual_words[i], expected_words_coos[i][0],
                        expected_words_coos[i][1], expected_words_coos[i][2],
                        expected_words_coos[i][3]);
@@ -407,8 +406,8 @@ void print_all_words_grid_coos(char **expected_words, char **actual_words,
             else
             {
                 printf("Word %i : \t " COLOR_RED "%s" COLOR_RESET
-                       "     \t : got " COLOR_GREEN "(%i, %i)(%i, %i)" COLOR_RESET
-                       "\n",
+                       "     \t : got " COLOR_GREEN
+                       "(%i, %i)(%i, %i)" COLOR_RESET "\n",
                        i, actual_words[i], expected_words_coos[i][0],
                        expected_words_coos[i][1], expected_words_coos[i][2],
                        expected_words_coos[i][3]);
@@ -654,18 +653,19 @@ int tests_solver()
         {12, 6, 12, 12}, {15, 12, 15, 7}, {7, 10, 10, 7}};
 
     // TODO: fix coordinates in other images
-    int expected_solved_words_grid_coos2[9][4] = {
-            {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},
-            {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
-            {12, 6, 12, 12}, {15, 12, 15, 7}, {7, 10, 10, 7}};
-    int expected_solved_words_grid_coos3[9][4] = {
-            {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},
-            {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
-            {12, 6, 12, 12}, {15, 12, 15, 7}, {7, 10, 10, 7}};
-    int expected_solved_words_grid_coos4[9][4] = {
-            {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},
-            {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
-            {12, 6, 12, 12}, {15, 12, 15, 7}, {7, 10, 10, 7}};
+    int expected_solved_words_grid_coos2[13][4] = {
+        {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},  {12, 13, 6, 13},
+        {11, 1, 5, 4},   {0, 1, 0, 4},    {12, 6, 12, 12}, {15, 12, 15, 7},
+        {15, 12, 15, 7}, {15, 12, 15, 7}, {15, 12, 15, 7}, {15, 12, 15, 7},
+        {7, 10, 10, 7}};
+    int expected_solved_words_grid_coos3[10][4] = {
+        {9, 5, 15, 5},   {10, 0, 6, 4}, {16, 1, 13, 4},  {12, 13, 6, 13},
+        {11, 1, 5, 4},   {0, 1, 0, 4},  {12, 6, 12, 12}, {15, 12, 15, 7},
+        {15, 12, 15, 7}, {7, 10, 10, 7}};
+    int expected_solved_words_grid_coos4[10][4] = {
+        {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},
+        {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
+        {12, 6, 12, 12}, {15, 12, 15, 7}, {15, 12, 15, 7}, {7, 10, 10, 7}};
 
     int result = 1;
 
@@ -677,19 +677,22 @@ int tests_solver()
     }
 
     if (!test_solver("Level 1 Image 2", "level_1_image_2.png", 12, 12,
-                     expected_grid_array2, 13, expected_words_list2, expected_solved_words_grid_coos2))
+                     expected_grid_array2, 13, expected_words_list2,
+                     expected_solved_words_grid_coos2))
     {
         result = 0;
     }
 
     if (!test_solver("Level 2 Image 1", "level_2_image_1.png", 7, 8,
-                     expected_grid_array3, 10, expected_words_list3, expected_solved_words_grid_coos3))
+                     expected_grid_array3, 10, expected_words_list3,
+                     expected_solved_words_grid_coos3))
     {
         result = 0;
     }
 
     if (!test_solver("Level 2 Image 2", "level_2_image_2.png", 14, 14,
-                     expected_grid_array4, 10, expected_words_list4, expected_solved_words_grid_coos4))
+                     expected_grid_array4, 10, expected_words_list4,
+                     expected_solved_words_grid_coos4))
     {
         result = 0;
     }
