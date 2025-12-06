@@ -677,9 +677,8 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int nb_cols;
     Letter *grid_letters = NULL;
     Letter *words_letters = NULL;
-    generate_letter(pixbuf, grid_coo, words_coo, coo,
-                    output_letter_file, nb_letter, &grid_letters,
-                    &words_letters);
+    generate_letter(pixbuf, grid_coo, words_coo, coo, output_letter_file,
+                    nb_letter, &grid_letters, &words_letters);
 
     Letter **grid_letters_array =
         build_grid_from_image(grid_letters, nb_letter_grid, &nb_rows, &nb_cols);
@@ -694,7 +693,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     pipelineResult.words.detected_words_count = detected_words_count;
     pipelineResult.words.words = words_letters_list;
-    
+
     int rows;
     int cols;
     char **grid_array = build_grid_array(pixbuf_to_slice, grid_letters_array,
@@ -711,9 +710,11 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     final_grid.nb_cols = cols;
     pipelineResult.grid = final_grid;
 
-    int **solved_words_grid_coos = get_solved_words_grid_coos(words_letters_list, detected_words_count, grid_array, rows, cols);
+    int **solved_words_grid_coos = get_solved_words_grid_coos(
+        words_letters_list, detected_words_count, grid_array, rows, cols);
     pipelineResult.words.solved_words_grid_coos = solved_words_grid_coos;
-    int **solved_words_image_coos = get_solved_words_image_coos_drawing(solved_words_grid_coos, detected_words_count, grid_coo, rows, cols);
+    int **solved_words_image_coos = get_solved_words_image_coos_drawing(
+        solved_words_grid_coos, detected_words_count, grid_coo, rows, cols);
     pipelineResult.words.solved_words_image_coos = solved_words_image_coos;
 
     int **word_list = malloc(nb_words * sizeof(int *));
@@ -791,6 +792,24 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
            "[INFO]" COLOR_RESET
            " Number of words detected in the words list of the grid : %i\n",
            nb_detected_words);
+    for (int i = 0; i < pipelineResult.words.detected_words_count; i++)
+    {
+        printf("Word %i : %s     \t, grid (%i, %i)(%i, %i), image (%i, %i) "
+               "(%i, %i) (%i, %i) (%i, %i)\n",
+               i, pipelineResult.words.words[i],
+               pipelineResult.words.solved_words_grid_coos[i][0],
+               pipelineResult.words.solved_words_grid_coos[i][1],
+               pipelineResult.words.solved_words_grid_coos[i][2],
+               pipelineResult.words.solved_words_grid_coos[i][3],
+               pipelineResult.words.solved_words_image_coos[i][0],
+               pipelineResult.words.solved_words_image_coos[i][1],
+               pipelineResult.words.solved_words_image_coos[i][2],
+               pipelineResult.words.solved_words_image_coos[i][3],
+               pipelineResult.words.solved_words_image_coos[i][4],
+               pipelineResult.words.solved_words_image_coos[i][5],
+               pipelineResult.words.solved_words_image_coos[i][6],
+               pipelineResult.words.solved_words_image_coos[i][7]);
+    }
 
     // #endif
 

@@ -1,30 +1,8 @@
-#include "../include/image/image.h"
 #include "../include/ui.h"
+#include "../include/image/image.h"
+#include "line_detection.h"
 
 #include <gtk/gtk.h>
-
-/**
- * AppData:
- * Small container for application state passed to callbacks.
- *
- * Fields:
- *  - image         : GTK image widget showing the current pixbuf.
- *  - original      : original loaded GdkPixbuf (keep to allow reset).
- *  - transformed   : working copy that receives in-place treatments.
- *  - current       : pixbuf currently shown (may be rotated view of
- * transformed).
- *  - rotation_angle: accumulated rotation angle in degrees.
- *  - save_index    : counter used to generate unique filenames when saving.
- */
-struct AppData
-{
-    GtkWidget *image;
-    GdkPixbuf *original;
-    GdkPixbuf *transformed;
-    GdkPixbuf *current;
-    double rotation_angle;
-    int save_index;
-};
 
 /**
  * update_image:
@@ -34,7 +12,7 @@ struct AppData
  *  - data: pointer to application state (must have data->image and
  * data->current).
  */
-void update_image(struct AppData *data)
+void update_image(AppData *data)
 {
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
     gtk_widget_queue_draw(data->image);
@@ -47,7 +25,7 @@ void update_image(struct AppData *data)
  * Parameters:
  *  - data: pointer to application state.
  */
-void apply_transformations(struct AppData *data)
+void apply_transformations(AppData *data)
 {
     if (data->current)
     {
@@ -75,7 +53,7 @@ void apply_transformations(struct AppData *data)
 void on_grayscale_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
 
     if (!data->transformed)
     {
@@ -101,7 +79,7 @@ void on_convert_to_black_and_white_clicked(GtkButton *button,
                                            gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
 
     if (!data->transformed)
     {
@@ -127,7 +105,7 @@ void on_convert_to_black_and_white_clicked(GtkButton *button,
 void on_filter_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
 
     if (!data->transformed)
     {
@@ -152,7 +130,7 @@ void on_filter_clicked(GtkButton *button, gpointer user_data)
 void on_rotate_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
 
     if (!data->transformed)
     {
@@ -186,12 +164,37 @@ void on_rotate_clicked(GtkButton *button, gpointer user_data)
 void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
 
     if (!data->transformed)
     {
         return;
     }
+
+    Words words = data->pipelineResult.words;
+    for (int i = 0; i < words.detected_words_count; i++)
+    {
+        int x1 = words.solved_words_image_coos[i][0];
+        int y1 = words.solved_words_image_coos[i][1];
+        int x2 = words.solved_words_image_coos[i][2];
+        int y2 = words.solved_words_image_coos[i][3];
+        int x3 = words.solved_words_image_coos[i][4];
+        int y3 = words.solved_words_image_coos[i][5];
+        int x4 = words.solved_words_image_coos[i][6];
+        int y4 = words.solved_words_image_coos[i][7];
+
+        if (x1 > 0 && y1 > 0 && x2 > 0 && y2 > 0 && x3 > 0 && y3 > 0 &&
+            x4 > 0 && y4 > 0)
+        {
+            draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
+                           5);
+            printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
+                   "with thickness %i\n",
+                   x1, y1, x2, y2, x3, y3, x4, y4, 5);
+        }
+    }
+
+    /*
 
     // Straight rectangle
     int x1 = 200, y1 = 100;
@@ -200,8 +203,12 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
     int x4 = 200, y4 = 300;
 
     int thickness = 5;
-    
-    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4, thickness);
+
+    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
+                   thickness);
+    printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) with "
+           "thickness %i\n",
+           x1, y1, x2, y2, x3, y3, x4, y4, thickness);
 
     // Diagonal rectangle
     x1 = 500, y1 = 300;
@@ -209,11 +216,20 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
     x3 = 700, y3 = 400;
     x4 = 600, y4 = 400;
 
-    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4, thickness);
-    
+    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
+                   thickness);
+
+    */
+
     apply_transformations(data);
 
-    printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) with thickness %i\n", x1, y1, x2, y2, x3, y3, x4, y4, thickness);
+    /*
+
+    printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) with "
+           "thickness %i\n",
+           x1, y1, x2, y2, x3, y3, x4, y4, thickness);
+
+    */
 }
 
 /**
@@ -227,7 +243,7 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
 void on_reset_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
 
     if (!data->original)
     {
@@ -262,7 +278,7 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
 void on_save_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
 
     if (!data->current)
     {
@@ -295,7 +311,7 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
 void free_app_data(GtkWidget *widget __attribute__((unused)),
                    gpointer user_data)
 {
-    struct AppData *data = user_data;
+    AppData *data = user_data;
     if (data)
     {
         if (data->current)
@@ -329,7 +345,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *window;
     GtkWidget *vertical_box;
     GtkWidget *horizontal_box;
-    
+
     GtkWidget *grayscale_button;
     GtkWidget *convert_to_black_and_white_button;
     GtkWidget *filter_button;
@@ -338,7 +354,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *reset_button;
     GtkWidget *save_button;
     GtkWidget *close_button;
-    
+
     GtkWidget *image;
     GtkWidget *scrolled;
 
@@ -405,7 +421,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
         gtk_button_new_with_label("Conversion en noir et blanc");
     filter_button = gtk_button_new_with_label("Filtrer l'image");
     rotate_button = gtk_button_new_with_label("Rotation automatique");
-    draw_rectangle_button = gtk_button_new_with_label("Dessiner un rectangle rouge");
+    draw_rectangle_button =
+        gtk_button_new_with_label("Dessiner un rectangle rouge");
     save_button = gtk_button_new_with_label("Sauvegarder l'image");
     reset_button = gtk_button_new_with_label("Réinitialiser l'image");
 
@@ -415,29 +432,32 @@ static void on_activate(GtkApplication *app, gpointer user_data)
                        convert_to_black_and_white_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), filter_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), rotate_button, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(horizontal_box), draw_rectangle_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), draw_rectangle_button, TRUE,
+                       TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), close_button, TRUE, TRUE, 5);
 
     // Initialize AppData
-    struct AppData *data = g_new(struct AppData, 1);
+    AppData *data = g_new(AppData, 1);
     data->image = image;
     data->original = pixbuf;
     data->current = gdk_pixbuf_copy(pixbuf);
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
+    data->pipelineResult = pipeline(filename, "grid", "letters");
 
     g_signal_connect(grayscale_button, "clicked",
                      G_CALLBACK(on_grayscale_clicked), data);
     g_signal_connect(convert_to_black_and_white_button, "clicked",
                      G_CALLBACK(on_convert_to_black_and_white_clicked), data);
-    g_signal_connect(filter_button, "clicked",
-                     G_CALLBACK(on_filter_clicked), data);
+    g_signal_connect(filter_button, "clicked", G_CALLBACK(on_filter_clicked),
+                     data);
     g_signal_connect(rotate_button, "clicked", G_CALLBACK(on_rotate_clicked),
                      data);
-    g_signal_connect(draw_rectangle_button, "clicked", G_CALLBACK(on_draw_rectangle_clicked), data);
+    g_signal_connect(draw_rectangle_button, "clicked",
+                     G_CALLBACK(on_draw_rectangle_clicked), data);
     g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
     g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked),
                      data);

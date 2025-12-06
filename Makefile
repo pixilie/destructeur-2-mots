@@ -36,12 +36,12 @@ IMG_PIPE_SRC = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
 
 # ===================== Object Files =====================
 MAIN_OBJ          = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-CORE_OBJ = $(filter-out $(BUILD_DIR)/image_main.o, \
-              $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)) \
-            $(BUILD_DIR)/dataset.o \
-            $(BUILD_DIR)/solver.o \
-            $(BUILD_DIR)/neural_network.o
-UI_OBJ = $(CORE_OBJ) build/ui.o build/ui_solve_grid.o
+CORE_OBJ          = $(filter-out $(BUILD_DIR)/image_main.o, \
+                    $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)) \
+                    $(BUILD_DIR)/dataset.o \
+                    $(BUILD_DIR)/solver.o \
+                    $(BUILD_DIR)/neural_network.o
+UI_OBJ            = $(CORE_OBJ) build/ui.o build/ui_solve_grid.o build/line_detection_testing.o
 IMG_OBJ           = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 PIPELINE_OBJ      = $(BUILD_DIR)/line_detection.o
 PIPELINE_IMG_OBJ  = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
@@ -61,7 +61,7 @@ $(TARGET): $(MAIN_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(filter-out $(BUILD_DIR)
 $(UI_BIN): $(UI_OBJ)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking UI..."
-	@$(CC) -o $@ $^ $(LDFLAGS)
+	@$(CC) -DTESTING -o $@ $^ $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: $(UI_SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
@@ -84,6 +84,12 @@ $(BUILD_DIR)/line_detection.o: $(SRC_DIR)/line_detection.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/line_detection_testing.o: $(SRC_DIR)/line_detection.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $< for UI/tests..."
+	@$(CC) $(CFLAGS) -DTESTING -c $< -o $@
+
 
 # ===================== Generic Compilation =====================
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c

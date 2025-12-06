@@ -8,9 +8,10 @@
 #include "solver.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <string.h>
+#include <math.h>
 
 // Path to the model useb by the neural network to recognise letters
-#define MODEL_PATH "assets/model"
+#define MODEL_PATH "model"
 #define SOLVED_GRID_LETTERS_PATH "solver_output/grid"
 #define SOLVED_WORDS_LETTERS_PATH "solver_output/words"
 
@@ -44,8 +45,8 @@ int len_word(char word[])
  * x1,y1      : output coordinates of first letter
  * x2,y2      : output coordinates of last letter
  */
-void solve(int rows, int cols, char **grid, char word[], int *x1,
-           int *y1, int *x2, int *y2)
+void solve(int rows, int cols, char **grid, char word[], int *x1, int *y1,
+           int *x2, int *y2)
 {
     int len = len_word(word);
     int dir[8][2] = {{1, 1},   {1, 0},  {1, -1}, {0, -1},
@@ -170,7 +171,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     row_sizes[0] = 1;
     int row_count = 1; // The number of rows in the grid
     int col_count = 1; // The number of columns in the grid
-    
+
     printf("Sorted grid letter 0 in row 0, col 0, with "
            "coordinates (%i, %i)(%i, %i)\n",
            grid_letters[0].x1, grid_letters[0].y1, grid_letters[0].x2,
@@ -198,11 +199,12 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
             temp_rows[row_count - 1][0] = grid_letters[i];
             row_sizes[row_count - 1] = 1;
         }
-        
+
         printf("Sorted grid letter %i in row %i, col %i, with "
-           "coordinates (%i, %i)(%i, %i)\n",
-           i, row_count - 1, row_sizes[row_count - 1] - 1, grid_letters[i].x1, grid_letters[i].y1, grid_letters[i].x2,
-           grid_letters[i].y2);
+               "coordinates (%i, %i)(%i, %i)\n",
+               i, row_count - 1, row_sizes[row_count - 1] - 1,
+               grid_letters[i].x1, grid_letters[i].y1, grid_letters[i].x2,
+               grid_letters[i].y2);
     }
 
     // Number of columns = Row with the maximum number of letters
@@ -254,7 +256,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
 char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
                         int cols, int *rows_out, int *cols_out)
 {
-    NeuralNetwork *nn = load_network(MODEL_PATH);
+    NeuralNetwork *nn = load_network(get_image_path(MODEL_PATH));
     if (!nn)
     {
         printf("Neural network could not be loaded, check if a model exists in "
@@ -285,21 +287,26 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
         char row_path[40];
         snprintf(row_path, 40, "solver_output/grid/row_%i", row);
         ensure_dir(row_path);
-        
-        //printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols + cols);
+
+        // printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols
+        // + cols);
         for (int col = 0; col < cols; col++)
         {
             Letter grid_letter = grid_letters[row][col];
             if (grid_letter.x1 <= 0 || grid_letter.y1 <= 0 ||
                 grid_letter.x2 >= width || grid_letter.y2 >= height)
             {
-                //printf("Failed to detect letter %i : Row : %i, col : %i\n", nb_letter, row, col);
+                // printf("Failed to detect letter %i : Row : %i, col : %i\n",
+                // nb_letter, row, col);
                 continue;
             }
-            GdkPixbuf *letter = crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 -os,
-                                     grid_letter.x2 + os, grid_letter.y2 + os);
+            GdkPixbuf *letter =
+                crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 - os,
+                     grid_letter.x2 + os, grid_letter.y2 + os);
             char letter_path[100];
-            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png", row_path, nb_letter, grid_letter.x1, grid_letter.y1, grid_letter.x2, grid_letter.y2);
+            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png",
+                     row_path, nb_letter, grid_letter.x1, grid_letter.y1,
+                     grid_letter.x2, grid_letter.y2);
             save_pixbuf_as_png(letter, letter_path);
             if (!letter)
             {
@@ -308,7 +315,7 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
             }
 
             char predicted_letter = predict_letter(nn, letter);
-            //printf("%c ", predicted_letter);
+            // printf("%c ", predicted_letter);
             grid_array[row][col] = predicted_letter;
 
             g_object_unref(letter);
@@ -449,7 +456,8 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 
             if (words_count > nb_letters)
             {
-                printf("Too many rows detected in words list, got %i\n", words_count);
+                printf("Too many rows detected in words list, got %i\n",
+                       words_count);
                 words_count = nb_letters;
                 break;
             }
@@ -509,7 +517,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                         int *words_size)
 {
-    NeuralNetwork *nn = load_network(MODEL_PATH);
+    NeuralNetwork *nn = load_network(get_image_path(MODEL_PATH));
     if (!nn)
     {
         printf("Neural network could not be loaded, check if a model exists in "
@@ -569,23 +577,28 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
             if (word_letter.x1 <= 0 || word_letter.y1 <= 0 ||
                 word_letter.x2 >= width || word_letter.y2 >= height)
             {
-                printf("Failed to detect letter %i : Word : %i, word index : %i\n",
-                       nb_letter, row, col);
+                printf(
+                    "Failed to detect letter %i : Word : %i, word index : %i\n",
+                    nb_letter, row, col);
                 continue;
             }
-            GdkPixbuf *letter = crop(pixbuf, word_letter.x1 - os, word_letter.y1 - os,
-                                     word_letter.x2 + os, word_letter.y2 + os);
+            GdkPixbuf *letter =
+                crop(pixbuf, word_letter.x1 - os, word_letter.y1 - os,
+                     word_letter.x2 + os, word_letter.y2 + os);
             if (!letter)
             {
-                printf("No letter found at word : %i, word index %i\n", row, col);
+                printf("No letter found at word : %i, word index %i\n", row,
+                       col);
                 continue;
             }
 
             invert_color(letter);
-            //GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
-            // 
+            // GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
+            //
             char letter_path[100];
-            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png", word_path, nb_letter, word_letter.x1, word_letter.y1, word_letter.x2, word_letter.y2);
+            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png",
+                     word_path, nb_letter, word_letter.x1, word_letter.y1,
+                     word_letter.x2, word_letter.y2);
             save_pixbuf_as_png(letter, letter_path);
 
             char predicted_letter = predict_letter(nn, letter);
@@ -593,7 +606,7 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
             words_list[row][col] = predicted_letter;
 
             g_object_unref(letter);
-            //g_object_unref(scaled_letter);
+            // g_object_unref(scaled_letter);
 
             nb_letter++;
         }
@@ -613,8 +626,10 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     return words_list;
 }
 
-// Attempts to solve all the detected words from the words list and gets the coordinates of the words in the grid array with the solver
-int **get_solved_words_grid_coos(char **words, int words_count, char **grid, int rows, int cols)
+// Attempts to solve all the detected words from the words list and gets the
+// coordinates of the words in the grid array with the solver
+int **get_solved_words_grid_coos(char **words, int words_count, char **grid,
+                                 int rows, int cols)
 {
     int **words_coos = calloc(words_count, sizeof(int *));
     for (int word_index = 0; word_index < words_count; word_index++)
@@ -636,47 +651,93 @@ int **get_solved_words_grid_coos(char **words, int words_count, char **grid, int
     return words_coos;
 }
 
-// Gets all the grid coordinates of the solved words and converts them to image coordinates for drawing on the UI
-int **get_solved_words_image_coos_drawing(int **words_grid_coos, int words_count, int grid_coos[4], int rows, int cols)
+// Gets all the grid coordinates of the solved words and converts them to image
+// coordinates for drawing on the UI
+int **get_solved_words_image_coos_drawing(int **words_grid_coos,
+                                          int words_count, int grid_coos[4],
+                                          int rows, int cols)
 {
     int **words_coos_image = calloc(words_count, sizeof(int *));
     
     int grid_width = grid_coos[2] - grid_coos[0];
     int grid_height = grid_coos[3] - grid_coos[1];
-    
-    int width_per_letter = grid_width / cols;
-    int height_per_letter = grid_height / rows;
+
+    float width_per_letter = (float)grid_width / cols;
+    float height_per_letter = (float)grid_height / rows;
 
     int start_x = grid_coos[0];
     int start_y = grid_coos[1];
 
-    for (int word_index = 0; word_index < words_count; word_index++)
+    float extension = width_per_letter / 2.0f;
+
+    for (int w = 0; w < words_count; w++)
     {
-        words_coos_image[word_index] = calloc(8, sizeof(int));
-        int x1_grid = words_grid_coos[word_index][0];
-        int y1_grid = words_grid_coos[word_index][1];
-        int x2_grid = words_grid_coos[word_index][2];
-        int y2_grid = words_grid_coos[word_index][3];
+        words_coos_image[w] = calloc(8, sizeof(int));
 
-        //free(words_grid_coos[word_index]);
+        int x1_grid = words_grid_coos[w][0];
+        int y1_grid = words_grid_coos[w][1];
+        int x2_grid = words_grid_coos[w][2];
+        int y2_grid = words_grid_coos[w][3];
 
-        int x1 = start_x + x1_grid * width_per_letter;
-        int y1 = start_y + y1_grid * height_per_letter;
-        int x2 = start_x + x2_grid * width_per_letter;
-        int y2 = y1;
-        int x3 = x2;
-        int y3 = start_y + y2_grid * height_per_letter;
-        int x4 = x1;
-        int y4 = y3;
+        // Word not found
+        if (x1_grid == -1 || y1_grid == -1 || x2_grid == -1 || y2_grid == -1)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                words_coos_image[w][i] = -1;
+            }
+            continue;
+        }
 
-        words_coos_image[word_index][0] = x1;
-        words_coos_image[word_index][1] = y1;
-        words_coos_image[word_index][2] = x2;
-        words_coos_image[word_index][3] = y2;
-        words_coos_image[word_index][4] = x3;
-        words_coos_image[word_index][5] = y3;
-        words_coos_image[word_index][6] = x4;
-        words_coos_image[word_index][7] = y4;
+        // Start and end in pixel coordinates (center of letters)
+        float x1 = start_x + x1_grid * width_per_letter + width_per_letter / 2.0f;
+        float y1 = start_y + y1_grid * height_per_letter + height_per_letter / 2.0f;
+        float x2 = start_x + x2_grid * width_per_letter + width_per_letter / 2.0f;
+        float y2 = start_y + y2_grid * height_per_letter + height_per_letter / 2.0f;
+
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float length = sqrtf(dx * dx + dy * dy);
+
+        float ux = dx / length;
+        float uy = dy / length;
+
+        // Extend start and end points along the word direction
+        x1 -= ux * extension;
+        y1 -= uy * extension;
+        x2 += ux * extension;
+        y2 += uy * extension;
+
+        float px = -uy;
+        float py = ux;
+
+        // Calculate thickness based on orientation
+        float thickness;
+        if (fabs(dx) < 0.01f) // Vertical word
+        {
+            thickness = width_per_letter / 2.0f;
+        }
+        else if (fabs(dy) < 0.01f) // Horizontal word
+        {
+            thickness = height_per_letter / 2.0f;
+        }
+        else // Diagonal word
+        {
+            thickness = (width_per_letter + height_per_letter) / 4.0f;
+        }
+
+        // Four corners of rotated rectangle
+        words_coos_image[w][0] = (int)(x1 + px * thickness - 0.5f);
+        words_coos_image[w][1] = (int)(y1 + py * thickness - 0.5f);
+
+        words_coos_image[w][2] = (int)(x2 + px * thickness - 0.5f);
+        words_coos_image[w][3] = (int)(y2 + py * thickness - 0.5f);
+
+        words_coos_image[w][4] = (int)(x2 - px * thickness - 0.5f);
+        words_coos_image[w][5] = (int)(y2 - py * thickness - 0.5f);
+
+        words_coos_image[w][6] = (int)(x1 - px * thickness - 0.5f);
+        words_coos_image[w][7] = (int)(y1 - py * thickness - 0.5f);
     }
 
     return words_coos_image;
