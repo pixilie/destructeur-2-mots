@@ -646,6 +646,20 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     save_pixbuf_as_png(pixbuf, "filtered.png");
 
+    int index = 1;
+    if (strcmp(filename, "level_1_image_2.png") == 0)
+    {
+        index = 2;
+    }
+    else if (strcmp(filename, "level_2_image_1.png") == 0)
+    {
+        index = 3;
+    }
+    else if (strcmp(filename, "level_2_image_2.png") == 0)
+    {
+        index = 4;
+    }
+
     // dilate_3x3(pixbuf);
 
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -689,7 +703,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     Letter **words_letters_final = build_words_list_from_image(
         words_letters, nb_letter_words, &words_size, &detected_words_count);
     char **words_letters_list = build_words_list(
-        pixbuf, words_letters_final, detected_words_count, words_size);
+        pixbuf, words_letters_final, detected_words_count, index, words_size);
 
     pipelineResult.words.detected_words_count = detected_words_count;
     pipelineResult.words.words = words_letters_list;
@@ -697,7 +711,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int rows;
     int cols;
     char **grid_array = build_grid_array(pixbuf, grid_letters_array,
-                                         nb_rows, nb_cols, &rows, &cols);
+                                         nb_rows, nb_cols, index, &rows, &cols);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);

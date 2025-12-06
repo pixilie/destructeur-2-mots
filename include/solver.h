@@ -22,11 +22,11 @@ int compare_y(const void *letter1, const void *letter2);
 Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
                                    int *rows_out, int *cols_out);
 char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
-                        int cols, int *rows_out, int *cols_out);
+                        int cols, int grid_index, int *rows_out, int *cols_out);
 
 Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
                                int **words_size_out, int *words_count_out);
-char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words, int *words_size);
+char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words, int grid_index, int *words_size);
 
 int **get_solved_words_grid_coos(char **words, int words_count, char **grid, int rows, int cols);
 int **get_solved_words_image_coos_drawing(int **words_grid_coos, int words_count, int grid_coos[4], int rows, int cols);

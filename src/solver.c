@@ -12,8 +12,8 @@
 
 // Path to the model useb by the neural network to recognise letters
 #define MODEL_PATH "model"
-#define SOLVED_GRID_LETTERS_PATH "solver_output/grid"
-#define SOLVED_WORDS_LETTERS_PATH "solver_output/words"
+#define SOLVED_GRID_LETTERS_PATH "tests/results/solver_output/grid"
+#define SOLVED_WORDS_LETTERS_PATH "tests/results/solver_output/words"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -229,7 +229,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
 
 // Builds the array of the grid with the letters found in the grid in the image
 char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
-                        int cols, int *rows_out, int *cols_out)
+                        int cols, int index, int *rows_out, int *cols_out)
 {
     NeuralNetwork *nn = load_network(get_image_path(MODEL_PATH));
     if (!nn)
@@ -252,15 +252,19 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
 
     int os = 3;
 
-    ensure_dir("solver_output");
-    ensure_dir("solver_output/grid");
+    ensure_dir("tests/results");
+    ensure_dir("tests/results/solver_output");
+
+    char grid_dir[50];
+    snprintf(grid_dir, 50, "tests/results/solver_output/grid%i", index);
+    ensure_dir(grid_dir);
 
     // For each letter, determine the character with the Neural Network and add
     // it to the grid array
     for (int row = 0; row < rows; row++)
     {
-        char row_path[40];
-        snprintf(row_path, 40, "solver_output/grid/row_%i", row);
+        char row_path[60];
+        snprintf(row_path, 60, "%s/row_%i", grid_dir, row);
         ensure_dir(row_path);
 
         // printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols
@@ -489,7 +493,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 }
 
 // Builds the list of the words
-char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
+char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words, int index,
                         int *words_size)
 {
     NeuralNetwork *nn = load_network(get_image_path(MODEL_PATH));
@@ -531,8 +535,11 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
 
-    ensure_dir("solver_output");
-    ensure_dir("solver_output/words");
+    char words_path[60];
+    snprintf(words_path, 60, "tests/results/solver_output/words%i", index);
+    
+    ensure_dir("tests/results/solver_output");
+    ensure_dir(words_path);
 
     int os = 3;
 
@@ -540,8 +547,8 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     // it to the grid array
     for (int row = 0; row < nb_words; row++)
     {
-        char word_path[40];
-        snprintf(word_path, 40, "solver_output/words/word_%i", row);
+        char word_path[60];
+        snprintf(word_path, 60, "%s/word_%i", words_path, row);
         ensure_dir(word_path);
         int word_size = words_size[row];
         printf("Word %i of length %i : Letters %i to %i :\t ", row, word_size,
