@@ -120,7 +120,7 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
  *  - button   : the clicked GtkButton (unused).
  *  - user_data: pointer to struct AppData.
  */
-void on_save_clicked(GtkButton *button, gpointer user_data)
+void on_save_clicked(GtkButton *button, gpointer user_data, GtkWidget *widget)
 {
     (void)button;
     struct AppData *data = user_data;
@@ -130,19 +130,32 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
         return;
     }
 
-    char filename[256];
-    snprintf(filename, sizeof(filename), "output%i.png", data->save_index);
-    data->save_index++;
-
-    GError *error = NULL;
-    if (!gdk_pixbuf_save(data->current, filename, "png", &error, NULL))
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(
+		    "Choisir où sauvegarder",
+		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+		    GTK_FILE_CHOOSER_ACTION_SAVE,
+		    "_Annuler", GTK_RESPONSE_CANCEL,
+		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
+		    NULL);
+    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        g_printerr("Failed to save image: %s\n", error->message);
-        g_error_free(error);
-        return;
+	char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	if(filename)
+	{
+            data->save_index++;
+            GError *error = NULL;
+            if (!gdk_pixbuf_save(data->current, filename, "png", &error, NULL))
+            {
+                g_printerr("Failed to save image: %s\n", error->message);
+                g_error_free(error);
+                return;
+            }
+
+            printf("Image saved as %s\n", filename);
+	}
     }
 
-    printf("Image saved as %s\n", filename);
+    gtk_widget_destroy(dialog);
 }
 
 /**
@@ -523,7 +536,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
    treatement_button = gtk_button_new_with_label("Traiter");
    reset_button = gtk_button_new_with_label("Réinitialiser");
-   save_button = gtk_button_new_with_label("Sauvegarde");
+   save_button = gtk_button_new_with_label("Sauvegarder");
    solver_button = gtk_button_new_with_label("Resoudre");
 
    GtkWidget *description = gtk_label_new("Image :");
