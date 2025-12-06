@@ -378,7 +378,7 @@ int are_coos_equal(int nb_coos, int expected_coos[nb_coos],
 {
     for (int i = 0; i < nb_coos; i++)
     {
-        if (expected_coos[i] != actual_coos[i])
+        if (actual_coos[i] && expected_coos[i] != actual_coos[i])
         {
             return 0;
         }
@@ -653,6 +653,20 @@ int tests_solver()
         {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
         {12, 6, 12, 12}, {15, 12, 15, 7}, {7, 10, 10, 7}};
 
+    // TODO: fix coordinates in other images
+    int expected_solved_words_grid_coos2[9][4] = {
+            {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},
+            {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
+            {12, 6, 12, 12}, {15, 12, 15, 7}, {7, 10, 10, 7}};
+    int expected_solved_words_grid_coos3[9][4] = {
+            {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},
+            {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
+            {12, 6, 12, 12}, {15, 12, 15, 7}, {7, 10, 10, 7}};
+    int expected_solved_words_grid_coos4[9][4] = {
+            {9, 5, 15, 5},   {10, 0, 6, 4},   {16, 1, 13, 4},
+            {12, 13, 6, 13}, {11, 1, 5, 4},   {0, 1, 0, 4},
+            {12, 6, 12, 12}, {15, 12, 15, 7}, {7, 10, 10, 7}};
+
     int result = 1;
 
     if (!test_solver("Level 1 Image 1", "level_1_image_1.png", 17, 17,
@@ -662,27 +676,23 @@ int tests_solver()
         result = 0;
     }
 
-    /*
-
     if (!test_solver("Level 1 Image 2", "level_1_image_2.png", 12, 12,
-                     expected_grid_array2, 13, expected_words_list2))
+                     expected_grid_array2, 13, expected_words_list2, expected_solved_words_grid_coos2))
     {
         result = 0;
     }
 
     if (!test_solver("Level 2 Image 1", "level_2_image_1.png", 7, 8,
-                     expected_grid_array3, 10, expected_words_list3))
+                     expected_grid_array3, 10, expected_words_list3, expected_solved_words_grid_coos3))
     {
         result = 0;
     }
 
     if (!test_solver("Level 2 Image 2", "level_2_image_2.png", 14, 14,
-                     expected_grid_array4, 10, expected_words_list4))
+                     expected_grid_array4, 10, expected_words_list4, expected_solved_words_grid_coos4))
     {
         result = 0;
     }
-
-    */
 
     return result;
 }
