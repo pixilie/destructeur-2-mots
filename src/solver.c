@@ -271,6 +271,10 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
     // it to the grid array
     for (int row = 0; row < rows; row++)
     {
+        char row_path[40];
+        snprintf(row_path, 40, "solver_output/grid/row_%i", row);
+        ensure_dir(row_path);
+        
         // printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols
         // + cols);
         for (int col = 0; col < cols; col++)
@@ -286,7 +290,7 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
             GdkPixbuf *letter = crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 -os,
                                      grid_letter.x2 + os, grid_letter.y2 + os);
             char letter_path[100];
-            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png", SOLVED_GRID_LETTERS_PATH, nb_letter, grid_letter.x1, grid_letter.y1, grid_letter.x2, grid_letter.y2);
+            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png", row_path, nb_letter, grid_letter.x1, grid_letter.y1, grid_letter.x2, grid_letter.y2);
             save_pixbuf_as_png(letter, letter_path);
             if (!letter)
             {
@@ -544,6 +548,9 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     // it to the grid array
     for (int row = 0; row < nb_words; row++)
     {
+        char word_path[40];
+        snprintf(word_path, 40, "solver_output/words/word_%i", row);
+        ensure_dir(word_path);
         int word_size = words_size[row];
         printf("Word %i of length %i : Letters %i to %i :\t ", row, word_size,
                nb_letter, nb_letter + word_size - 1);
@@ -569,7 +576,7 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
             //GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
             // 
             char letter_path[100];
-            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png", SOLVED_WORDS_LETTERS_PATH, nb_letter, word_letter.x1, word_letter.y1, word_letter.x2, word_letter.y2);
+            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png", word_path, nb_letter, word_letter.x1, word_letter.y1, word_letter.x2, word_letter.y2);
             save_pixbuf_as_png(letter, letter_path);
 
             char predicted_letter = predict_letter(nn, letter);
