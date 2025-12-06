@@ -710,8 +710,8 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     int rows;
     int cols;
-    char **grid_array = build_grid_array(pixbuf, grid_letters_array,
-                                         nb_rows, nb_cols, index, &rows, &cols);
+    char **grid_array = build_grid_array(pixbuf, grid_letters_array, nb_rows,
+                                         nb_cols, index, &rows, &cols);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);
@@ -808,7 +808,8 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
            nb_detected_words);
     for (int i = 0; i < pipelineResult.words.detected_words_count; i++)
     {
-        printf("Word %i : %s     \t, grid (%i, %i)(%i, %i), image (%i, %i) "
+        printf("Word %i : %s     \t: Grid coos : (%i, %i)(%i, %i), Image coos "
+               ": (%i, %i) "
                "(%i, %i) (%i, %i) (%i, %i)\n",
                i, pipelineResult.words.words[i],
                pipelineResult.words.solved_words_grid_coos[i][0],
