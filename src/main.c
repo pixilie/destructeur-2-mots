@@ -75,59 +75,6 @@ void apply_transformations(struct AppData *data)
     update_image(data);
 }
 
-/*
- * Grayscale 
- * Gtk callback invoked but not when button clicked, grayscale applied when call 
- * for the image treatement
- *
- * Parameters:
- *  - user_data: pointer to struct Appdata
- */
-
-/*
-void greyscale(gpointer user_data)
-{
-    struct AppData *data = user_data;
-
-    if(!data->transformed)
-    {
-	return;
-    }
-
-    convert_to_greyscale(data->transformed);
-
-    apply_transformations(data);
-    //see if we need to do all the details
-    
-    printf("Image converted to greyscale\n");
-}
-*/
-
-
-
-/*
- * Gtk callback for "White and Black"
- *
- * Parameters :
- *  -user_data : pointer to struct AppData
- */
-/*
-void binarize_image(gpointer user_data)
-{
-    struct AppData *data = user_data;
-
-    if(!data->transformed)
-	    return;
-
-    convert_to_greyscale(data->transformed);
-    
-    int treshold = convert_to_black_and_white(data->transformed);
-
-    apply_transformations(data);
-
-    printf("Image converted to black and white with treshold = %i\n", threshold);
-}
-*/
 
 
 /**
@@ -266,30 +213,6 @@ void solver(GtkButton *button, gpointer user_data)
     (void)button;
 }
 
-/*
-void change_image(const char *filename, gpointer user_data)
-{
-    struct AppData *data = user_data;
-    GError *error = NULL;
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(filename, &error);
-
-
-    //unref the old img
-    if (data->original)
-	    g_object_unref(data->original);
-    if (data->current)
-	    g_object_unref(data->current);
-    if (data->transformed)
-	    g_object_unref(data->transformed);
-
-    data->image = gtk_image_new_from_pixbuf(pixbuf);
-    data->original = pixbuf;
-    data->current = gdk_pixbuf_copy(pixbuf);
-    data->transformed = gdk_pixbuf_copy(pixbuf);
-    data->rotation_angle = 0.0;
-    data->save_index = 1;
-}
-*/
 
 void change_image(const char *filename, gpointer user_data)
 {
@@ -442,6 +365,10 @@ void get_neural_load_path(GtkWidget *widget)
 
 void train_neural(const char *filename)
 {
+    char *path = malloc(256);
+    if(path == NULL)
+	    return;
+    path = filename;
     Dataset data = load_dataset(filename);
     train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
 }
@@ -451,7 +378,7 @@ void get_neural_train_path(GtkWidget *widget)
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
 		    "Choisir le Dataset",
 		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-		    GTK_FILE_CHOOSER_ACTION_OPEN,
+		    GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
 		    "_Annuler", GTK_RESPONSE_CANCEL,
 		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
 		    NULL);
