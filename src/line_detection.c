@@ -324,8 +324,8 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
     {
         if (coo[index_coo][0] < coo[index_coo][2] &&
             coo[index_coo][1] < coo[index_coo][3] &&
-            coo[index_coo][2] - coo[index_coo][0] <= 200 &&
-            coo[index_coo][3] - coo[index_coo][1] <= 200 &&
+            coo[index_coo][2] - coo[index_coo][0] <= 200 && //200
+            coo[index_coo][3] - coo[index_coo][1] <= 200 && //200
             coo[index_coo][2] - coo[index_coo][0] >= 1 &&
             coo[index_coo][3] - coo[index_coo][1] >= 10)
         {
@@ -642,6 +642,7 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
         median_filter_3x3(pixbuf); // Only filter level 2 images
     }
 
+    //remove_lines(pixbuf);
     save_pixbuf_as_png(pixbuf, "filtered.png");
 
     // dilate_3x3(pixbuf);
