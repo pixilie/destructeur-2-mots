@@ -694,15 +694,6 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     pipelineResult.words.detected_words_count = detected_words_count;
     pipelineResult.words.words = words_letters_list;
-
-    free(grid_letters);
-    free(words_letters);
-
-    for (int i = 0; i < pipelineResult.words.detected_words_count; i++)
-    {
-        free(words_letters_final[i]);
-    }
-    free(words_letters_final);
     
     int rows;
     int cols;

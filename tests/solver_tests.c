@@ -387,6 +387,23 @@ int test_solver(char *test_image_name, char *filename, int nb_rows, int nb_cols,
     
     free(expected_grid_ptr);
     free(actual_words_list);
+
+    Grid grid = pipelineResult.grid;
+    int rows_count = grid.nb_rows;
+    for (int i = 0; i < rows_count; i++)
+    {
+        free(grid.grid[i]);
+    }
+    free(grid.grid);
+
+    Words words = pipelineResult.words;
+    int words_count = words.detected_words_count;
+    for (int i = 0; i < words_count; i++)
+    {
+        free(words.words[i]);
+    }
+    free(words.words);
+
     return result;
 }
 

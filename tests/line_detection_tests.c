@@ -75,6 +75,22 @@ int test_pipeline(char *test_name, char *filename, char *output_gw_file,
                                pipelineResult.nb_letters_words);
     result &= is_count_correct("Words", nb_words, pipelineResult.nb_words);
 
+    Grid grid = pipelineResult.grid;
+    int nb_rows = grid.nb_rows;
+    for (int i = 0; i < nb_rows; i++)
+    {
+        free(grid.grid[i]);
+    }
+    free(grid.grid);
+
+    Words words = pipelineResult.words;
+    int words_count = words.detected_words_count;
+    for (int i = 0; i < words_count; i++)
+    {
+        free(words.words[i]);
+    }
+    free(words.words);
+
     return result;
 }
 

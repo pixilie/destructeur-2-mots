@@ -232,6 +232,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     }
     free(temp_rows);
     free(row_sizes);
+    free(grid_letters);
 
     *rows_out = row_count;
     *cols_out = col_count;
@@ -490,6 +491,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 
     free(temp_rows);
     free(row_sizes);
+    free(words_letters);
 
     *words_count_out = words_count;
 
@@ -591,6 +593,13 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
         printf("\n");
         words_list[row][word_size] = '\0'; // Null terminate the word string
     }
+
+    for (int word = 0; word < nb_words; word++)
+    {
+        free(words_letters[word]);
+    }
+    free(words_letters);
+    free(words_size);
 
     free_network(nn);
 
