@@ -344,8 +344,6 @@ void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
 {
     for (int epoch = 0; epoch < epochs; epoch++)
     {
-        double total_loss = 0.0;
-
         for (int s = 0; s < samples; s++)
         {
             forward(nn, inputs[s]);
