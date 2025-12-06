@@ -682,7 +682,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
                     &words_letters);
 
     Letter **grid_letters_array =
-        build_grid_from_image(grid_letters, nb_letter, &nb_rows, &nb_cols);
+        build_grid_from_image(grid_letters, nb_letter_grid, &nb_rows, &nb_cols);
 
     int *words_size = NULL;
     int detected_words_count = 0;

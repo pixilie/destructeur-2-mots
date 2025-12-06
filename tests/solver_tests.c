@@ -210,8 +210,6 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
         is_dimension_correct = 0;
     }
 
-    int rows = expected_grid.nb_rows;
-    int cols = expected_grid.nb_cols;
     char **expected_grid_array = expected_grid.grid;
     char **actual_grid_array = actual_grid.grid;
 
@@ -226,19 +224,21 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
         print_fail();
         
         printf("Expected grid :\n");
-        print_grid_array(expected_grid_array, rows, cols);
+        print_grid_array(expected_grid_array, expected_grid.nb_rows, expected_grid.nb_cols);
         
         printf("Got grid :\n");
-        print_grid_array(actual_grid_array, rows, cols);
+        print_grid_array(actual_grid_array, actual_grid.nb_rows, actual_grid.nb_cols);
         
         return 0;
     }
 
     int nb_errors = 0;
+    int nb_rows = expected_grid.nb_rows;
+    int nb_cols = expected_grid.nb_cols;
     
-    for (int i = 0; i < rows; i++)
+    for (int i = 0; i < nb_rows; i++)
     {
-        for (int j = 0; j < cols; j++)
+        for (int j = 0; j < nb_cols; j++)
         {
             if (expected_grid_array[i][j] != actual_grid_array[i][j])
             {
@@ -249,10 +249,10 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
                        actual_grid_array[i][j]);
                 
                 printf("Expected grid :\n");
-                print_grid_array(expected_grid_array, rows, cols);
+                print_grid_array(expected_grid_array, nb_rows, nb_cols);
                 
                 printf("Got grid :\n");
-                print_grid_array_differences(expected_grid_array, actual_grid_array, rows, cols, &nb_errors);
+                print_grid_array_differences(expected_grid_array, actual_grid_array, nb_rows, nb_cols, &nb_errors);
                 printf("Found %i incorrect letters in the grid\n", nb_errors);
                 
                 return 0;
@@ -260,8 +260,8 @@ int are_grid_arrays_equal(Grid expected_grid, Grid actual_grid)
         }
     }
     print_success();
-    printf("Got array of %i rows and %i columns :\n", rows, cols);
-    print_grid_array(actual_grid_array, rows, cols);
+    printf("Got array of %i rows and %i columns :\n", nb_rows, nb_cols);
+    print_grid_array(actual_grid_array, nb_rows, nb_cols);
     return 1;
 }
 

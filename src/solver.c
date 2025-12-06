@@ -44,7 +44,7 @@ int len_word(char word[])
  * x1,y1      : output coordinates of first letter
  * x2,y2      : output coordinates of last letter
  */
-void solve(int rows, int cols, char tab[rows][cols], char word[], int *x1,
+void solve(int rows, int cols, char **grid, char word[], int *x1,
            int *y1, int *x2, int *y2)
 {
     int len = len_word(word);
@@ -55,7 +55,7 @@ void solve(int rows, int cols, char tab[rows][cols], char word[], int *x1,
     {
         for (int x = 0; x < cols; x++)
         {
-            if (tolower(tab[y][x]) != tolower(word[0]))
+            if (tolower(grid[y][x]) != tolower(word[0]))
             {
                 continue;
             }
@@ -79,7 +79,7 @@ void solve(int rows, int cols, char tab[rows][cols], char word[], int *x1,
                         break;
                     }
 
-                    if (tolower(tab[cy][cx]) != tolower(word[i]))
+                    if (tolower(grid[cy][cx]) != tolower(word[i]))
                     {
 
                         break;
@@ -87,7 +87,7 @@ void solve(int rows, int cols, char tab[rows][cols], char word[], int *x1,
 
                     i++;
                 }
-                if (i == len)
+                if (i == len) // Found word in the grid
                 {
                     *x1 = x;
                     *y1 = y;
@@ -99,7 +99,7 @@ void solve(int rows, int cols, char tab[rows][cols], char word[], int *x1,
         }
     }
 
-    *x1 = *y1 = *x2 = *y2 = -1;
+    *x1 = *y1 = *x2 = *y2 = -1; // Word not found
 }
 
 int center_x(const Letter *letter) { return (letter->x1 + letter->x2) / 2; }
@@ -160,7 +160,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     // Sort letters by y value
     qsort(grid_letters, nb_letters, sizeof(Letter), compare_y);
 
-    int row_threshold = 12; // The tolerance between 2 y letter values to group
+    int row_threshold = 30; // The tolerance between 2 y letter values to group
                             // them in the same row
     Letter **temp_rows = malloc(nb_letters * sizeof(Letter *));
     int *row_sizes = calloc(nb_letters, sizeof(int));
@@ -170,6 +170,11 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     row_sizes[0] = 1;
     int row_count = 1; // The number of rows in the grid
     int col_count = 1; // The number of columns in the grid
+    
+    printf("Sorted grid letter 0 in row 0, col 0, with "
+           "coordinates (%i, %i)(%i, %i)\n",
+           grid_letters[0].x1, grid_letters[0].y1, grid_letters[0].x2,
+           grid_letters[0].y2);
 
     int first_letter_in_row = 0;
     for (int i = 1; i < nb_letters; i++)
@@ -193,6 +198,11 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
             temp_rows[row_count - 1][0] = grid_letters[i];
             row_sizes[row_count - 1] = 1;
         }
+        
+        printf("Sorted grid letter %i in row %i, col %i, with "
+           "coordinates (%i, %i)(%i, %i)\n",
+           i, row_count - 1, row_sizes[row_count - 1] - 1, grid_letters[i].x1, grid_letters[i].y1, grid_letters[i].x2,
+           grid_letters[i].y2);
     }
 
     // Number of columns = Row with the maximum number of letters
@@ -276,16 +286,14 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
         snprintf(row_path, 40, "solver_output/grid/row_%i", row);
         ensure_dir(row_path);
         
-        // printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols
-        // + cols);
+        //printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols + cols);
         for (int col = 0; col < cols; col++)
         {
             Letter grid_letter = grid_letters[row][col];
             if (grid_letter.x1 <= 0 || grid_letter.y1 <= 0 ||
                 grid_letter.x2 >= width || grid_letter.y2 >= height)
             {
-                // printf("Failed to detect letter %i : Row : %i, col : %i\n",
-                // nb_letter, row, col);
+                //printf("Failed to detect letter %i : Row : %i, col : %i\n", nb_letter, row, col);
                 continue;
             }
             GdkPixbuf *letter = crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 -os,
@@ -295,13 +303,12 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
             save_pixbuf_as_png(letter, letter_path);
             if (!letter)
             {
-                // printf("No letter found at row : %i, col %i\n", row, col);
+                printf("No letter found at row : %i, col %i\n", row, col);
                 continue;
             }
-            //GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
 
             char predicted_letter = predict_letter(nn, letter);
-            // printf("%c ", predicted_letter);
+            //printf("%c ", predicted_letter);
             grid_array[row][col] = predicted_letter;
 
             g_object_unref(letter);
@@ -562,7 +569,7 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
             if (word_letter.x1 <= 0 || word_letter.y1 <= 0 ||
                 word_letter.x2 >= width || word_letter.y2 >= height)
             {
-                printf("Failed to detect letter %i : Row : %i, col : %i\n",
+                printf("Failed to detect letter %i : Word : %i, word index : %i\n",
                        nb_letter, row, col);
                 continue;
             }
@@ -570,7 +577,7 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                                      word_letter.x2 + os, word_letter.y2 + os);
             if (!letter)
             {
-                printf("No letter found at row : %i, col %i\n", row, col);
+                printf("No letter found at word : %i, word index %i\n", row, col);
                 continue;
             }
 
@@ -604,4 +611,73 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     free_network(nn);
 
     return words_list;
+}
+
+// Attempts to solve all the detected words from the words list and gets the coordinates of the words in the grid array with the solver
+int **get_solved_words_grid_coos(char **words, int words_count, char **grid, int rows, int cols)
+{
+    int **words_coos = calloc(words_count, sizeof(int *));
+    for (int word_index = 0; word_index < words_count; word_index++)
+    {
+        words_coos[word_index] = calloc(4, sizeof(int));
+        int x1 = 0;
+        int y1 = 0;
+        int x2 = 0;
+        int y2 = 0;
+
+        char *word = words[word_index];
+        solve(rows, cols, grid, word, &x1, &y1, &x2, &y2);
+        words_coos[word_index][0] = x1;
+        words_coos[word_index][1] = y1;
+        words_coos[word_index][2] = x2;
+        words_coos[word_index][3] = y2;
+    }
+
+    return words_coos;
+}
+
+// Gets all the grid coordinates of the solved words and converts them to image coordinates for drawing on the UI
+int **get_solved_words_image_coos_drawing(int **words_grid_coos, int words_count, int grid_coos[4], int rows, int cols)
+{
+    int **words_coos_image = calloc(words_count, sizeof(int *));
+    
+    int grid_width = grid_coos[2] - grid_coos[0];
+    int grid_height = grid_coos[3] - grid_coos[1];
+    
+    int width_per_letter = grid_width / cols;
+    int height_per_letter = grid_height / rows;
+
+    int start_x = grid_coos[0];
+    int start_y = grid_coos[1];
+
+    for (int word_index = 0; word_index < words_count; word_index++)
+    {
+        words_coos_image[word_index] = calloc(8, sizeof(int));
+        int x1_grid = words_grid_coos[word_index][0];
+        int y1_grid = words_grid_coos[word_index][1];
+        int x2_grid = words_grid_coos[word_index][2];
+        int y2_grid = words_grid_coos[word_index][3];
+
+        free(words_grid_coos[word_index]);
+
+        int x1 = start_x + x1_grid * width_per_letter;
+        int y1 = start_y + y1_grid * height_per_letter;
+        int x2 = start_x + x2_grid * width_per_letter;
+        int y2 = y1;
+        int x3 = x2;
+        int y3 = start_y + y2_grid * height_per_letter;
+        int x4 = x1;
+        int y4 = y3;
+
+        words_coos_image[word_index][0] = x1;
+        words_coos_image[word_index][1] = y1;
+        words_coos_image[word_index][2] = x2;
+        words_coos_image[word_index][3] = y2;
+        words_coos_image[word_index][4] = x3;
+        words_coos_image[word_index][5] = y3;
+        words_coos_image[word_index][6] = x4;
+        words_coos_image[word_index][7] = y4;
+    }
+
+    return words_coos_image;
 }
