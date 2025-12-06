@@ -36,7 +36,7 @@ struct AppData
 };
 
 NeuralNetwork *neural;
-
+int treated = 0;
 /**
  * update_image:
  * Update the GTK image widget to display data->current and request redraw.
@@ -89,6 +89,9 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
     struct AppData *data = user_data;
+
+    treated = 0; 
+    //because we reset the img, it become untreated again
 
     if (!data->original)
     {
@@ -188,6 +191,20 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
     }
 }
 
+
+void pop_up_treated()
+{
+    GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
+
+    GtkWidget *text= gtk_label_new("Image already treated");
+    
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_container_add(GTK_CONTAINER(window), box);
+    gtk_box_pack_start(GTK_BOX(box), text, FALSE, FALSE, 0);
+
+    gtk_widget_show_all(window);
+}
+
 /*
  * Automatic treatment:
  * Applie the automatic treatement with these step :
@@ -201,15 +218,25 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(!data->transformed)
-	    return;
+    if(treated == 0)
+    {
+        if(!data->transformed)
+		return;
 
-    convert_to_grayscale(data->transformed);
-    int treshold = convert_to_black_and_white(data->transformed);
-    median_filter_3x3(data->transformed);
-    data->transformed = rotate_image_automatic(data->transformed);
+        convert_to_grayscale(data->transformed);
+        int treshold = convert_to_black_and_white(data->transformed);
+        median_filter_3x3(data->transformed);
+        data->transformed = rotate_image_automatic(data->transformed);
 
-    apply_transformations(data);
+        apply_transformations(data);
+
+	treated = 1;
+    }
+    else
+    {
+	printf("Image already treated\n");
+	pop_up_treated();
+    }
 }
 
 /*
@@ -230,6 +257,8 @@ void solver(GtkButton *button, gpointer user_data)
 void change_image(const char *filename, gpointer user_data)
 {
     struct AppData *data = (struct AppData *)user_data;
+
+    treated = 0;
 
     // Vérifications de base
     if (!data) {
@@ -591,10 +620,10 @@ static void on_activate(GtkApplication *app, gpointer user_data)
    GtkWidget *title_neural = gtk_label_new("Réseau de neurone :");
    gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
    //Create new button for neural training
-   training_button = gtk_button_new_with_label("Entraîner");
+   training_button = gtk_button_new_with_label("Entraîner et créer un réseau");
    g_signal_connect(training_button, "clicked", G_CALLBACK(get_neural_train_path), NULL); //check NULL
 
-   load_button = gtk_button_new_with_label("Charger");
+   load_button = gtk_button_new_with_label("Charger un modèle déjà existant");
    g_signal_connect(load_button, "clicked", G_CALLBACK(get_neural_load_path), NULL);
 
    save_neural_button = gtk_button_new_with_label("Sauvegarder l'entraînement");
