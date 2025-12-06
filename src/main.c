@@ -416,6 +416,36 @@ void get_neural_train_path(GtkWidget *widget)
 }
 
 
+void save_neural(GtkWidget *widget)
+{
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(
+		    "Choisir où sauvegarder",
+		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+		    GTK_FILE_CHOOSER_ACTION_SAVE,
+		    "_Annuler", GTK_RESPONSE_CANCEL,
+		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
+		    NULL);
+
+    if(neural == NULL)
+    {
+        printf("Error : cannot save empty NeuralNetwork\n");
+        return;
+    }
+    else
+    {
+        if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+        {
+	    char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	    if(filename)
+	    {
+	        save_network(neural, filename);
+	        printf("Save neural at : %s\n", filename);
+	    }
+        }
+        gtk_widget_destroy(dialog);
+    }
+}
+
 
 
 /*
@@ -568,6 +598,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
    g_signal_connect(load_button, "clicked", G_CALLBACK(get_neural_load_path), NULL);
 
    save_neural_button = gtk_button_new_with_label("Sauvegarder l'entraînement");
+   g_signal_connect(save_neural_button, "clicked", G_CALLBACK(save_neural), NULL);
 
 
    gtk_box_pack_start(GTK_BOX(right_button), file_button, FALSE, TRUE, 5);
