@@ -373,12 +373,12 @@ int are_words_list_equal(int expected_words_count, char **expected_words_list,
     return 1;
 }
 
-int are_coos_equal(int nb_coos, int expected_coos[nb_coos],
-                   int actual_coos[nb_coos])
+int are_coos_equal(int nb_coos, int expected_coos[4],
+                   int actual_coos[4])
 {
     for (int i = 0; i < nb_coos; i++)
     {
-        if (actual_coos[i] && expected_coos[i] != actual_coos[i])
+        if (expected_coos[i] != actual_coos[i])
         {
             return 0;
         }

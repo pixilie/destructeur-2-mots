@@ -174,7 +174,7 @@ clean:
 	@find $(BUILD_DIR) -mindepth 1 ! -name ".__afs*" -exec rm -rf {} + 2>/dev/null || true
 	@rm -rf $(RESULTS_DIR) 2>/dev/null || true
 	#@rm -f tests/model
-	@rm -rf solver_output/
+	@rm -rf tests/results/solver_output/
 	@rm -f image.png bw.png filtered.png
 	@rm -rf gw/ letters/
 	@rm -rf helpers/generate_dataset/fonts helpers/generate_dataset/dataset

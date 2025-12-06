@@ -11,7 +11,7 @@
 #include <math.h>
 
 // Path to the model useb by the neural network to recognise letters
-#define MODEL_PATH "model"
+#define MODEL_PATH "assets/model"
 #define SOLVED_GRID_LETTERS_PATH "tests/results/solver_output/grid"
 #define SOLVED_WORDS_LETTERS_PATH "tests/results/solver_output/words"
 
@@ -255,16 +255,16 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
     ensure_dir("tests/results");
     ensure_dir("tests/results/solver_output");
 
-    char grid_dir[50];
-    snprintf(grid_dir, 50, "tests/results/solver_output/grid%i", index);
+    char grid_dir[256];
+    snprintf(grid_dir, 256, "tests/results/solver_output/grid%i", index);
     ensure_dir(grid_dir);
 
     // For each letter, determine the character with the Neural Network and add
     // it to the grid array
     for (int row = 0; row < rows; row++)
     {
-        char row_path[60];
-        snprintf(row_path, 60, "%s/row_%i", grid_dir, row);
+        char row_path[256];
+        snprintf(row_path, sizeof(row_path), "%.*s/row_%i", 200, grid_dir, row);
         ensure_dir(row_path);
 
         // printf("Row %i : Letters %i to %i :\t ", row, row * cols, row * cols
@@ -282,9 +282,9 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
             GdkPixbuf *letter =
                 crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 - os,
                      grid_letter.x2 + os, grid_letter.y2 + os);
-            char letter_path[100];
-            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png",
-                     row_path, nb_letter, grid_letter.x1, grid_letter.y1,
+            char letter_path[256];
+            snprintf(letter_path, sizeof(letter_path), "%.*s/letter_%i__%i__%i_%i_%i.png",
+                     200, row_path, nb_letter, grid_letter.x1, grid_letter.y1,
                      grid_letter.x2, grid_letter.y2);
             save_pixbuf_as_png(letter, letter_path);
             if (!letter)
@@ -535,8 +535,8 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
 
-    char words_path[60];
-    snprintf(words_path, 60, "tests/results/solver_output/words%i", index);
+    char words_path[256];
+    snprintf(words_path, 256, "tests/results/solver_output/words%i", index);
     
     ensure_dir("tests/results/solver_output");
     ensure_dir(words_path);
@@ -547,8 +547,8 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     // it to the grid array
     for (int row = 0; row < nb_words; row++)
     {
-        char word_path[60];
-        snprintf(word_path, 60, "%s/word_%i", words_path, row);
+        char word_path[256];
+        snprintf(word_path, sizeof(word_path), "%.*s/word_%i", 200, words_path, row);
         ensure_dir(word_path);
         int word_size = words_size[row];
         printf("Word %i of length %i : Letters %i to %i :\t ", row, word_size,
@@ -576,9 +576,9 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
 
             // GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
             //
-            char letter_path[100];
-            snprintf(letter_path, 100, "%s/letter_%i__%i__%i_%i_%i.png",
-                     word_path, nb_letter, word_letter.x1, word_letter.y1,
+            char letter_path[256];
+            snprintf(letter_path, sizeof(letter_path), "%.*s/letter_%i__%i__%i_%i_%i.png",
+                     200, word_path, nb_letter, word_letter.x1, word_letter.y1,
                      word_letter.x2, word_letter.y2);
             save_pixbuf_as_png(letter, letter_path);
 
