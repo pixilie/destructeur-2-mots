@@ -658,7 +658,7 @@ int **get_solved_words_image_coos_drawing(int **words_grid_coos, int words_count
         int x2_grid = words_grid_coos[word_index][2];
         int y2_grid = words_grid_coos[word_index][3];
 
-        free(words_grid_coos[word_index]);
+        //free(words_grid_coos[word_index]);
 
         int x1 = start_x + x1_grid * width_per_letter;
         int y1 = start_y + y1_grid * height_per_letter;

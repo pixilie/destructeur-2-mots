@@ -14,6 +14,8 @@ typedef struct
 {
     int detected_words_count;
     char **words;
+    int **solved_words_grid_coos;
+    int **solved_words_image_coos;
 } Words;
 
 typedef struct

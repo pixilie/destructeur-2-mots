@@ -711,6 +711,11 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     final_grid.nb_cols = cols;
     pipelineResult.grid = final_grid;
 
+    int **solved_words_grid_coos = get_solved_words_grid_coos(words_letters_list, detected_words_count, grid_array, rows, cols);
+    pipelineResult.words.solved_words_grid_coos = solved_words_grid_coos;
+    int **solved_words_image_coos = get_solved_words_image_coos_drawing(solved_words_grid_coos, detected_words_count, grid_coo, rows, cols);
+    pipelineResult.words.solved_words_image_coos = solved_words_image_coos;
+
     int **word_list = malloc(nb_words * sizeof(int *));
     for (int i = 0; i < nb_words; i++)
     {
