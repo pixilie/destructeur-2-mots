@@ -311,8 +311,8 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
  *  - output_file    : directory path where letter images will be saved (created
  * if necessary).
  */
-void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, int **grid_coo,
-                     int **words_coo, char *output_file,
+void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, int *grid_coo,
+                     int *words_coo, char *output_file,
                      int *nb_letters_grid_out, int *nb_letters_words_out)
 {
     g_mkdir_with_parents(output_file, 0777);
@@ -321,6 +321,8 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, int **grid_coo,
     char full_path[512];
 
     int index_coo = 0;
+    int nb_letters_grid = 0;
+    int nb_letters_words = 0;
 
     while (coo[index_coo][0] != 0)
     {
@@ -331,6 +333,24 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, int **grid_coo,
             coo[index_coo][2] - coo[index_coo][0] >= 1 &&
             coo[index_coo][3] - coo[index_coo][1] >= 10)
         {
+            if (coo[index_coo][0] >= grid_coo[0] &&
+                coo[index_coo][1] >= grid_coo[1] &&
+                coo[index_coo][2] <= grid_coo[2] &&
+                coo[index_coo][3] <= grid_coo[3])
+            {
+                nb_letters_grid++;
+            }
+
+            // If the letter is in the words list : add it to the list of words
+            // list letters
+            else if (coo[index_coo][0] >= words_coo[0] &&
+                     coo[index_coo][1] >= words_coo[1] &&
+                     coo[index_coo][2] <= words_coo[2] &&
+                     coo[index_coo][3] <= words_coo[3])
+            {
+                nb_letters_words++;
+            }
+
             GdkPixbuf *letter = crop(
                 pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
                 coo[index_coo][2] + os, coo[index_coo][3] + os);
@@ -346,6 +366,8 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, int **grid_coo,
         }
         index_coo++;
     }
+    *nb_letters_grid_out = nb_letters_grid;
+    *nb_letters_words_out = nb_letters_words;
 }
 
 int compare_x(const void *a, const void *b)
@@ -558,33 +580,6 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
     return detected_words;
 }
 
-// Return the number of letters found in a bounding box (either the number of
-// letters in the grid box or the number of letters in the words list box)
-int count_letters_in_box(int **coo, int nb_letter, int *box)
-{
-    int count = 0;
-    for (int i = 0; i < nb_letter; i++)
-    {
-        int x1 = coo[i][0];
-        int y1 = coo[i][1];
-        int x2 = coo[i][2];
-        int y2 = coo[i][3];
-
-        if (x2 <= x1 || y2 <= y1)
-        {
-            continue;
-        }
-
-        // Letter coordinates are inside the bounds of the box -> Increment
-        // letter counter
-        if (x1 <= box[2] && x2 >= box[0] && y1 <= box[3] && y2 >= box[1])
-        {
-            count++;
-        }
-    }
-    return count;
-}
-
 // Terminal colors
 #define COLOR_RESET "\033[0m"
 #define COLOR_RED "\033[31m"
@@ -665,14 +660,13 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
 
-    int nb_letter_grid = count_letters_in_box(
-        coo, nb_letter, grid_coo); // Number of letters in the grid
+    int nb_letter_grid = 0;
+    int nb_letter_words = 0;
+    
+    generate_letter(pixbuf_to_slice, coo, grid_coo, words_coo, output_letter_file, &nb_letter_grid, &nb_letter_words);
+    
     pipelineResult.nb_letters_grid = nb_letter_grid;
-    int nb_letter_words = count_letters_in_box(
-        coo, nb_letter, words_coo); // Number of letters in the words list
     pipelineResult.nb_letters_words = nb_letter_words;
-
-    generate_letter(pixbuf_to_slice, coo, output_letter_file);
 
     int **word_list = malloc(nb_words * sizeof(int *));
     for (int i = 0; i < nb_words; i++)
@@ -742,11 +736,11 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Number of letters detected : %i (In the grid : %i, "
                         "in the words list : %i)\n",
-           nb_letter, nb_letter_grid, nb_letter_words);
+           pipelineResult.nb_letters, pipelineResult.nb_letters_grid, pipelineResult.nb_letters_words);
     printf(COLOR_YELLOW
            "[INFO]" COLOR_RESET
            " Number of words detected in the words list of the grid : %i\n",
-           nb_detected_words);
+           pipelineResult.nb_words);
 
     // #endif
 
