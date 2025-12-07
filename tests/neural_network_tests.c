@@ -8,8 +8,8 @@
 #include "../include/neural_network.h"
 #include "../include/test_helpers.h"
 
-#define DATASET_PATH "./tests/dataset/"
-// #define DATASET_PATH "./helpers/generate_dataset/dataset/"
+//#define DATASET_PATH "./tests/dataset/"
+#define DATASET_PATH "./assets/dataset_processed/"
 #define MODEL_PATH "./tests/model"
 
 int get_test_image_path(const char *base_path, char letter, char *out_path)

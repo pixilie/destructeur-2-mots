@@ -216,7 +216,7 @@ void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
         for (int x = 0; x < width; x++)
         {
             guchar pixel = row[x * n_channels];
-            out[y * width + x] = (255.0 - (double)pixel) / 255.0;
+            out[y * width + x] = (double)pixel / 255.0;
         }
     }
 }
