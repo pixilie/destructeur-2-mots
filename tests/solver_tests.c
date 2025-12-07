@@ -435,8 +435,8 @@ void print_all_words_coos(
         {
             printf(
                 "expected : (%i, %i)(%i, %i) / (%i, %i) (%i, %i) "
-                "(%i, %i) (%i, %i), got " COLOR_RED
-                ": (%i, %i)(%i, %i) / (%i, %i) (%i, %i), (%i, %i) "
+                "(%i, %i) (%i, %i), got : " COLOR_RED
+                "(%i, %i)(%i, %i) / (%i, %i) (%i, %i), (%i, %i) "
                 "(%i, %i)" COLOR_RESET "\n",
                 expected_words_grid_coos[i][0], expected_words_grid_coos[i][1],
                 expected_words_grid_coos[i][2], expected_words_grid_coos[i][3],
