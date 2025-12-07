@@ -147,10 +147,10 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     int row_count = 1; // The number of rows in the grid
     int col_count = 1; // The number of columns in the grid
 
-    printf("Sorted grid letter 0 in row 0, col 0, with "
-           "coordinates (%i, %i)(%i, %i)\n",
-           grid_letters[0].x1, grid_letters[0].y1, grid_letters[0].x2,
-           grid_letters[0].y2);
+    // printf("Sorted grid letter 0 in row 0, col 0, with "
+    //"coordinates (%i, %i)(%i, %i)\n",
+    // grid_letters[0].x1, grid_letters[0].y1, grid_letters[0].x2,
+    // grid_letters[0].y2);
 
     int first_letter_in_row = 0;
     for (int i = 1; i < nb_letters; i++)
@@ -175,11 +175,11 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
             row_sizes[row_count - 1] = 1;
         }
 
-        printf("Sorted grid letter %i in row %i, col %i, with "
-               "coordinates (%i, %i)(%i, %i)\n",
-               i, row_count - 1, row_sizes[row_count - 1] - 1,
-               grid_letters[i].x1, grid_letters[i].y1, grid_letters[i].x2,
-               grid_letters[i].y2);
+        // printf("Sorted grid letter %i in row %i, col %i, with "
+        //"coordinates (%i, %i)(%i, %i)\n",
+        // i, row_count - 1, row_sizes[row_count - 1] - 1,
+        // grid_letters[i].x1, grid_letters[i].y1, grid_letters[i].x2,
+        // grid_letters[i].y2);
     }
 
     // Number of columns = Row with the maximum number of letters
@@ -290,7 +290,7 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
             save_pixbuf_as_png(letter, letter_path);
             if (!letter)
             {
-                printf("No letter found at row : %i, col %i\n", row, col);
+                // printf("No letter found at row : %i, col %i\n", row, col);
                 continue;
             }
 
@@ -362,14 +362,14 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
     char **new_grid_array = malloc(row_count * sizeof(char *));
     for (int row = 0; row < row_count; row++)
     {
-        printf("Row %i : \t ", row);
+        // printf("Row %i : \t ", row);
         new_grid_array[row] = calloc(col_count, sizeof(char));
         for (int col = 0; col < col_count; col++)
         {
             new_grid_array[row][col] = grid_array[start_row + row][col];
-            printf("%c ", new_grid_array[row][col]);
+            // printf("%c ", new_grid_array[row][col]);
         }
-        printf("\n");
+        // printf("\n");
     }
 
     *rows_out = row_count;
@@ -411,10 +411,10 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     int words_count = 1; // The number of rows in the grid
     int first_letter_in_row = 0;
 
-    printf("Sorted word letter 0 in word 0 at index 0, with "
-           "coordinates (%i, %i)(%i, %i)\n",
-           words_letters[0].x1, words_letters[0].y1, words_letters[0].x2,
-           words_letters[0].y2);
+    // printf("Sorted word letter 0 in word 0 at index 0, with "
+    //  "coordinates (%i, %i)(%i, %i)\n",
+    // words_letters[0].x1, words_letters[0].y1, words_letters[0].x2,
+    // words_letters[0].y2);
 
     for (int i = 1; i < nb_letters; i++)
     {
@@ -436,8 +436,8 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 
             if (words_count > nb_letters)
             {
-                printf("Too many rows detected in words list, got %i\n",
-                       words_count);
+                // printf("Too many rows detected in words list, got %i\n",
+                //       words_count);
                 words_count = nb_letters;
                 break;
             }
@@ -446,11 +446,11 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
             row_sizes[words_count - 1] = 1;
         }
 
-        printf("Sorted word letter %i in word %i at index %i, with "
-               "coordinates (%i, %i)(%i, %i)\n",
-               i, words_count - 1, row_sizes[words_count - 1] - 1,
-               words_letters[i].x1, words_letters[i].y1, words_letters[i].x2,
-               words_letters[i].y2);
+        // printf("Sorted word letter %i in word %i at index %i, with "
+        //    "coordinates (%i, %i)(%i, %i)\n",
+        //   i, words_count - 1, row_sizes[words_count - 1] - 1,
+        // words_letters[i].x1, words_letters[i].y1, words_letters[i].x2,
+        // words_letters[i].y2);
     }
 
     if (words_count > nb_letters)
@@ -521,13 +521,13 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
         return NULL;
     }
 
-    printf("Number of detected words : %i\n", nb_words);
+    //printf("Number of detected words : %i\n", nb_words);
 
     char **words_list = malloc(nb_words * sizeof(char *));
     for (int row = 0; row < nb_words; row++)
     {
         int word_size = words_size[row];
-        printf("Word %i : Size %i\n", row, word_size);
+        //printf("Word %i : Size %i\n", row, word_size);
         words_list[row] = calloc(word_size + 1, sizeof(char));
     }
 
@@ -553,8 +553,9 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                  row);
         ensure_dir(word_path);
         int word_size = words_size[row];
-        printf("Word %i of length %i : Letters %i to %i :\t ", row, word_size,
-               nb_letter, nb_letter + word_size - 1);
+        // printf("Word %i of length %i : Letters %i to %i :\t ", row,
+        // word_size,
+        //       nb_letter, nb_letter + word_size - 1);
         for (int col = 0; col < word_size; col++)
         {
             Letter word_letter = words_letters[row][col];
@@ -562,8 +563,9 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                 word_letter.x2 >= width || word_letter.y2 >= height)
             {
                 printf(
-                    "Failed to detect letter %i : Word : %i, word index : %i\n",
-                    nb_letter, row, col);
+                    "Failed to detect word letter %i : Word : %i, word index : %i, got coordinates : (%i, %i)(%i, %i)\n",
+                    nb_letter, row, col, word_letter.x1, word_letter.y1, word_letter.x2, word_letter.y2);
+                nb_letter++;
                 continue;
             }
             GdkPixbuf *letter =
@@ -571,8 +573,9 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                      word_letter.x2 + os, word_letter.y2 + os);
             if (!letter)
             {
-                printf("No letter found at word : %i, word index %i\n", row,
+                printf("No word letter found at word : %i, word index %i\n", row,
                        col);
+                nb_letter++;
                 continue;
             }
 
@@ -586,7 +589,7 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
             save_pixbuf_as_png(letter, letter_path);
 
             char predicted_letter = predict_letter(nn, letter);
-            printf("%c ", predicted_letter);
+            // printf("%c ", predicted_letter);
             words_list[row][col] = predicted_letter;
 
             g_object_unref(letter);
@@ -594,7 +597,7 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
 
             nb_letter++;
         }
-        printf("\n");
+        // printf("\n");
         words_list[row][word_size] = '\0'; // Null terminate the word string
     }
 

@@ -338,6 +338,12 @@ int are_words_list_equal(int expected_words_count, char **expected_words_list,
         print_fail();
         printf("Detected words count is incorrect, expected %i, got %i\n",
                expected_words_count, actual_words_count);
+        printf("Expected words list :\n");
+        print_words_list(expected_words_list, expected_words_count);
+        printf("Got words list :\n");
+        int nb_errors = 0;
+        print_words_list_differences(expected_words_list, actual_words_list,
+                                     actual_words_count, &nb_errors);
         return 0;
     }
     else
@@ -373,7 +379,8 @@ int are_words_list_equal(int expected_words_count, char **expected_words_list,
     return 1;
 }
 
-int are_coos_equal(int nb_coos, int expected_coos[4], int actual_coos[4])
+int are_coos_equal(int nb_coos, int expected_coos[nb_coos],
+                   int actual_coos[nb_coos])
 {
     for (int i = 0; i < nb_coos; i++)
     {
@@ -385,66 +392,78 @@ int are_coos_equal(int nb_coos, int expected_coos[4], int actual_coos[4])
     return 1;
 }
 
-void print_all_words_grid_coos(char **expected_words, char **actual_words,
-                               int expected_words_count,
-                               int expected_words_coos[expected_words_count][4],
-                               int actual_words_count, int **actual_words_coos)
+void print_all_words_coos(
+    char **expected_words, char **actual_words, int expected_words_count,
+    int expected_words_grid_coos[expected_words_count][4],
+    int actual_words_count, int **actual_words_grid_coos,
+    int expected_words_image_coos[expected_words_count][8],
+    int **actual_words_image_coos)
 {
     for (int i = 0; i < actual_words_count; i++)
     {
-        if (are_coos_equal(4, expected_words_coos[i], actual_words_coos[i]))
+        printf("Word %i : ", i);
+        if (strcmp(expected_words[i], actual_words[i]) == 0) // Words equal
         {
-            if (strcmp(expected_words[i], actual_words[i]) == 0) // Words equal
-            {
-                printf("Word %i : \t " COLOR_GREEN "%s" COLOR_RESET
-                       "     \t : got " COLOR_GREEN
-                       "(%i, %i)(%i, %i)" COLOR_RESET "\n",
-                       i, actual_words[i], expected_words_coos[i][0],
-                       expected_words_coos[i][1], expected_words_coos[i][2],
-                       expected_words_coos[i][3]);
-            }
-            else
-            {
-                printf("Word %i : \t " COLOR_RED "%s" COLOR_RESET
-                       "     \t : got " COLOR_GREEN
-                       "(%i, %i)(%i, %i)" COLOR_RESET "\n",
-                       i, actual_words[i], expected_words_coos[i][0],
-                       expected_words_coos[i][1], expected_words_coos[i][2],
-                       expected_words_coos[i][3]);
-            }
+            printf(COLOR_GREEN "%s" COLOR_RESET, actual_words[i]);
         }
         else
         {
-            if (strcmp(expected_words[i], actual_words[i]) == 0) // Words equal
-            {
-                printf("Word %i : \t " COLOR_GREEN "%s" COLOR_RESET
-                       "     \t : expected (%i, %i)(%i, %i), got " COLOR_RED
-                       "(%i, %i)(%i, %i)" COLOR_RESET "\n",
-                       i, actual_words[i], expected_words_coos[i][0],
-                       expected_words_coos[i][1], expected_words_coos[i][2],
-                       expected_words_coos[i][3], actual_words_coos[i][0],
-                       actual_words_coos[i][1], actual_words_coos[i][2],
-                       actual_words_coos[i][3]);
-            }
-            else
-            {
-                printf("Word %i : \t " COLOR_RED "%s" COLOR_RESET
-                       "     \t : expected (%i, %i)(%i, %i), got " COLOR_RED
-                       "(%i, %i)(%i, %i)" COLOR_RESET "\n",
-                       i, actual_words[i], expected_words_coos[i][0],
-                       expected_words_coos[i][1], expected_words_coos[i][2],
-                       expected_words_coos[i][3], actual_words_coos[i][0],
-                       actual_words_coos[i][1], actual_words_coos[i][2],
-                       actual_words_coos[i][3]);
-            }
+            printf(COLOR_RED "%s" COLOR_RESET, actual_words[i]);
+        }
+        printf("    \t : ");
+        if (are_coos_equal(4, expected_words_grid_coos[i],
+                           actual_words_grid_coos[i]) &&
+            are_coos_equal(8, expected_words_image_coos[i],
+                           actual_words_image_coos[i]))
+        {
+            printf(
+                "got : " COLOR_GREEN
+                "(%i, %i)(%i, %i) / (%i, %i) (%i, %i) (%i, %i) (%i, "
+                "%i)" COLOR_RESET,
+                expected_words_grid_coos[i][0], expected_words_grid_coos[i][1],
+                expected_words_grid_coos[i][2], expected_words_grid_coos[i][3],
+                expected_words_image_coos[i][0],
+                expected_words_image_coos[i][1],
+                expected_words_image_coos[i][2],
+                expected_words_image_coos[i][3],
+                expected_words_image_coos[i][4],
+                expected_words_image_coos[i][5],
+                expected_words_image_coos[i][6],
+                expected_words_image_coos[i][7]);
+        }
+        else
+        {
+            printf(
+                "expected : (%i, %i)(%i, %i) / (%i, %i) (%i, %i) "
+                "(%i, %i) (%i, %i), got " COLOR_RED
+                ": (%i, %i)(%i, %i) / (%i, %i) (%i, %i), (%i, %i) "
+                "(%i, %i)" COLOR_RESET "\n",
+                expected_words_grid_coos[i][0], expected_words_grid_coos[i][1],
+                expected_words_grid_coos[i][2], expected_words_grid_coos[i][3],
+                expected_words_image_coos[i][0],
+                expected_words_image_coos[i][1],
+                expected_words_image_coos[i][2],
+                expected_words_image_coos[i][3],
+                expected_words_image_coos[i][4],
+                expected_words_image_coos[i][5],
+                expected_words_image_coos[i][6],
+                expected_words_image_coos[i][7], actual_words_grid_coos[i][0],
+                actual_words_grid_coos[i][1], actual_words_grid_coos[i][2],
+                actual_words_grid_coos[i][3], actual_words_image_coos[i][0],
+                actual_words_image_coos[i][1], actual_words_image_coos[i][2],
+                actual_words_image_coos[i][3], actual_words_image_coos[i][4],
+                actual_words_image_coos[i][5], actual_words_image_coos[i][6],
+                actual_words_image_coos[i][7]);
         }
     }
 }
 
-int are_solved_words_grid_coos_equal(
+int are_solved_words_grid_equal(
     char **expected_words, char **actual_words, int expected_words_count,
-    int expected_words_coos[expected_words_count][4], int actual_words_count,
-    int **actual_words_coos)
+    int expected_words_grid_coos[expected_words_count][4],
+    int actual_words_count, int **actual_words_grid_coos,
+    int expected_words_image_coos[expected_words_count][8],
+    int **actual_words_image_coos)
 {
     if (expected_words_count != actual_words_count)
     {
@@ -456,29 +475,36 @@ int are_solved_words_grid_coos_equal(
 
     for (int i = 0; i < expected_words_count; i++)
     {
-        if (!are_coos_equal(4, expected_words_coos[i], actual_words_coos[i]))
+        if (!are_coos_equal(4, expected_words_grid_coos[i],
+                            actual_words_grid_coos[i]) ||
+            !(are_coos_equal(8, expected_words_image_coos[i],
+                             actual_words_image_coos[i])))
         {
             print_fail();
-            printf("Solved words grid coordinates are incorrect\n");
-            print_all_words_grid_coos(expected_words, actual_words,
-                                      expected_words_count, expected_words_coos,
-                                      actual_words_count, actual_words_coos);
+            printf("Solved words coordinates are incorrect \t (Grid coos / Image coos)\n");
+            print_all_words_coos(expected_words, actual_words,
+                                 expected_words_count, expected_words_grid_coos,
+                                 actual_words_count, actual_words_grid_coos,
+                                 expected_words_image_coos,
+                                 actual_words_image_coos);
             return 0;
         }
     }
 
     print_success();
-    printf("Solved words grid coordinates are correct, got\n");
-    print_all_words_grid_coos(expected_words, actual_words,
-                              expected_words_count, expected_words_coos,
-                              actual_words_count, actual_words_coos);
+    printf("Solved words coordinates are correct, got: \t (Grid coos / Image coos)\n");
+    print_all_words_coos(expected_words, actual_words, expected_words_count,
+                         expected_words_grid_coos, actual_words_count,
+                         actual_words_grid_coos, expected_words_image_coos,
+                         actual_words_image_coos);
     return 1;
 }
 
 int test_solver(char *test_image_name, char *filename, int nb_rows, int nb_cols,
                 char expected_grid_array[nb_rows][nb_cols], int nb_words,
                 char **expected_words_list,
-                int expected_words_coos[nb_words][4])
+                int expected_words_grid_coos[nb_words][4],
+                int expected_words_image_coos[nb_words][8])
 {
     print_test_subsubcategory(test_image_name);
 
@@ -521,10 +547,11 @@ int test_solver(char *test_image_name, char *filename, int nb_rows, int nb_cols,
         result = 0;
     }
 
-    if (!are_solved_words_grid_coos_equal(
+    if (!are_solved_words_grid_equal(
             expected_words_list, actual_words.words, nb_words,
-            expected_words_coos, actual_words.detected_words_count,
-            actual_words.solved_words_grid_coos))
+            expected_words_grid_coos, actual_words.detected_words_count,
+            actual_words.solved_words_grid_coos, expected_words_image_coos,
+            actual_words.solved_words_image_coos))
     {
         result = 0;
     }
@@ -669,32 +696,63 @@ int tests_solver()
         {11, 1, 5, 4},   {0, 1, 0, 4},  {12, 6, 12, 12}, {15, 12, 15, 7},
         {15, 12, 15, 7}, {7, 10, 10, 7}};
 
+    int expected_solved_words_image_coos1[9][8] = {
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0},
+    };
+    int expected_solved_words_image_coos2[13][8] = {
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0},
+    };
+    int expected_solved_words_image_coos3[10][8] = {
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+    };
+    int expected_solved_words_image_coos4[10][8] = {
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+        {9, 5, 15, 5, 0, 0, 0, 0}, {9, 5, 15, 5, 0, 0, 0, 0},
+    };
+
     int result = 1;
 
     if (!test_solver("Level 1 Image 1", "level_1_image_1.png", 17, 17,
                      expected_grid_array1, 9, expected_words_list_1,
-                     expected_solved_words_grid_coos1))
+                     expected_solved_words_grid_coos1, expected_solved_words_image_coos1))
     {
         result = 0;
     }
 
     if (!test_solver("Level 1 Image 2", "level_1_image_2.png", 12, 12,
                      expected_grid_array2, 13, expected_words_list2,
-                     expected_solved_words_grid_coos2))
+                     expected_solved_words_grid_coos2, expected_solved_words_image_coos2))
     {
         result = 0;
     }
 
     if (!test_solver("Level 2 Image 1", "level_2_image_1.png", 7, 8,
                      expected_grid_array3, 10, expected_words_list3,
-                     expected_solved_words_grid_coos3))
+                     expected_solved_words_grid_coos3, expected_solved_words_image_coos3))
     {
         result = 0;
     }
 
     if (!test_solver("Level 2 Image 2", "level_2_image_2.png", 14, 14,
                      expected_grid_array4, 10, expected_words_list4,
-                     expected_solved_words_grid_coos4))
+                     expected_solved_words_grid_coos4, expected_solved_words_image_coos4))
     {
         result = 0;
     }
