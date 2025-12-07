@@ -798,9 +798,13 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Best rotation angle : %.2f°\n",
            best_angle);
 
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
+    printf(COLOR_YELLOW "[INFO][SOLVER]" COLOR_RESET
                         " Built grid with %i rows and %i columns\n",
            pipelineResult.grid.nb_rows, pipelineResult.grid.nb_cols);
+    printf(COLOR_YELLOW "[INFO][SOLVER]" COLOR_RESET
+                        " Built words list with %i words detected\n",
+           pipelineResult.words.detected_words_count);
+
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected grid coordinates : (%i, %i)(%i, %i)\n",
            pipelineResult.grid_coo[0], pipelineResult.grid_coo[1],
@@ -820,6 +824,19 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
            " Number of words detected in the words list of the grid : %i\n",
            nb_detected_words);
     // #endif
+
+    #ifndef TESTING
+    Words words_pipeline = pipelineResult.words;
+    for (int i = 0; i < words_pipeline.detected_words_count; i++)
+    {
+        free(words_pipeline.solved_words_grid_coos[i]);
+        free(words_pipeline.solved_words_image_coos[i]);
+        free(words_pipeline.words[i]);
+    }
+    free(words_pipeline.solved_words_grid_coos);
+    free(words_pipeline.solved_words_image_coos);
+    free(words_pipeline.words);
+    #endif
 
     // free all pointers
 

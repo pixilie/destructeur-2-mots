@@ -9,18 +9,6 @@
 #include <libgen.h>
 #include <unistd.h>
 
-char *get_executable_dir()
-{
-    static char buffer[4096];
-    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
-    if (len == -1)
-    {
-        return NULL;
-    }
-    buffer[len] = '\0';
-    return dirname(buffer);
-}
-
 /**
  * update_image:
  * Update the GTK image widget to display data->current and request redraw.

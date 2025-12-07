@@ -231,7 +231,11 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
 char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
                         int cols, int index, int *rows_out, int *cols_out)
 {
-    NeuralNetwork *nn = load_network(get_image_path(MODEL_PATH));
+    char *exe_dir = get_executable_dir();
+    char model_path[512];
+    snprintf(model_path, sizeof(model_path), "%s/../assets/%s", exe_dir, MODEL_PATH);
+    
+    NeuralNetwork *nn = load_network(get_image_path(model_path));
     if (!nn)
     {
         printf("Neural network could not be loaded, check if a model exists in "
@@ -497,7 +501,11 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                         int index, int *words_size)
 {
-    NeuralNetwork *nn = load_network(get_image_path(MODEL_PATH));
+    char *exe_dir = get_executable_dir();
+    char model_path[512];
+    snprintf(model_path, sizeof(model_path), "%s/../assets/%s", exe_dir, MODEL_PATH);
+    
+    NeuralNetwork *nn = load_network(get_image_path(model_path));
     if (!nn)
     {
         printf("Neural network could not be loaded, check if a model exists in "
