@@ -411,6 +411,10 @@ void train_neural(const char *filename)
     if(path == NULL)
 	    return;
     path = filename;
+
+    if(neural == NULL)
+	    neural = create_network(784, 128, 26);
+
     Dataset data = load_dataset(filename);
     train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
 }
