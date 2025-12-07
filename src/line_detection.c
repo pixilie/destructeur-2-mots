@@ -819,31 +819,6 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
            "[INFO]" COLOR_RESET
            " Number of words detected in the words list of the grid : %i\n",
            nb_detected_words);
-    for (int i = 0; i < pipelineResult.words.detected_words_count; i++)
-    {
-        if (!pipelineResult.words.solved_words_grid_coos)
-        {
-            break;
-        }
-        
-        printf("Word %i : %s     \t: Grid coos : (%i, %i)(%i, %i), Image coos "
-               ": (%i, %i) "
-               "(%i, %i) (%i, %i) (%i, %i)\n",
-               i, pipelineResult.words.words[i],
-               pipelineResult.words.solved_words_grid_coos[i][0],
-               pipelineResult.words.solved_words_grid_coos[i][1],
-               pipelineResult.words.solved_words_grid_coos[i][2],
-               pipelineResult.words.solved_words_grid_coos[i][3],
-               pipelineResult.words.solved_words_image_coos[i][0],
-               pipelineResult.words.solved_words_image_coos[i][1],
-               pipelineResult.words.solved_words_image_coos[i][2],
-               pipelineResult.words.solved_words_image_coos[i][3],
-               pipelineResult.words.solved_words_image_coos[i][4],
-               pipelineResult.words.solved_words_image_coos[i][5],
-               pipelineResult.words.solved_words_image_coos[i][6],
-               pipelineResult.words.solved_words_image_coos[i][7]);
-    }
-
     // #endif
 
     // free all pointers

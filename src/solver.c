@@ -11,7 +11,7 @@
 #include <string.h>
 
 // Path to the model useb by the neural network to recognise letters
-#define MODEL_PATH "model"
+#define MODEL_PATH "model_v2"
 #define SOLVED_GRID_LETTERS_PATH "tests/results/solver_output/grid"
 #define SOLVED_WORDS_LETTERS_PATH "tests/results/solver_output/words"
 
