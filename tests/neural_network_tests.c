@@ -1,6 +1,5 @@
 #include <dirent.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "../include/dataset.h"
@@ -8,7 +7,7 @@
 #include "../include/neural_network.h"
 #include "../include/test_helpers.h"
 
-//#define DATASET_PATH "./tests/dataset/"
+// #define DATASET_PATH "./tests/dataset/"
 #define DATASET_PATH "./assets/dataset_processed/"
 #define MODEL_PATH "./tests/model"
 
@@ -76,7 +75,7 @@ int main()
            nn->output_size);
 
     print_test_subcategory("Training Neural Network");
-    train(nn, data.inputs, data.targets, data.samples, 0.01, 1000);
+    train(nn, data.inputs, data.targets, data.samples, 0.01, 5000);
     print_success();
     printf("Training completed successfully.\n");
 
