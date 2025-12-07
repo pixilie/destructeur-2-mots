@@ -7,8 +7,8 @@
 #include "../include/neural_network.h"
 #include "../include/test_helpers.h"
 
-// #define DATASET_PATH "./tests/dataset/"
-#define DATASET_PATH "./assets/dataset_processed/"
+#define DATASET_PATH "./tests/dataset/"
+// #define DATASET_PATH "./assets/dataset_processed/"
 #define MODEL_PATH "./tests/model"
 
 int get_test_image_path(const char *base_path, char letter, char *out_path)
@@ -75,7 +75,7 @@ int main()
            nn->output_size);
 
     print_test_subcategory("Training Neural Network");
-    train(nn, data.inputs, data.targets, data.samples, 0.01, 5000);
+    train(nn, data.inputs, data.targets, data.samples, 0.01, 1000);
     print_success();
     printf("Training completed successfully.\n");
 
