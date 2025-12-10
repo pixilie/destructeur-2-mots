@@ -1,11 +1,14 @@
 #include "../include/line_detection.h"
 #include "../include/image/image.h"
-#include "image/image_helpers.h"
+#include "../include/image/image_helpers.h"
+#include "../include/solver.h"
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define PIPELINE_OUTPUT "tests/results/pipeline_output"
 
 /**
  * sobel_filter:
@@ -269,7 +272,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
             {
                 guchar *p = pixels + y * rowstride + x * n_channels;
 
-                if (p[0] == 255)
+                if (p[0] > 200)
                 {
                     coo[index_coo][0] = coo[index_coo][2] = x;
                     coo[index_coo][1] = coo[index_coo][3] = y;
@@ -311,16 +314,21 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
  *  - output_file    : directory path where letter images will be saved (created
  * if necessary).
  */
-void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
+void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
+                     int **coo, char *output_file, int nb_letters,
+                     Letter **grid_letters_out, Letter **words_letters_out)
 {
     g_mkdir_with_parents(output_file, 0777);
 
     int os = 3;
     char full_path[512];
 
-    int index_coo = 0;
+    int letter_grid_count = 0;
+    int letter_word_count = 0;
+    Letter *grid_letters = calloc(nb_letters, sizeof(Letter));
+    Letter *words_letters = calloc(nb_letters, sizeof(Letter));
 
-    while (coo[index_coo][0] != 0)
+    for (int index_coo = 0; index_coo < nb_letters; index_coo++)
     {
         if (coo[index_coo][0] < coo[index_coo][2] &&
             coo[index_coo][1] < coo[index_coo][3] &&
@@ -329,6 +337,43 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
             coo[index_coo][2] - coo[index_coo][0] >= 1 &&
             coo[index_coo][3] - coo[index_coo][1] >= 10)
         {
+            // If the letter is in the grid : add it to the list of grid letters
+            if (coo[index_coo][0] >= grid_coo[0] &&
+                coo[index_coo][1] >= grid_coo[1] &&
+                coo[index_coo][2] <= grid_coo[2] &&
+                coo[index_coo][3] <= grid_coo[3])
+            {
+                Letter grid_letter;
+                grid_letter.x1 = coo[index_coo][0];
+                grid_letter.y1 = coo[index_coo][1];
+                grid_letter.x2 = coo[index_coo][2];
+                grid_letter.y2 = coo[index_coo][3];
+                // printf("Detected letter %i : (%i, %i)(%i, %i)\n",
+                // letter_grid_index, grid_letter.x1, grid_letter.y1,
+                // grid_letter.x2, grid_letter.y2);
+                grid_letters[letter_grid_count] = grid_letter;
+                letter_grid_count++;
+            }
+
+            // If the letter is in the words list : add it to the list of words
+            // list letters
+            else if (coo[index_coo][0] >= words_coo[0] &&
+                     coo[index_coo][1] >= words_coo[1] &&
+                     coo[index_coo][2] <= words_coo[2] &&
+                     coo[index_coo][3] <= words_coo[3])
+            {
+                Letter word_letter;
+                word_letter.x1 = coo[index_coo][0];
+                word_letter.y1 = coo[index_coo][1];
+                word_letter.x2 = coo[index_coo][2];
+                word_letter.y2 = coo[index_coo][3];
+                // printf("Detected letter in words list %i : (%i, %i)(%i,
+                // %i)\n",letter_word_count, word_letter.x1, word_letter.y1,
+                // word_letter.x2, word_letter.y2);
+                words_letters[letter_word_count] = word_letter;
+                letter_word_count++;
+            }
+
             GdkPixbuf *letter = crop(
                 pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
                 coo[index_coo][2] + os, coo[index_coo][3] + os);
@@ -337,8 +382,10 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int **coo, char *output_file)
             save_pixbuf_as_png(letter, full_path);
             g_object_unref(letter);
         }
-        index_coo++;
     }
+
+    *grid_letters_out = grid_letters;
+    *words_letters_out = words_letters;
 }
 
 /**
@@ -557,21 +604,40 @@ int count_letters_in_box(int **coo, int nb_letter, int *box)
  *  - output_gw_file   : output directory for grid and word crops.
  *  - output_letter_file: output directory for individual letter images.
  */
-pipelineResult pipeline(char *filename, char *output_gw_file,
+PipelineResult pipeline(char *filename, char *output_gw_file,
                         char *output_letter_file)
 {
     g_mkdir_with_parents(output_gw_file, 0777);
     g_mkdir_with_parents(output_letter_file, 0777);
 
+    g_mkdir_with_parents(PIPELINE_OUTPUT, 0777);
+
     int nb_words =
         50; // we state that there will not be more than 50 words in an exercise
 
-    pipelineResult pipelineResult;
+    PipelineResult pipelineResult;
 
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
 
-    save_pixbuf_as_png(pixbuf, "image.png");
+    int index = 1;
+    if (strcmp(filename, "level_1_image_2.png") == 0)
+    {
+        index = 2;
+    }
+    else if (strcmp(filename, "level_2_image_1.png") == 0)
+    {
+        index = 3;
+    }
+    else if (strcmp(filename, "level_2_image_2.png") == 0)
+    {
+        index = 4;
+    }
+
+    char output_image[256];
+    snprintf(output_image, sizeof(output_image), "%s/image%i.png",
+             PIPELINE_OUTPUT, index);
+    save_pixbuf_as_png(pixbuf, output_image);
 
     convert_to_grayscale(pixbuf);
 
@@ -581,7 +647,7 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
         GdkPixbuf *rotated = rotate_image(pixbuf, best_angle);
         g_object_unref(pixbuf);
         pixbuf = rotated;
-        
+
         GdkPixbuf *rotated_slice = rotate_image(pixbuf_to_slice, best_angle);
         g_object_unref(pixbuf_to_slice);
         pixbuf_to_slice = rotated_slice;
@@ -589,7 +655,10 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
 
     convert_to_black_and_white(pixbuf);
 
-    save_pixbuf_as_png(pixbuf, "bw.png");
+    char output_bw[256];
+    snprintf(output_bw, sizeof(output_bw), "%s/bw%i.png", PIPELINE_OUTPUT,
+             index);
+    save_pixbuf_as_png(pixbuf, output_bw);
 
     invert_color(pixbuf);
 
@@ -599,7 +668,10 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
         median_filter_3x3(pixbuf); // Only filter level 2 images
     }
 
-    save_pixbuf_as_png(pixbuf, "filtered.png");
+    char output_filtered[256];
+    snprintf(output_filtered, sizeof(output_filtered), "%s/filtered%i.png",
+             PIPELINE_OUTPUT, index);
+    save_pixbuf_as_png(pixbuf, output_filtered);
 
     // dilate_3x3(pixbuf);
 
@@ -628,14 +700,54 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
         coo, nb_letter, words_coo); // Number of letters in the words list
     pipelineResult.nb_letters_words = nb_letter_words;
 
-    generate_letter(pixbuf_to_slice, coo, output_letter_file);
+    int nb_rows;
+    int nb_cols;
+    Letter *grid_letters = NULL;
+    Letter *words_letters = NULL;
+    generate_letter(pixbuf, grid_coo, words_coo, coo, output_letter_file,
+                    nb_letter, &grid_letters, &words_letters);
+
+    Letter **grid_letters_array =
+        build_grid_from_image(grid_letters, nb_letter_grid, &nb_rows, &nb_cols);
+
+    int *words_size = NULL;
+    int detected_words_count = 0;
+
+    Letter **words_letters_final = build_words_list_from_image(
+        words_letters, nb_letter_words, &words_size, &detected_words_count);
+    char **words_letters_list = build_words_list(
+        pixbuf, words_letters_final, detected_words_count, index, words_size);
+
+    pipelineResult.words.detected_words_count = detected_words_count;
+    pipelineResult.words.words = words_letters_list;
+
+    int rows;
+    int cols;
+    char **grid_array = build_grid_array(pixbuf, grid_letters_array, nb_rows,
+                                         nb_cols, index, &rows, &cols);
+    for (int i = 0; i < nb_rows; i++)
+    {
+        free(grid_letters_array[i]);
+    }
+    free(grid_letters_array);
+
+    Grid final_grid;
+    final_grid.grid = grid_array;
+    final_grid.nb_rows = rows;
+    final_grid.nb_cols = cols;
+    pipelineResult.grid = final_grid;
+
+    int **solved_words_grid_coos = get_solved_words_grid_coos(
+        words_letters_list, detected_words_count, grid_array, rows, cols);
+    pipelineResult.words.solved_words_grid_coos = solved_words_grid_coos;
+    int **solved_words_image_coos = get_solved_words_image_coos_drawing(
+        solved_words_grid_coos, detected_words_count, grid_coo, rows, cols);
+    pipelineResult.words.solved_words_image_coos = solved_words_image_coos;
 
     int **word_list = malloc(nb_words * sizeof(int *));
     for (int i = 0; i < nb_words; i++)
     {
-        word_list[i] = malloc(4 * sizeof(int));
-        word_list[i][0] = word_list[i][1] = word_list[i][2] = word_list[i][3] =
-            0;
+        word_list[i] = calloc(4, sizeof(int));
     }
 
     int nb_detected_words =
@@ -683,7 +795,15 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
     g_object_unref(words);
 
     // #ifndef TESTING
-    printf("Best rotation angle : %.2f°\n", best_angle);
+    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Best rotation angle : %.2f°\n",
+           best_angle);
+
+    printf(COLOR_YELLOW "[INFO][SOLVER]" COLOR_RESET
+                        " Built grid with %i rows and %i columns\n",
+           pipelineResult.grid.nb_rows, pipelineResult.grid.nb_cols);
+    printf(COLOR_YELLOW "[INFO][SOLVER]" COLOR_RESET
+                        " Built words list with %i words detected\n",
+           pipelineResult.words.detected_words_count);
 
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected grid coordinates : (%i, %i)(%i, %i)\n",
@@ -703,8 +823,20 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
            "[INFO]" COLOR_RESET
            " Number of words detected in the words list of the grid : %i\n",
            nb_detected_words);
-
     // #endif
+
+    #ifndef TESTING
+    Words words_pipeline = pipelineResult.words;
+    for (int i = 0; i < words_pipeline.detected_words_count; i++)
+    {
+        free(words_pipeline.solved_words_grid_coos[i]);
+        free(words_pipeline.solved_words_image_coos[i]);
+        free(words_pipeline.words[i]);
+    }
+    free(words_pipeline.solved_words_grid_coos);
+    free(words_pipeline.solved_words_image_coos);
+    free(words_pipeline.words);
+    #endif
 
     // free all pointers
 
@@ -724,7 +856,7 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
     free(grid_path);
     free(word_path);
     free(words_path);
-        
+
     g_object_unref(pixbuf);
     g_object_unref(pixbuf_to_slice);
 
