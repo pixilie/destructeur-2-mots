@@ -524,7 +524,7 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
                       int nb_words)
 {
     int seuil = 20;
-    int seuilx = 50;
+    int seuilx = 60;
     int seuily = 5;
 
     for (int i = 0; i < nb_letter; i++)
@@ -644,8 +644,8 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
 
     if (best_angle != 0)
     {
-        erode_3x3(pixbuf);
-        median_filter_3x3(pixbuf); // Only filter level 2 images
+        //erode_3x3(pixbuf);
+       //median_filter_3x3(pixbuf); // Only filter level 2 images
     }
 
     //remove_lines(pixbuf);
