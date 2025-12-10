@@ -420,17 +420,27 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
     int box1 = 0;
     int box2 = 0;
 
-    int threshold_b1_x;
-    int threshold_b1_y;
-    int threshold_b2_x;
-    int threshold_b2_y;
+    int thresh = 0;
+
+    for(int i = 0; i < nb_letter; i ++)
+    {
+        thresh += (coo[i][3] - coo[i][1]);
+    }
+
+    thresh /= nb_letter;
+    thresh *= 2;
+    
+    int threshold_b1_x = thresh;
+    int threshold_b1_y = thresh;
+    int threshold_b2_x = thresh;
+    int threshold_b2_y = thresh;
 
     for (int i = 0; i < nb_letter; i++)
     {
         if (box1 == 0)
         {
-            threshold_b1_x = 50; //(coo[i][2] - coo[i][0]) * 3.5;
-            threshold_b1_y = 50; //(coo[i][3] - coo[i][1]) * 1.2;
+            //threshold_b1_x = 50; //(coo[i][2] - coo[i][0]) * 3.5;
+            //threshold_b1_y = 50; //(coo[i][3] - coo[i][1]) * 1.2;
             box1_coo[0] = coo[i][0];
             box1_coo[1] = coo[i][1];
             box1_coo[2] = coo[i][2];
@@ -450,8 +460,8 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
         }
         else if (box2 == 0)
         {
-            threshold_b2_x = 50; //(coo[i][2] - coo[i][0]) * 3.5;
-            threshold_b2_y = 50; //(coo[i][3] - coo[i][1]) * 1.2;
+            //threshold_b2_x = 50; //(coo[i][2] - coo[i][0]) * 3.5;
+            //threshold_b2_y = 50; //(coo[i][3] - coo[i][1]) * 1.2;
             box2_coo[0] = coo[i][0];
             box2_coo[1] = coo[i][1];
             box2_coo[2] = coo[i][2];
@@ -643,12 +653,15 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
 
     // dilate_3x3(pixbuf);
 
-    int width = gdk_pixbuf_get_width(pixbuf);
-    int height = gdk_pixbuf_get_height(pixbuf);
+    //int width = gdk_pixbuf_get_width(pixbuf);
+    //int height = gdk_pixbuf_get_height(pixbuf);
     int *grid_coo = malloc(4 * sizeof(int));
     int *words_coo = malloc(4 * sizeof(int));
-    int **coo = malloc(width * height * sizeof(int *));
-    for (int i = 0; i < width * height; i++)
+
+    int magic_nb_letter = 1000;
+    
+    int **coo = malloc(magic_nb_letter * sizeof(int *));
+    for (int i = 0; i < magic_nb_letter; i++)
     {
         coo[i] = malloc(4 * sizeof(int)); // coo[i][0] = x1 coo[i][1] = y1
                                           // coo[i][2] = x2 coo[i][3] = y2
@@ -747,7 +760,7 @@ pipelineResult pipeline(char *filename, char *output_gw_file,
 
     // free all pointers
 
-    for (int i = 0; i < width * height; i++)
+    for (int i = 0; i < magic_nb_letter; i++)
     {
         free(coo[i]);
     }
