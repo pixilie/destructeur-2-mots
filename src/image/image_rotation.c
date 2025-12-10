@@ -190,6 +190,9 @@ double detect_best_angle(GdkPixbuf *pixbuf)
         }
     }
 
+    if(downscaled_pixbuf)
+        g_object_unref(downscaled_pixbuf);
+    
     if (best_angle > -1.0 &&
         best_angle < 1.0) // Avoid small angles for straight images
     {
