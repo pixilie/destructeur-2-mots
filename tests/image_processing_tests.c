@@ -1,5 +1,6 @@
 #include "../include/image/image_helpers.h"
 #include "../include/image/image_processing.h"
+#include "../include/image/image_filter.h"
 #include "../include/test_helpers.h"
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
