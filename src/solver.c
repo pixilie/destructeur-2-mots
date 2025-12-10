@@ -286,6 +286,9 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
             GdkPixbuf *letter =
                 crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 - os,
                      grid_letter.x2 + os, grid_letter.y2 + os);
+            
+            median_filter_3x3(letter);
+            
             char letter_path[256];
             snprintf(letter_path, sizeof(letter_path),
                      "%.*s/letter_%i__%i__%i_%i_%i.png", 200, row_path,
@@ -586,6 +589,8 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                 nb_letter++;
                 continue;
             }
+            
+            median_filter_3x3(letter);
 
             // GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
             //
