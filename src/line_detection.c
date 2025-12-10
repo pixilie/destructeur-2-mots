@@ -315,7 +315,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
  * if necessary).
  */
 void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
-                     int **coo, char *output_file, int nb_letters,
+                     int **coo, char *output_file, int nb_letters, int *nb_grid_letters_out, int *nb_words_letters_out,
                      Letter **grid_letters_out, Letter **words_letters_out)
 {
     g_mkdir_with_parents(output_file, 0777);
@@ -389,6 +389,8 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
         }
     }
 
+    *nb_grid_letters_out = letter_grid_count;
+    *nb_words_letters_out = letter_word_count;
     *grid_letters_out = grid_letters;
     *words_letters_out = words_letters;
 }
@@ -613,33 +615,6 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
     return detected_words;
 }
 
-// Return the number of letters found in a bounding box (either the number of
-// letters in the grid box or the number of letters in the words list box)
-int count_letters_in_box(int **coo, int nb_letter, int *box)
-{
-    int count = 0;
-    for (int i = 0; i < nb_letter; i++)
-    {
-        int x1 = coo[i][0];
-        int y1 = coo[i][1];
-        int x2 = coo[i][2];
-        int y2 = coo[i][3];
-
-        if (x2 <= x1 || y2 <= y1)
-        {
-            continue;
-        }
-
-        // Letter coordinates are inside the bounds of the box -> Increment
-        // letter counter
-        if (x1 <= box[2] && x2 >= box[0] && y1 <= box[3] && y2 >= box[1])
-        {
-            count++;
-        }
-    }
-    return count;
-}
-
 // Terminal colors
 #define COLOR_RESET "\033[0m"
 #define COLOR_RED "\033[31m"
@@ -748,28 +723,26 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
 
-    int nb_letter_grid = count_letters_in_box(
-        coo, nb_letter, grid_coo); // Number of letters in the grid
-    pipelineResult.nb_letters_grid = nb_letter_grid;
-    int nb_letter_words = count_letters_in_box(
-        coo, nb_letter, words_coo); // Number of letters in the words list
-    pipelineResult.nb_letters_words = nb_letter_words;
-
     int nb_rows;
     int nb_cols;
+    int nb_letters_grid = 0;
+    int nb_letters_words = 0;
     Letter *grid_letters = NULL;
     Letter *words_letters = NULL;
     generate_letter(pixbuf, grid_coo, words_coo, coo, output_letter_file,
-                    nb_letter, &grid_letters, &words_letters);
+                    nb_letter, &nb_letters_grid, &nb_letters_words, &grid_letters, &words_letters);
+
+    pipelineResult.nb_letters_grid = nb_letters_grid;
+    pipelineResult.nb_letters_words = nb_letters_words;
 
     Letter **grid_letters_array =
-        build_grid_from_image(grid_letters, nb_letter_grid, &nb_rows, &nb_cols);
+        build_grid_from_image(grid_letters, nb_letters_grid, &nb_rows, &nb_cols);
 
     int *words_size = NULL;
     int detected_words_count = 0;
 
     Letter **words_letters_final = build_words_list_from_image(
-        words_letters, nb_letter_words, &words_size, &detected_words_count);
+        words_letters, nb_letters_words, &words_size, &detected_words_count);
     char **words_letters_list = build_words_list(
         pixbuf, words_letters_final, detected_words_count, index, words_size);
 

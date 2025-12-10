@@ -40,10 +40,10 @@ void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y, int *is_visited,
                               int index_coo, int **coo);
 
 int find_letter(GdkPixbuf *pixbuf, int **coo);
-void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo, int **coo,
-                     char *output_file, int nb_letters,
-                     Letter **grid_letters_out,
-                     Letter **words_letters_out);
+void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
+                     int **coo, char *output_file, int nb_letters,
+                     int *nb_grid_letters_out, int *nb_word_letters_out,
+                     Letter **grid_letters_out, Letter **words_letters_out);
 
 void find_grid_and_words(int *grid_coo, int *word_coo, int **coo,
                          int nb_letter);
