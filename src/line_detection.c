@@ -642,6 +642,8 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int nb_words =
         50; // Max number of words in the words list
 
+    //char *exe_dir = get_executable_dir();
+
     PipelineResult pipelineResult;
 
     GdkPixbuf *pixbuf = load_image(filename);
