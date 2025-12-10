@@ -251,7 +251,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
 
     int nb_letter = 0;
     int min_letter_width = 1;
-    int min_letter_height = 10;
+    int min_letter_height = 15; //10
     int max_letter_width = 70;
     int max_letter_height = 70;
 
