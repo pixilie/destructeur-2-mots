@@ -131,17 +131,66 @@ int save_pixbuf_as_png(GdkPixbuf *pixbuf, const char *filename)
 }
 
 /**
- * Resize the input pixbuf to 28x28 using bilinear interpolation.
+ * Resizes a GdkPixbuf to a fixed 28x28 size while preserving the aspect ratio.
  *
  * Parameters:
- *  - src : original GdkPixbuf
+ * - src : the source GdkPixbuf to be scaled (must be valid)
  *
  * Returns:
- *  - new 28x28 GdkPixbuf
+ * A new GdkPixbuf of size 28x28 containing the centered, scaled image.
+ * Returns NULL if src is invalid or memory allocation fails.
  */
 GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
 {
-    return gdk_pixbuf_scale_simple(src, 28, 28, GDK_INTERP_BILINEAR);
+    if (!src)
+    {
+        return NULL;
+    }
+
+    int src_w = gdk_pixbuf_get_width(src);
+    int src_h = gdk_pixbuf_get_height(src);
+
+    GdkPixbuf *final_pixbuf =
+        gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, 28, 28);
+
+    gdk_pixbuf_fill(final_pixbuf, 0xFFFFFFFF);
+
+    int target_size = 20;
+
+    double scale_x = (double)target_size / src_w;
+    double scale_y = (double)target_size / src_h;
+    double scale_factor = (scale_x < scale_y) ? scale_x : scale_y;
+
+    int new_w = (int)(src_w * scale_factor);
+    int new_h = (int)(src_h * scale_factor);
+
+    if (new_w < 1)
+    {
+        new_w = 1;
+    }
+    if (new_h < 1)
+    {
+        new_h = 1;
+    }
+
+    GdkPixbuf *scaled_src =
+        gdk_pixbuf_scale_simple(src, new_w, new_h, GDK_INTERP_HYPER);
+
+    if (!scaled_src)
+    {
+        g_object_unref(final_pixbuf);
+        return NULL;
+    }
+
+    int offset_x = (28 - new_w) / 2;
+    int offset_y = (28 - new_h) / 2;
+
+    gdk_pixbuf_copy_area(scaled_src, 0, 0, new_w, new_h, final_pixbuf, offset_x,
+                         offset_y);
+
+    g_object_unref(scaled_src);
+
+    return final_pixbuf;
 }
 
 /**
@@ -167,7 +216,7 @@ void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
         for (int x = 0; x < width; x++)
         {
             guchar pixel = row[x * n_channels];
-            out[y * width + x] = (255.0 - (double)pixel) / 255.0;
+            out[y * width + x] = (double)pixel / 255.0;
         }
     }
 }

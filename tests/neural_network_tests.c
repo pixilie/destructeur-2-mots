@@ -1,6 +1,5 @@
 #include <dirent.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "../include/dataset.h"
@@ -9,6 +8,7 @@
 #include "../include/test_helpers.h"
 
 #define DATASET_PATH "./tests/dataset/"
+// #define DATASET_PATH "./assets/dataset_processed/"
 #define MODEL_PATH "./tests/model"
 
 int get_test_image_path(const char *base_path, char letter, char *out_path)
@@ -113,9 +113,9 @@ int main()
 
     print_test_subcategory("Testing function predict_letter() with Images");
 
-    char letters_to_test[] = {'A', 'B', 'C', 'M', 'Z'};
+    char letters_to_test[] = {'A', 'B', 'C', 'M', 'Z', 'I', 'J'};
 
-    for (int i = 0; i < 5; i++)
+    for (unsigned long i = 0; i < sizeof(letters_to_test); i++)
     {
         char target = letters_to_test[i];
         char image_path[512];
