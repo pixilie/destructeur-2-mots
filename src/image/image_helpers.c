@@ -130,67 +130,67 @@ int save_pixbuf_as_png(GdkPixbuf *pixbuf, const char *filename)
     return 1;
 }
 
+/**
+ * Resizes a GdkPixbuf to a fixed 28x28 size while preserving the aspect ratio.
+ *
+ * Parameters:
+ * - src : the source GdkPixbuf to be scaled (must be valid)
+ *
+ * Returns:
+ * A new GdkPixbuf of size 28x28 containing the centered, scaled image.
+ * Returns NULL if src is invalid or memory allocation fails.
+ */
 GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
 {
     if (!src)
     {
-        fprintf(stderr, "scale_pixbuf_to_28x28: src == NULL\n");
         return NULL;
     }
 
     int src_w = gdk_pixbuf_get_width(src);
     int src_h = gdk_pixbuf_get_height(src);
 
-    if (src_w <= 0 || src_h <= 0)
-    {
-        fprintf(stderr, "scale_pixbuf_to_28x28: invalid size %dx%d\n", src_w,
-                src_h);
-        return NULL;
-    }
+    GdkPixbuf *final_pixbuf =
+        gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, 28, 28);
 
-    int has_alpha = gdk_pixbuf_get_has_alpha(src);
-    int max_side = src_w > src_h ? src_w : src_h;
+    gdk_pixbuf_fill(final_pixbuf, 0xFFFFFFFF);
 
-    if (max_side < 1)
-        max_side = 1;
+    int target_size = 20;
 
-    GdkPixbuf *square =
-        gdk_pixbuf_new(GDK_COLORSPACE_RGB, has_alpha, 8, max_side, max_side);
-    gdk_pixbuf_fill(square, 0xFFFFFFFF);
+    double scale_x = (double)target_size / src_w;
+    double scale_y = (double)target_size / src_h;
+    double scale_factor = (scale_x < scale_y) ? scale_x : scale_y;
 
-    double padding_ratio = 0.90;
-    int new_w = (int)(src_w * padding_ratio);
-    int new_h = (int)(src_h * padding_ratio);
+    int new_w = (int)(src_w * scale_factor);
+    int new_h = (int)(src_h * scale_factor);
 
     if (new_w < 1)
+    {
         new_w = 1;
+    }
     if (new_h < 1)
+    {
         new_h = 1;
+    }
 
     GdkPixbuf *scaled_src =
-        gdk_pixbuf_scale_simple(src, new_w, new_h, GDK_INTERP_BILINEAR);
+        gdk_pixbuf_scale_simple(src, new_w, new_h, GDK_INTERP_HYPER);
 
     if (!scaled_src)
     {
-        fprintf(stderr, "scaled_src creation failed\n");
-        g_object_unref(square);
+        g_object_unref(final_pixbuf);
         return NULL;
     }
 
-    int offset_x = (max_side - new_w) / 2;
-    int offset_y = (max_side - new_h) / 2;
+    int offset_x = (28 - new_w) / 2;
+    int offset_y = (28 - new_h) / 2;
 
-    gdk_pixbuf_copy_area(scaled_src, 0, 0, new_w, new_h, square, offset_x,
+    gdk_pixbuf_copy_area(scaled_src, 0, 0, new_w, new_h, final_pixbuf, offset_x,
                          offset_y);
 
     g_object_unref(scaled_src);
 
-    GdkPixbuf *final_28 =
-        gdk_pixbuf_scale_simple(square, 28, 28, GDK_INTERP_BILINEAR);
-
-    g_object_unref(square);
-
-    return final_28;
+    return final_pixbuf;
 }
 
 /**
@@ -216,7 +216,7 @@ void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
         for (int x = 0; x < width; x++)
         {
             guchar pixel = row[x * n_channels];
-            out[y * width + x] = (255.0 - (double)pixel) / 255.0;
+            out[y * width + x] = (double)pixel / 255.0;
         }
     }
 }

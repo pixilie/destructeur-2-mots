@@ -413,10 +413,10 @@ void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
             free(hidden_deltas);
         }
 
-        // if (epoch % 100 == 0)
-        // {
-        //     printf("Epoch %d - Loss: %.6f\n", epoch, total_loss);
-        // }
+        if (epoch % 100 == 0)
+        {
+            printf("Epoch %d - Loss: %.6f\n", epoch, total_loss);
+        }
     }
 }
 

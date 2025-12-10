@@ -177,6 +177,8 @@ clean:
 	@rm -rf tests/results/solver_output/
 	@rm -rf tests/results/pipeline_output/
 	@rm -rf helpers/generate_dataset/fonts helpers/generate_dataset/dataset
+	@rm -f tests/model
+	@rm -rd helpers/generate_dataset/fonts helpers/generate_dataset/dataset
 	@echo "Clean complete."
 
 .PHONY: all clean tests
