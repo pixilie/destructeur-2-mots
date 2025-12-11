@@ -344,8 +344,6 @@ void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
 {
     for (int epoch = 0; epoch < epochs; epoch++)
     {
-        double total_loss = 0.0;
-
         for (int s = 0; s < samples; s++)
         {
             forward(nn, inputs[s]);
@@ -353,16 +351,6 @@ void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
             double *output_deltas = malloc(sizeof(double) * nn->output_size);
             double *hidden_deltas = malloc(sizeof(double) * nn->hidden_size);
 
-            // Calculate Loss (Cross-Entropy)
-            for (int o = 0; o < nn->output_size; o++)
-            {
-                if (targets[s][o] == 1.0)
-                {
-                    total_loss += -log(nn->output[o] + 1e-12);
-                }
-            }
-
-            // Output Layer Deltas (Softmax + Cross-Entropy Derivative = O - T)
             for (int o = 0; o < nn->output_size; o++)
             {
                 output_deltas[o] = nn->output[o] - targets[s][o];
@@ -411,11 +399,6 @@ void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
 
             free(output_deltas);
             free(hidden_deltas);
-        }
-
-        if (epoch % 100 == 0)
-        {
-            printf("Epoch %d - Loss: %.6f\n", epoch, total_loss);
         }
     }
 }

@@ -1,6 +1,5 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-// Removes tiny black pixels
 void erode_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -51,7 +50,6 @@ void erode_3x3(GdkPixbuf *pixbuf)
     g_free(copy);
 }
 
-// Restore black pixels
 void dilate_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -100,7 +98,6 @@ void dilate_3x3(GdkPixbuf *pixbuf)
     g_free(copy);
 }
 
-// Returns the index of the minimum element of the 3x3 neighboring pixels array
 int find_minimum_index(int start_index, guchar *neighborhood)
 {
     int min_index = start_index;
@@ -114,8 +111,6 @@ int find_minimum_index(int start_index, guchar *neighborhood)
     return min_index;
 }
 
-// Simple selection sort to sort the array of the 3x3 neighboring pixels to
-// calculate the median of the array
 void selection_sort(guchar *neighborhood)
 {
     for (int i = 0; i < 9; i++)
@@ -127,7 +122,6 @@ void selection_sort(guchar *neighborhood)
     }
 }
 
-// Filter a 3x3 neighborhood
 void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
                              int width, int height, int rowstride,
                              int n_channels)

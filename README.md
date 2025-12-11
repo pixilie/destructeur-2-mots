@@ -6,14 +6,11 @@ An OCR (Optical Character Recognition) system that reads an image of a word-sear
 - `assets`: Assets used in the project (images, datasets, models...)
 - `build`: Compiled objects & executables  
 - `docs`: Documentation (reports, documents...)
-- `helpers`: Complementary programs we used
 - `include`: Header files
 - `src`: Source code
-- `tests`: Unit tests
   
 ## Build
 - `make`          → builds everything (except the tests) in build/, then start the main program.
-- `make test`     → builds build/test from src/*.c + tests/*.c, then runs it. Results can be found in tests/result.
 - `make clean`    → cleans everything.
 
 ## Documents

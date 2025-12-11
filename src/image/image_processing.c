@@ -93,22 +93,6 @@ int *create_histogram(GdkPixbuf *pixbuf)
     return histogram;
 }
 
-void print_histogram(GdkPixbuf *pixbuf)
-{
-    int *histogram = create_histogram(pixbuf);
-
-    printf("Histogram of pixels:\n");
-
-    for (int i = 0; i < 256; i++)
-    // Print histogram[0] to histogram[255] of pixel intensities with number of
-    // pixels of intensity i
-    {
-        printf("Intensity %i : %i pixels\n", i, histogram[i]);
-    }
-
-    free(histogram);
-}
-
 int calculate_otsu_threshold(GdkPixbuf *pixbuf)
 {
     int *histogram = create_histogram(pixbuf);
@@ -178,12 +162,6 @@ int calculate_otsu_threshold(GdkPixbuf *pixbuf)
  */
 void binarize_image(GdkPixbuf *pixbuf, int threshold)
 {
-    // Transform gray image into a black and white image
-    // For each pixel in image:
-    //  - if gray < threshold -> black pixel
-    //  - if gray >= threshold -> white pixel
-    // Threshold is 128 by default
-
     // Get image dimensions
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);

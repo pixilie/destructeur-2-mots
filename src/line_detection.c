@@ -1,76 +1,17 @@
-#include "../include/line_detection.h"
 #include "../include/image/image.h"
 #include "../include/image/image_helpers.h"
+#include "../include/line_detection.h"
 #include "../include/solver.h"
 
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define PIPELINE_OUTPUT "tests/results/pipeline_output"
-
-/**
- * sobel_filter:
- * Apply a Sobel edge-detection filter to a grayscale GdkPixbuf in-place.
- *
- * Parameters:
- *  - pixbuf: pointer to a GdkPixbuf expected to be grayscale (R==G==B).
- */
-void sobel_filter(GdkPixbuf *pixbuf)
-{
-    int Gx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
-    int Gy[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
-    int gx = 0;
-    int gy = 0;
-
-    int width = gdk_pixbuf_get_width(pixbuf);
-    int height = gdk_pixbuf_get_height(pixbuf);
-
-    int *temp_p = malloc(width * height * sizeof(int));
-    for (int i = 0; i < width * height; i++)
-        temp_p[i] = 0;
-
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
-    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-
-    for (int i = 1; i < height - 1; i++)
-    {
-        for (int j = 1; j < width - 1; j++)
-        {
-            gx = 0;
-            gy = 0;
-            for (int sob_y = 0; sob_y <= 2; sob_y++)
-            {
-                for (int sob_x = 0; sob_x <= 2; sob_x++)
-                {
-                    guchar *p = pixels + (i + sob_y - 1) * rowstride +
-                                (j + sob_x - 1) * n_channels;
-                    gx += Gx[sob_y][sob_x] * (*p);
-                    gy += Gy[sob_y][sob_x] * (*p);
-                }
-            }
-            int diff = (int)sqrt(gx * gx + gy * gy);
-            if (diff > 255)
-                diff = 255;
-            temp_p[i * width + j] = diff;
-        }
-    }
-
-    for (int i = 0; i < height; i++)
-    {
-        for (int j = 0; j < width; j++)
-        {
-            guchar *p = pixels + i * rowstride + j * n_channels;
-            p[0] = p[1] = p[2] = (guchar)temp_p[i * width + j];
-            if (n_channels == 4)
-                p[3] = 255;
-        }
-    }
-
-    free(temp_p);
-}
+// Terminal colors
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[31m"
+#define COLOR_GREEN "\033[32m"
+#define COLOR_YELLOW "\033[33m"
 
 /**
  * invert_color:
@@ -96,66 +37,6 @@ void invert_color(GdkPixbuf *pixbuf)
         }
     }
 }
-
-/**
- * remove_lines:
- * Detect and remove strong horizontal and vertical lines from a binarized
- * image.
- *
- * Parameters:
- *  - pixbuf: pointer to a binarized GdkPixbuf (white text on black background
- *           or inverted accordingly).
- */
-void remove_lines(GdkPixbuf *pixbuf)
-{
-    int width = gdk_pixbuf_get_width(pixbuf);
-    int height = gdk_pixbuf_get_height(pixbuf);
-    int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
-    int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
-
-    for (int y = 0; y < height; y++)
-    {
-        int sum = 0;
-        for (int x = 0; x < width; x++)
-        {
-            guchar *p = pixels + y * rowstride + x * n_channels;
-            sum += p[0];
-        }
-        if (sum >= width * 255 * 0.70)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                guchar *p = pixels + y * rowstride + x * n_channels;
-                p[0] = p[1] = p[2] = 0;
-            }
-        }
-    }
-
-    for (int x = 0; x < width; x++)
-    {
-        int sum = 0;
-        for (int y = 0; y < height; y++)
-        {
-            guchar *p = pixels + y * rowstride + x * n_channels;
-            sum += p[0];
-        }
-        if (sum >= height * 255 * 0.70)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                guchar *p = pixels + y * rowstride + x * n_channels;
-                p[0] = p[1] = p[2] = 0;
-            }
-        }
-    }
-}
-
-typedef struct
-{
-    int x;
-    int y;
-} Point;
 
 /**
  * find_black_pixels_around:
@@ -254,7 +135,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
 
     int nb_letter = 0;
     int min_letter_width = 1;
-    int min_letter_height = 15; //10
+    int min_letter_height = 15; // 10
     int max_letter_width = 70;
     int max_letter_height = 70;
 
@@ -314,15 +195,10 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
  *  - output_file    : directory path where letter images will be saved (created
  * if necessary).
  */
-void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
-                     int **coo, char *output_file, int nb_letters, int *nb_grid_letters_out, int *nb_words_letters_out,
+void generate_letter(int *grid_coo, int *words_coo, int **coo, int nb_letters,
+                     int *nb_grid_letters_out, int *nb_words_letters_out,
                      Letter **grid_letters_out, Letter **words_letters_out)
 {
-    g_mkdir_with_parents(output_file, 0777);
-
-    int os = 3;
-    char full_path[512];
-
     int letter_grid_count = 0;
     int letter_word_count = 0;
     Letter *grid_letters = calloc(nb_letters, sizeof(Letter));
@@ -332,8 +208,8 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
     {
         if (coo[index_coo][0] < coo[index_coo][2] &&
             coo[index_coo][1] < coo[index_coo][3] &&
-            coo[index_coo][2] - coo[index_coo][0] <= 200 && //200
-            coo[index_coo][3] - coo[index_coo][1] <= 200 && //200
+            coo[index_coo][2] - coo[index_coo][0] <= 200 && // 200
+            coo[index_coo][3] - coo[index_coo][1] <= 200 && // 200
             coo[index_coo][2] - coo[index_coo][0] >= 1 &&
             coo[index_coo][3] - coo[index_coo][1] >= 10)
         {
@@ -348,9 +224,6 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
                 grid_letter.y1 = coo[index_coo][1];
                 grid_letter.x2 = coo[index_coo][2];
                 grid_letter.y2 = coo[index_coo][3];
-                // printf("Detected letter %i : (%i, %i)(%i, %i)\n",
-                // letter_grid_index, grid_letter.x1, grid_letter.y1,
-                // grid_letter.x2, grid_letter.y2);
                 grid_letters[letter_grid_count] = grid_letter;
                 letter_grid_count++;
             }
@@ -367,25 +240,9 @@ void generate_letter(GdkPixbuf *pixbuf_to_crop, int *grid_coo, int *words_coo,
                 word_letter.y1 = coo[index_coo][1];
                 word_letter.x2 = coo[index_coo][2];
                 word_letter.y2 = coo[index_coo][3];
-                // printf("Detected letter in words list %i : (%i, %i)(%i,
-                // %i)\n",letter_word_count, word_letter.x1, word_letter.y1,
-                // word_letter.x2, word_letter.y2);
                 words_letters[letter_word_count] = word_letter;
                 letter_word_count++;
             }
-
-            GdkPixbuf *letter = crop(
-                pixbuf_to_crop, coo[index_coo][0] - os, coo[index_coo][1] - os,
-                coo[index_coo][2] + os, coo[index_coo][3] + os);
-            snprintf(full_path, sizeof(full_path), "%s/letter_%d_%d.png",
-                     output_file, coo[index_coo][0], coo[index_coo][1]);
-
-            // Convert letter to 28x28 pixbuf for the neural network
-            GdkPixbuf *scaled_letter = scale_pixbuf_to_28x28(letter);
-            save_pixbuf_as_png(scaled_letter, full_path);
-
-            g_object_unref(letter);
-            g_object_unref(scaled_letter);
         }
     }
 
@@ -447,14 +304,14 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
 
     int thresh = 0;
 
-    for(int i = 0; i < nb_letter; i ++)
+    for (int i = 0; i < nb_letter; i++)
     {
         thresh += (coo[i][3] - coo[i][1]);
     }
 
     thresh /= nb_letter;
     thresh *= 2;
-    
+
     int threshold_b1_x = thresh;
     int threshold_b1_y = thresh;
     int threshold_b2_x = thresh;
@@ -464,8 +321,6 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
     {
         if (box1 == 0)
         {
-            //threshold_b1_x = 50; //(coo[i][2] - coo[i][0]) * 3.5;
-            //threshold_b1_y = 50; //(coo[i][3] - coo[i][1]) * 1.2;
             box1_coo[0] = coo[i][0];
             box1_coo[1] = coo[i][1];
             box1_coo[2] = coo[i][2];
@@ -485,8 +340,6 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
         }
         else if (box2 == 0)
         {
-            //threshold_b2_x = 50; //(coo[i][2] - coo[i][0]) * 3.5;
-            //threshold_b2_y = 50; //(coo[i][3] - coo[i][1]) * 1.2;
             box2_coo[0] = coo[i][0];
             box2_coo[1] = coo[i][1];
             box2_coo[2] = coo[i][2];
@@ -615,12 +468,6 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
     return detected_words;
 }
 
-// Terminal colors
-#define COLOR_RESET "\033[0m"
-#define COLOR_RED "\033[31m"
-#define COLOR_GREEN "\033[32m"
-#define COLOR_YELLOW "\033[33m"
-
 /**
  * pipeline:
  * High-level OCR pipeline that processes a puzzle image to extract grid, words,
@@ -631,42 +478,13 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
  *  - output_gw_file   : output directory for grid and word crops.
  *  - output_letter_file: output directory for individual letter images.
  */
-PipelineResult pipeline(char *filename, char *output_gw_file,
-                        char *output_letter_file)
+PipelineResult pipeline(char *filename)
 {
-    g_mkdir_with_parents(output_gw_file, 0777);
-    g_mkdir_with_parents(output_letter_file, 0777);
-
-    g_mkdir_with_parents(PIPELINE_OUTPUT, 0777);
-
-    int nb_words =
-        50; // Max number of words in the words list
-
-    //char *exe_dir = get_executable_dir();
+    int nb_words = 50; // Max number of words in the words list
 
     PipelineResult pipelineResult;
-
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
-
-    int index = 1;
-    if (strcmp(filename, "level_1_image_2.png") == 0)
-    {
-        index = 2;
-    }
-    else if (strcmp(filename, "level_2_image_1.png") == 0)
-    {
-        index = 3;
-    }
-    else if (strcmp(filename, "level_2_image_2.png") == 0)
-    {
-        index = 4;
-    }
-
-    char output_image[256];
-    snprintf(output_image, sizeof(output_image), "%s/image%i.png",
-             PIPELINE_OUTPUT, index);
-    save_pixbuf_as_png(pixbuf, output_image);
 
     convert_to_grayscale(pixbuf);
 
@@ -683,34 +501,13 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     }
 
     convert_to_black_and_white(pixbuf);
-
-    char output_bw[256];
-    snprintf(output_bw, sizeof(output_bw), "%s/bw%i.png", PIPELINE_OUTPUT,
-             index);
-    save_pixbuf_as_png(pixbuf, output_bw);
-
     invert_color(pixbuf);
 
-    if (best_angle != 0)
-    {
-        //erode_3x3(pixbuf);
-       //median_filter_3x3(pixbuf); // Only filter level 2 images
-    }
-
-    char output_filtered[256];
-    snprintf(output_filtered, sizeof(output_filtered), "%s/filtered%i.png",
-             PIPELINE_OUTPUT, index);
-    save_pixbuf_as_png(pixbuf, output_filtered);
-
-    // dilate_3x3(pixbuf);
-
-    //int width = gdk_pixbuf_get_width(pixbuf);
-    //int height = gdk_pixbuf_get_height(pixbuf);
     int *grid_coo = malloc(4 * sizeof(int));
     int *words_coo = malloc(4 * sizeof(int));
 
     int magic_nb_letter = 1000;
-    
+
     int **coo = malloc(magic_nb_letter * sizeof(int *));
     for (int i = 0; i < magic_nb_letter; i++)
     {
@@ -731,14 +528,14 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int nb_letters_words = 0;
     Letter *grid_letters = NULL;
     Letter *words_letters = NULL;
-    generate_letter(pixbuf, grid_coo, words_coo, coo, output_letter_file,
-                    nb_letter, &nb_letters_grid, &nb_letters_words, &grid_letters, &words_letters);
+    generate_letter(grid_coo, words_coo, coo, nb_letter, &nb_letters_grid,
+                    &nb_letters_words, &grid_letters, &words_letters);
 
     pipelineResult.nb_letters_grid = nb_letters_grid;
     pipelineResult.nb_letters_words = nb_letters_words;
 
-    Letter **grid_letters_array =
-        build_grid_from_image(grid_letters, nb_letters_grid, &nb_rows, &nb_cols);
+    Letter **grid_letters_array = build_grid_from_image(
+        grid_letters, nb_letters_grid, &nb_rows, &nb_cols);
 
     int *words_size = NULL;
     int detected_words_count = 0;
@@ -746,7 +543,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     Letter **words_letters_final = build_words_list_from_image(
         words_letters, nb_letters_words, &words_size, &detected_words_count);
     char **words_letters_list = build_words_list(
-        pixbuf, words_letters_final, detected_words_count, index, words_size);
+        pixbuf, words_letters_final, detected_words_count, words_size);
 
     pipelineResult.words.detected_words_count = detected_words_count;
     pipelineResult.words.words = words_letters_list;
@@ -754,7 +551,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     int rows;
     int cols;
     char **grid_array = build_grid_array(pixbuf, grid_letters_array, nb_rows,
-                                         nb_cols, index, &rows, &cols);
+                                         nb_cols, &rows, &cols);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);
@@ -784,35 +581,12 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
         find_word_by_word(coo, word_list, words_coo, nb_letter, nb_words);
     pipelineResult.nb_words = nb_detected_words;
 
-    // crop the grid, word list and words of the image
-
-    char *word_path = malloc(strlen(output_gw_file) + 40 * sizeof(char));
-    for (int i = 0; i < nb_words; i++)
-    {
-        if (word_list[i][2] - word_list[i][0] > 0 &&
-            word_list[i][3] - word_list[i][1] > 0)
-        {
-            sprintf(word_path, "%s/word_n%i.png", output_gw_file, i + 1);
-            GdkPixbuf *word =
-                crop(pixbuf_to_slice, word_list[i][0], word_list[i][1],
-                     word_list[i][2], word_list[i][3]);
-            save_pixbuf_as_png(word, word_path);
-            g_object_unref(word);
-        }
-    }
-
-    char *grid_path = malloc(strlen(output_gw_file) + 40 * sizeof(char));
-    char *words_path = malloc(strlen(output_gw_file) + 40 * sizeof(char));
-    sprintf(grid_path, "%s/grid.png", output_gw_file);
-    sprintf(words_path, "%s/words.png", output_gw_file);
-
     for (int i = 0; i < 4; i++)
     {
         pipelineResult.grid_coo[i] = grid_coo[i];
     }
     GdkPixbuf *grid = crop(pixbuf_to_slice, grid_coo[0], grid_coo[1],
                            grid_coo[2], grid_coo[3]);
-    save_pixbuf_as_png(grid, grid_path);
     g_object_unref(grid);
 
     for (int i = 0; i < 4; i++)
@@ -821,10 +595,8 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     }
     GdkPixbuf *words = crop(pixbuf_to_slice, words_coo[0], words_coo[1],
                             words_coo[2], words_coo[3]);
-    save_pixbuf_as_png(words, words_path);
     g_object_unref(words);
 
-    // #ifndef TESTING
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Best rotation angle : %.2f°\n",
            best_angle);
 
@@ -848,15 +620,13 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Number of letters detected : %i (In the grid : %i, "
                         "in the words list : %i)\n",
-           pipelineResult.nb_letters, pipelineResult.nb_letters_grid, pipelineResult.nb_letters_words);
+           pipelineResult.nb_letters, pipelineResult.nb_letters_grid,
+           pipelineResult.nb_letters_words);
     printf(COLOR_YELLOW
            "[INFO]" COLOR_RESET
            " Number of words detected in the words list of the grid : %i\n",
            pipelineResult.nb_words);
 
-    // #endif
-
-    #ifndef TESTING
     Words words_pipeline = pipelineResult.words;
     for (int i = 0; i < words_pipeline.detected_words_count; i++)
     {
@@ -867,9 +637,6 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     free(words_pipeline.solved_words_grid_coos);
     free(words_pipeline.solved_words_image_coos);
     free(words_pipeline.words);
-    #endif
-
-    // free all pointers
 
     for (int i = 0; i < magic_nb_letter; i++)
     {
@@ -884,52 +651,8 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     free(grid_coo);
     free(words_coo);
 
-    free(grid_path);
-    free(word_path);
-    free(words_path);
-
     g_object_unref(pixbuf);
     g_object_unref(pixbuf_to_slice);
 
     return pipelineResult;
 }
-
-#ifndef TESTING
-int main(int argc, char **argv)
-{
-    if (argc < 4)
-    {
-        printf(COLOR_RED "[FAIL]" COLOR_RESET " Not enough arguments\n");
-        printf("Usage: ./pipeline <input_image> <output_grid_words_dir> "
-               "<output_letters_dir>\n");
-        printf("\nExample:\n");
-        printf("  ./pipeline input.png gw_output letters_output\n");
-        printf("\nDescription:\n");
-        printf("  This program processes a word search puzzle image through "
-               "the OCR pipeline:\n");
-        printf("   - Converts to grayscale and binarizes the image\n");
-        printf("   - Finds letters and words\n");
-        printf("   - Crops and saves grid, words, and individual letters\n");
-        return EXIT_FAILURE;
-    }
-
-    char *input_image = argv[1];
-    char *output_gw_dir = argv[2];
-    char *output_letters_dir = argv[3];
-
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Starting OCR pipeline...\n");
-    printf("Input image: %s\n", input_image);
-    printf("Output (grid/words): %s\n", output_gw_dir);
-    printf("Output (letters): %s\n\n", output_letters_dir);
-
-    pipeline(input_image, output_gw_dir, output_letters_dir);
-
-    printf(COLOR_GREEN "[SUCCESS]" COLOR_RESET
-                       " Pipeline completed successfully!\n");
-    printf("  Processed image saved in:\n");
-    printf("   - %s (grid and word crops)\n", output_gw_dir);
-    printf("   - %s (letters)\n", output_letters_dir);
-
-    return EXIT_SUCCESS;
-}
-#endif
