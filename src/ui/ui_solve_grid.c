@@ -84,9 +84,9 @@ void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
 {
     // Draw color based on orintation of word
     int color[3];
-    int rectangle_width = x2 - x1;
-    int rectangle_height = y3 - y2;
-    if (x1 == x2 && x3 == x4 && rectangle_height < rectangle_width)
+    int rectangle_width = abs(x2 - x1);
+    int rectangle_height = abs(y3 - y2);
+    if (y1 == y2 && y3 == y4 && rectangle_height < rectangle_width)
     {
         color[0] = 255; // Horizontal words : red rectangle
     }
@@ -98,7 +98,7 @@ void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
     {
         color[2] = 255;
     }
-    
+       
     draw_line(pixbuf, x1, y1, x2, y2, thickness, color);
     draw_line(pixbuf, x2, y2, x3, y3, thickness, color);
     draw_line(pixbuf, x3, y3, x4, y4, thickness, color);

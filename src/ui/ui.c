@@ -184,18 +184,18 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
         return;
     }
 
-    int rectangle_ui_offset = 3; // Shrink the rectangle to make it appear slightly smaller in the ui
+    //int rectangle_ui_offset = 3; // Shrink the rectangle to make it appear slightly smaller in the ui
 
     for (int i = 0; i < words.detected_words_count; i++)
     {
-        int x1 = words.solved_words_image_coos[i][0] + rectangle_ui_offset;
-        int y1 = words.solved_words_image_coos[i][1] + rectangle_ui_offset;
-        int x2 = words.solved_words_image_coos[i][2] - rectangle_ui_offset;
-        int y2 = words.solved_words_image_coos[i][3] + rectangle_ui_offset;
-        int x3 = words.solved_words_image_coos[i][4] - rectangle_ui_offset;
-        int y3 = words.solved_words_image_coos[i][5] - rectangle_ui_offset;
-        int x4 = words.solved_words_image_coos[i][6] + rectangle_ui_offset;
-        int y4 = words.solved_words_image_coos[i][7] - rectangle_ui_offset;
+        int x1 = words.solved_words_image_coos[i][0];
+        int y1 = words.solved_words_image_coos[i][1];
+        int x2 = words.solved_words_image_coos[i][2];
+        int y2 = words.solved_words_image_coos[i][3];
+        int x3 = words.solved_words_image_coos[i][4];
+        int y3 = words.solved_words_image_coos[i][5];
+        int x4 = words.solved_words_image_coos[i][6];
+        int y4 = words.solved_words_image_coos[i][7];
 
         if (x1 > 0 && y1 > 0 && x2 > 0 && y2 > 0 && x3 > 0 && y3 > 0 &&
             x4 > 0 && y4 > 0)
