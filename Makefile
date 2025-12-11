@@ -47,6 +47,7 @@ PIPELINE_OBJ      = $(BUILD_DIR)/line_detection.o
 PIPELINE_IMG_OBJ  = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 SOLVER_OBJ        = $(BUILD_DIR)/solver.o
 NEURAL_NET_OBJ    = $(BUILD_DIR)/neural_network.o
+DATASET_OBJ       = $(BUILD_DIR)/dataset.o
 
 # ===================== Main Rules =====================
 all: $(TARGET) $(UI_BIN) $(IMAGE_BIN) $(PIPELINE_BIN)
@@ -58,12 +59,12 @@ $(TARGET): $(MAIN_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(filter-out $(BUILD_DIR)
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
 # ---------- UI ----------
-$(UI_BIN): $(UI_OBJ)
+$(UI_BIN): $(UI_OBJ) $(NEURAL_NET_OBJ) $(DATASET_OBJ) 
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking UI..."
 	@$(CC) -DTESTING -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/%.o: $(UI_SRC_DIR)/%.c
+$(BUILD_DIR)/ui.o: $(SRC_DIR)/main.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
