@@ -31,23 +31,8 @@ void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness, int color[3])
 
 // Draws a red line from (x1, y1) to (x2, y2) in the UI colored image
 // Uses Bresenham's line algorithm to draw the ideal straight line
-void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
-{
-    // Draw color based on orintation of word
-    int color[3];
-    if (x1 == x2)
-    {
-        color[0] = 255; // Horizontal words : red rectangle
-    }
-    else if (y1 == y2)
-    {
-        color[1] = 255; // Vertical words : Green rectangle
-    }
-    else
-    {
-        color[2] = 255;
-    }
-    
+void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness, int color[3])
+{    
     if (x1 == x2 && y1 == y2)
     {
         draw_pixel(pixbuf, x1, y1, thickness, color);
@@ -97,10 +82,27 @@ void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
 void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
                     int y3, int x4, int y4, int thickness)
 {
-    draw_line(pixbuf, x1, y1, x2, y2, thickness);
-    draw_line(pixbuf, x2, y2, x3, y3, thickness);
-    draw_line(pixbuf, x3, y3, x4, y4, thickness);
-    draw_line(pixbuf, x4, y4, x1, y1, thickness);
+    // Draw color based on orintation of word
+    int color[3];
+    int rectangle_width = x2 - x1;
+    int rectangle_height = y3 - y2;
+    if (x1 == x2 && x3 == x4 && rectangle_height < rectangle_width)
+    {
+        color[0] = 255; // Horizontal words : red rectangle
+    }
+    else if (y1 == y2 && y3 == y4 && rectangle_width < rectangle_height)
+    {
+        color[1] = 255; // Vertical words : Green rectangle
+    }
+    else
+    {
+        color[2] = 255;
+    }
+    
+    draw_line(pixbuf, x1, y1, x2, y2, thickness, color);
+    draw_line(pixbuf, x2, y2, x3, y3, thickness, color);
+    draw_line(pixbuf, x3, y3, x4, y4, thickness, color);
+    draw_line(pixbuf, x4, y4, x1, y1, thickness, color);
 }
 
 // Return an array of the solved words' coordinates in the grid
