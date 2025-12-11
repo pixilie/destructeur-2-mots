@@ -1,5 +1,13 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <string.h>
+#include <stdlib.h>
 
+/*
+ * erode_3x3:
+ * Simple 3x3 erosion on a grayscale/binary image (in-place).
+ * Parameters:
+ *  - pixbuf: image to modify.
+ */
 void erode_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -50,6 +58,12 @@ void erode_3x3(GdkPixbuf *pixbuf)
     g_free(copy);
 }
 
+/*
+ * dilate_3x3:
+ * Simple 3x3 dilation on a grayscale/binary image (in-place).
+ * Parameters:
+ *  - pixbuf: image to modify.
+ */
 void dilate_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -98,6 +112,10 @@ void dilate_3x3(GdkPixbuf *pixbuf)
     g_free(copy);
 }
 
+/*
+ * find_minimum_index:
+ * Return index of minimum value in neighborhood starting at start_index.
+ */
 int find_minimum_index(int start_index, guchar *neighborhood)
 {
     int min_index = start_index;
@@ -111,6 +129,10 @@ int find_minimum_index(int start_index, guchar *neighborhood)
     return min_index;
 }
 
+/*
+ * selection_sort:
+ * Simple selection sort for a 9-element array (used for median).
+ */
 void selection_sort(guchar *neighborhood)
 {
     for (int i = 0; i < 9; i++)
@@ -122,6 +144,12 @@ void selection_sort(guchar *neighborhood)
     }
 }
 
+/*
+ * filter_neighborhood_3x3:
+ * Replace pixel at (x,y) with median of its 3x3 neighborhood.
+ * Parameters: pixbuf (target), copy (source pixels), x, y, width, height,
+ * rowstride, n_channels.
+ */
 void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
                              int width, int height, int rowstride,
                              int n_channels)
@@ -170,6 +198,12 @@ void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
     dst[0] = dst[1] = dst[2] = median;
 }
 
+/*
+ * median_filter_3x3:
+ * Apply a 3x3 median filter over the entire image (in-place).
+ * Parameters:
+ *  - pixbuf: image to filter.
+ */
 void median_filter_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);

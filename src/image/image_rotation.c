@@ -3,20 +3,14 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
 
-/**
+/*
  * rotate_image:
- * Rotate a GdkPixbuf by a given angle (degrees) and return a newly allocated
- * GdkPixbuf containing the rotated image.
+ * Rotate a GdkPixbuf by a given angle (degrees) and return a new GdkPixbuf.
+ * Caller owns the returned pixbuf and must g_object_unref() it.
  *
  * Parameters:
- *  - src          : pointer to the source GdkPixbuf to rotate (not modified).
- *  - angle_degrees: rotation angle in degrees (positive = clockwise).
- *
- * Returns:
- *  - A newly-allocated GdkPixbuf* containing the rotated image. The caller
- *    owns the returned pixbuf and must call g_object_unref() when done.
- *  - The function does not return NULL on error in the current implementation;
- *    callers should still validate the return value.
+ *  - pixbuf: source image (not modified)
+ *  - angle_degrees: rotation angle in degrees (positive = clockwise)
  */
 GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
 {
@@ -84,6 +78,15 @@ GdkPixbuf *rotate_image(GdkPixbuf *pixbuf, double angle_degrees)
     return new;
 }
 
+/*
+ * downscale_pixbuf:
+ * Downscale pixbuf to the given target width (preserving aspect ratio).
+ * Returns the downscaled pixbuf or the original when already small enough.
+ *
+ * Parameters:
+ *  - pixbuf: source image
+ *  - target_width: desired maximum width
+ */
 GdkPixbuf *downscale_pixbuf(GdkPixbuf *pixbuf, int target_width)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -103,10 +106,16 @@ GdkPixbuf *downscale_pixbuf(GdkPixbuf *pixbuf, int target_width)
                                    GDK_INTERP_NEAREST);
 }
 
+/*
+ * compute_projection_variance:
+ * Compute a variance-based score for the image projection. Higher values
+ * indicate stronger line structure useful for angle selection.
+ *
+ * Parameters:
+ *  - pixbuf: input image (usually downscaled, B/W)
+ */
 double compute_projection_variance(GdkPixbuf *pixbuf)
 {
-    // Used to calculate the variance of an image
-    // The higher the return is, the better is the angle of the image
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
@@ -149,9 +158,12 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
 
 double detect_best_angle(GdkPixbuf *pixbuf)
 {
-    // test image from -90° to 90°
-    // it NEEDS to take a black and white image to function correctly
-    // return a double which is the better angle found
+    /*
+     * detect_best_angle:
+     * Search candidate rotation angles and return the best angle (degrees).
+     * The function evaluates rotated images and picks the angle with highest score.
+     * Works best on binarized/black-and-white input.
+     */
 
     // Downscale to speed up rotation to 100 pixels width (less pixels)
     GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 150);
@@ -202,7 +214,11 @@ double detect_best_angle(GdkPixbuf *pixbuf)
     return best_angle;
 }
 
-// Detects the best rotation angle and rotates the image by that angle
+/*
+ * rotate_image_automatic:
+ * Detect the best rotation angle and rotate the image accordingly.
+ * Returns the rotated pixbuf (new reference) or the original if no rotation needed.
+ */
 GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
 {
     double best_angle = detect_best_angle(pixbuf);

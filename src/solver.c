@@ -15,8 +15,9 @@
 // Path to the model useb by the neural network to recognise letters
 #define MODEL_PATH "ocr_model"
 
-/**
- * Return the length of a string (no strlen allowed).
+/*
+ * len_word:
+ * Return the length of a null-terminated string.
  */
 int len_word(char word[])
 {
@@ -26,14 +27,10 @@ int len_word(char word[])
     return i;
 }
 
-/**
- * Search for a word inside a 2D grid of characters.
- *
- * rows, cols : grid dimensions
- * tab        : 2D character grid [rows][cols]
- * word       : null-terminated string to search
- * x1,y1      : output coordinates of first letter
- * x2,y2      : output coordinates of last letter
+/*
+ * solve:
+ * Search for a word inside a 2D character grid. If found, write the start
+ * (x1,y1) and end (x2,y2) grid coordinates. Otherwise set all outputs to -1.
  */
 void solve(int rows, int cols, char **grid, char word[], int *x1, int *y1,
            int *x2, int *y2)
@@ -93,10 +90,20 @@ void solve(int rows, int cols, char **grid, char word[], int *x1, int *y1,
     *x1 = *y1 = *x2 = *y2 = -1; // Word not found
 }
 
+/* center_x:
+ * Return the x-coordinate of the center of a Letter bounding box.
+ */
 int center_x(const Letter *letter) { return (letter->x1 + letter->x2) / 2; }
 
+/* center_y:
+ * Return the y-coordinate of the center of a Letter bounding box.
+ */
 int center_y(const Letter *letter) { return (letter->y1 + letter->y2) / 2; }
 
+/*
+ * compare_x:
+ * Compare two Letter instances by their center X for sorting (left-to-right).
+ */
 int compare_x(const void *letter_1, const void *letter_2)
 {
     const Letter *letter1 = letter_1;
@@ -105,6 +112,10 @@ int compare_x(const void *letter_1, const void *letter_2)
     return center_x(letter1) - center_x(letter2);
 }
 
+/*
+ * compare_y:
+ * Compare two Letter instances by their center Y for sorting (top-to-bottom).
+ */
 int compare_y(const void *letter_1, const void *letter_2)
 {
     const Letter *letter1 = letter_1;
@@ -113,6 +124,11 @@ int compare_y(const void *letter_1, const void *letter_2)
     return center_y(letter1) - center_y(letter2);
 }
 
+/*
+ * build_grid_from_image:
+ * Organize detected Letter bounding boxes into a 2D grid (rows x cols).
+ * Returns a newly allocated Letter** grid and writes rows/cols to outputs.
+ */
 Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
                                int *rows_out, int *cols_out)
 {
@@ -206,6 +222,11 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     return grid;
 }
 
+/*
+ * build_grid_array:
+ * Recognize each Letter region from pixbuf using the neural network and build
+ * a rows x cols char grid (A-Z). Returns malloc'd char** and writes rows/cols.
+ */
 char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
                         int cols, int *rows_out, int *cols_out)
 {
@@ -338,6 +359,11 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
     return new_grid_array;
 }
 
+/*
+ * build_words_list_from_image:
+ * Group word-region Letter boxes into per-word arrays and return them.
+ * Outputs: words_size_out (array of sizes), words_count_out (number of words).
+ */
 Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
                                      int **words_size_out, int *words_count_out)
 {
@@ -433,6 +459,11 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     return words_list;
 }
 
+/*
+ * build_words_list:
+ * Recognize letters for each word region using the neural network and return
+ * an array of null-terminated word strings (caller must free).
+ */
 char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
                         int *words_size)
 {
@@ -529,6 +560,11 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     return words_list;
 }
 
+/*
+ * get_solved_words_grid_coos:
+ * For each solved word string, find its start/end coordinates in the grid
+ * using solve() and return an array of [x1,y1,x2,y2] entries.
+ */
 int **get_solved_words_grid_coos(char **words, int words_count, char **grid,
                                  int rows, int cols)
 {
@@ -558,6 +594,11 @@ int **get_solved_words_grid_coos(char **words, int words_count, char **grid,
     return words_coos;
 }
 
+/*
+ * get_solved_words_image_coos_drawing:
+ * Convert solved word grid coordinates into image-space polygon coords for
+ * drawing (returns array of 8 ints per word: 4 corner points).
+ */
 int **get_solved_words_image_coos_drawing(int **words_grid_coos,
                                           int words_count, int grid_coos[4],
                                           int rows, int cols)

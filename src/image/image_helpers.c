@@ -11,10 +11,10 @@
 #include <string.h>
 #include <unistd.h>
 
-/**
+/*
  * get_image_path:
- * Build an absolute path to an asset located in the project's ../assets
- * directory relative to the running executable.
+ * Resolve an asset filename to an absolute path in the project's ../assets
+ * directory or return the absolute path if the filename is already absolute.
  *
  * Parameters:
  *  - filename: name of the asset file (e.g. "image.png").
@@ -62,9 +62,9 @@ char *get_image_path(const char *filename)
     return NULL;
 }
 
-/**
+/*
  * load_image:
- * Load an image file from the assets directory into a GdkPixbuf.
+ * Load an image file into a new GdkPixbuf using the resolved asset path.
  *
  * Parameters:
  *  - filename: asset filename (relative name passed to get_image_path).
@@ -99,9 +99,9 @@ GdkPixbuf *load_image(char *filename)
     return pixbuf;
 }
 
-/**
+/*
  * save_pixbuf_as_png:
- * Save a GdkPixbuf to a PNG file.
+ * Save a GdkPixbuf to a PNG file on disk.
  *
  * Parameters:
  *  - pixbuf: pointer to a valid GdkPixbuf to save.
@@ -193,14 +193,14 @@ GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
     return final_28;
 }
 
-/**
+/*
+ * pixbuf_to_input_vector:
  * Convert a GdkPixbuf into a normalized input vector for the neural network.
- * Performs normalization (0.0 - 1.0) and color inversion (assuming input is
- * black text on white).
+ * Normalizes pixels to [0.0,1.0] and inverts color (assumes dark text on light bg).
  *
  * Parameters:
  * - pixbuf : the source image (must be valid)
- * - out    : pointer to an allocated double array (size must be width * height)
+ * - out    : pointer to an allocated double array (size = width * height)
  */
 void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
 {
@@ -221,6 +221,13 @@ void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
     }
 }
 
+/*
+ * get_executable_dir:
+ * Return the directory of the running executable or NULL on failure.
+ *
+ * Returns:
+ *  - pointer to a static string with the executable directory, or NULL.
+ */
 char *get_executable_dir()
 {
     static char buffer[4096];

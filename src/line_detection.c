@@ -252,16 +252,36 @@ void generate_letter(int *grid_coo, int *words_coo, int **coo, int nb_letters,
     *words_letters_out = words_letters;
 }
 
+/*
+ * compare_letter_x:
+ * Compare two bounding-box pointers by their x (left) coordinate.
+ * Suitable for qsort when ordering letters left-to-right.
+ */
 int compare_letter_x(const void *a, const void *b)
 {
     return (((int *)a)[0]) - (((int *)b)[0]);
 }
 
+/*
+ * compare_letter_y:
+ * Compare two bounding-box pointers by their y (top) coordinate.
+ * Suitable for qsort when ordering letters top-to-bottom.
+ */
 int compare_letter_y(const void *a, const void *b)
 {
     return (((int *)a)[1]) - (((int *)b)[1]);
 }
 
+/*
+ * sort_letter:
+ * Sort an array of letter bounding-box pointers into a reasonable reading
+ * order. First sort by X (left-to-right), then for groups of close X values
+ * (likely same row) sort by Y (top-to-bottom).
+ *
+ * Parameters:
+ *  - coo: array of int* where each points to an int[4] bbox [xmin,ymin,xmax,ymax]
+ *  - nb_letter: number of entries in coo
+ */
 void sort_letter(int **coo, int nb_letter)
 {
     qsort(coo, nb_letter, sizeof(int *), compare_letter_x);
