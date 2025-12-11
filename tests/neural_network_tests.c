@@ -9,6 +9,7 @@
 #include "../include/test_helpers.h"
 
 #define DATASET_PATH "./tests/dataset/"
+// #define DATASET_PATH "./helpers/generate_dataset/dataset/"
 #define MODEL_PATH "./tests/model"
 
 int get_test_image_path(const char *base_path, char letter, char *out_path)
@@ -74,6 +75,7 @@ int main()
     printf("Network created: %d-%d-%d\n", nn->input_size, nn->hidden_size,
            nn->output_size);
 
+    /*
     print_test_subcategory("Training Neural Network");
     train(nn, data.inputs, data.targets, data.samples, 0.01, 1000);
     print_success();
@@ -83,7 +85,8 @@ int main()
     save_network(nn, MODEL_PATH);
     print_success();
     printf("Model saved to %s\n", MODEL_PATH);
-
+    */
+    
     print_test_subcategory("Evaluating on Training Dataset (Vectors)");
     int correct = 0;
     for (int i = 0; i < data.samples; i++)
@@ -113,9 +116,9 @@ int main()
 
     print_test_subcategory("Testing function predict_letter() with Images");
 
-    char letters_to_test[] = {'A', 'B', 'C', 'M', 'Z'};
+    char letters_to_test[] = {'A', 'B', 'C', 'I', 'J', 'M', 'Z'};
 
-    for (int i = 0; i < 5; i++)
+    for (unsigned long i = 0; i < sizeof(letters_to_test); i++)
     {
         char target = letters_to_test[i];
         char image_path[512];

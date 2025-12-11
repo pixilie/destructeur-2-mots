@@ -1,8 +1,8 @@
 #include "../../include/solver.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-// Draws a red pixel of size thickness * thickness
-void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness)
+// Draws a pixel of size thickness * thickness with custom GDB color
+void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness, int color[3])
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
@@ -22,9 +22,9 @@ void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness)
             }
 
             guchar *pixel = pixels + new_y * rowstride + new_x * n_channels;
-            pixel[0] = 255; // Red
-            pixel[1] = 0;
-            pixel[2] = 0;
+            pixel[0] = color[0];
+            pixel[1] = color[1];
+            pixel[2] = color[2];
         }
     }
 }
@@ -33,9 +33,24 @@ void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness)
 // Uses Bresenham's line algorithm to draw the ideal straight line
 void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
 {
+    // Draw color based on orintation of word
+    int color[3];
+    if (x1 == x2)
+    {
+        color[0] = 255; // Horizontal words : red rectangle
+    }
+    else if (y1 == y2)
+    {
+        color[1] = 255; // Vertical words : Green rectangle
+    }
+    else
+    {
+        color[2] = 255;
+    }
+    
     if (x1 == x2 && y1 == y2)
     {
-        draw_pixel(pixbuf, x1, y1, thickness);
+        draw_pixel(pixbuf, x1, y1, thickness, color);
         return;
     }
     
@@ -49,7 +64,7 @@ void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
 
     while (1)
     {
-        draw_pixel(pixbuf, x1, y1, thickness);
+        draw_pixel(pixbuf, x1, y1, thickness, color);
 
         if (x1 == x2 && y1 == y2)
         {
@@ -89,7 +104,7 @@ void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
 }
 
 // Return an array of the solved words' coordinates in the grid
-int **get_all_words_coordinates(int rows, int cols, char tab[rows][cols],
+int **get_all_words_coordinates(int rows, int cols, char** tab,
                                 int words_count, char **words)
 {
     int **result = malloc(words_count * sizeof(int *));
@@ -138,5 +153,3 @@ int *get_word_image_coordinates(int grid_coos[4], int rows, int cols, int x1,
 
     return result;
 }
-
-void solve_grid() {}
