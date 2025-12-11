@@ -1,10 +1,9 @@
-#include "../../include/solver.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 /*
  * draw_pixel:
- * Draw a red square of size thickness x thickness centered at (x, y) in the pixbuf.
- * Parameters:
+ * Draw a red square of size thickness x thickness centered at (x, y) in the
+ * pixbuf. Parameters:
  *  - pixbuf: target GdkPixbuf (modified in-place).
  *  - x, y: center coordinates of the pixel to draw.
  *  - thickness: size of the square in pixels (odd values center neatly).
@@ -38,8 +37,8 @@ void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness)
 
 /*
  * draw_line:
- * Draw a red line from (x1, y1) to (x2, y2) into the pixbuf using Bresenham's algorithm.
- * Parameters:
+ * Draw a red line from (x1, y1) to (x2, y2) into the pixbuf using Bresenham's
+ * algorithm. Parameters:
  *  - pixbuf: target GdkPixbuf (modified in-place).
  *  - x1,y1: start coordinates.
  *  - x2,y2: end coordinates.
@@ -88,8 +87,8 @@ void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
 
 /*
  * draw_rectangle:
- * Draw a red closed polygon connecting four points on the pixbuf. Used to mark a solved word.
- * Supports horizontal, vertical and diagonal orientations.
+ * Draw a red closed polygon connecting four points on the pixbuf. Used to mark
+ * a solved word. Supports horizontal, vertical and diagonal orientations.
  *
  * Parameters:
  *  - pixbuf: target GdkPixbuf (modified in-place).
