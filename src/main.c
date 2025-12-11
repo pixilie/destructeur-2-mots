@@ -37,6 +37,8 @@ struct AppData
 
 NeuralNetwork *neural;
 int treated = 0;
+
+
 /**
  * update_image:
  * Update the GTK image widget to display data->current and request redraw.
@@ -225,7 +227,8 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
 
         convert_to_grayscale(data->transformed);
         int treshold = convert_to_black_and_white(data->transformed);
-        median_filter_3x3(data->transformed);
+        printf("threshold = %i\n", treshold);
+	median_filter_3x3(data->transformed);
         data->transformed = rotate_image_automatic(data->transformed);
 
         apply_transformations(data);
@@ -260,7 +263,7 @@ void change_image(const char *filename, gpointer user_data)
 
     treated = 0;
 
-    // Vérifications de base
+    // Basics verification
     if (!data) {
         g_printerr("Erreur : AppData invalide\n");
         return;
@@ -277,7 +280,7 @@ void change_image(const char *filename, gpointer user_data)
     g_print("DEBUG: data=%p, data->image=%p, filename=%s\n",
             data, data->image, filename);
 
-    // Charger le pixbuf depuis le fichier
+    // load pixbuf from file
     GError *error = NULL;
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(filename, &error);
     if (!pixbuf) {
@@ -291,10 +294,10 @@ void change_image(const char *filename, gpointer user_data)
             gdk_pixbuf_get_width(pixbuf),
             gdk_pixbuf_get_height(pixbuf));
 
-    // Mettre à jour le GtkImage affiché
+    // Change to the new image 
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), pixbuf);
 
-    // Libérer les anciens pixbufs si nécessaires
+    // Free older pixbuf if needed
     if (data->original) {
         g_object_unref(data->original);
         data->original = NULL;
@@ -308,7 +311,6 @@ void change_image(const char *filename, gpointer user_data)
         data->transformed = NULL;
     }
 
-    // Copier le pixbuf pour AppData
     data->original = pixbuf;
 
     data->current = gdk_pixbuf_copy(pixbuf);
@@ -325,7 +327,7 @@ void change_image(const char *filename, gpointer user_data)
         g_print("DEBUG: transformed pixbuf=%p\n", data->transformed);
     }
 
-    // Réinitialiser autres champs
+    // Reset other parameters
     data->rotation_angle = 0.0;
     data->save_index = 1;
 
@@ -341,7 +343,7 @@ void get_path_image(GtkWidget *widget, gpointer user_data)
         return;
     }
 
-    // Création du dialogue pour choisir un fichierstruct AppData *data = (struct AppData *)user_data;
+    // Creation of dialog 
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
         "Choisir une image",
         GTK_WINDOW(gtk_widget_get_toplevel(widget)), // parent window
@@ -353,15 +355,17 @@ void get_path_image(GtkWidget *widget, gpointer user_data)
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-        if (filename) {
+        if (filename) 
+	{
             printf("Image choisie : %s\n", filename);
 
-            // Appel sécurisé pour mettre à jour l'image
+            // Call to the function to change the image
             change_image(filename, data);
 
-            // Libération de la mémoire allouée par GTK
             g_free(filename);
-        } else {
+        }
+       	else 
+	{
             g_printerr("Erreur : aucun fichier sélectionné\n");
         }
     }
@@ -418,6 +422,7 @@ void train_neural(const char *filename)
     Dataset data = load_dataset(filename);
     train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
 }
+
 
 void get_neural_train_path(GtkWidget *widget)
 {
@@ -507,6 +512,11 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *training_button;
     GtkWidget *load_button;
     GtkWidget *save_neural_button;
+    GtkWidget *file_button;
+    GtkWidget *center;
+    GtkWidget *right_button;
+    GtkWidget *description;
+    GtkWidget *title_neural;
 
     char **filename = (char**)user_data;
     printf("Fichier à charger : %s\n", *filename);
@@ -521,7 +531,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
 
     //button to choose file
-    GtkWidget *file_button = gtk_button_new_with_label("Charger l'image");
+    file_button = gtk_button_new_with_label("Charger l'image");
 
     GError *error = NULL;
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
@@ -565,7 +575,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     gtk_box_pack_start(GTK_BOX(top_bar), close_button, TRUE, TRUE, 15);
 
 
-
     GdkPixbuf *scaled =
         gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
 
@@ -583,13 +592,13 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
 
     //Create box for neural training
-    GtkWidget *center = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    center = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start(GTK_BOX(vertical_box), center, TRUE, TRUE, 0);
     
     gtk_box_pack_start(GTK_BOX(center), scrolled, TRUE, TRUE, 0);
     
     //right button for neural
-    GtkWidget *right_button = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    right_button = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_box_pack_start(GTK_BOX(center), right_button, FALSE, FALSE, 0);
 
 
@@ -602,7 +611,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
    save_button = gtk_button_new_with_label("Sauvegarder");
    solver_button = gtk_button_new_with_label("Resoudre");
 
-   GtkWidget *description = gtk_label_new("Image :");
+   description = gtk_label_new("Image :");
 
    gtk_box_pack_start(GTK_BOX(horizontal_box), treatement_button, TRUE, TRUE, 5);
    gtk_box_pack_start(GTK_BOX(horizontal_box), solver_button, TRUE, TRUE, 5);
@@ -621,7 +630,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
    
     
     //label
-   GtkWidget *title_neural = gtk_label_new("Réseau de neurone :");
+   title_neural = gtk_label_new("Réseau de neurone :");
    gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
    //Create new button for neural training
    training_button = gtk_button_new_with_label("Entraîner et créer un réseau");
