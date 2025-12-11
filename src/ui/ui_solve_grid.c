@@ -95,7 +95,7 @@ void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
     }
     else if (rectangle_width < min_width && rectangle_height > min_height)
     {
-        color[1] = 255; // Vertical words : Green rectangle
+        color[1] = 200; // Vertical words : Green rectangle
     }
     else
     {

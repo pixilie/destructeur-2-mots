@@ -648,6 +648,20 @@ int **get_solved_words_grid_coos(char **words, int words_count, char **grid,
 
         char *word = words[word_index];
         solve(rows, cols, grid, word, &x1, &y1, &x2, &y2);
+        
+        if (x1 > x2) // Swap if word is reversed horizontally
+        {
+            int tmp = x2;
+            x2 = x1;
+            x1 = tmp;
+        }
+        if (y1 > y2) // Swap if word is reversed vertically
+        {
+            int tmp = y2;
+            y2 = y1;
+            y1 = tmp;
+        }
+
         words_coos[word_index][0] = x1;
         words_coos[word_index][1] = y1;
         words_coos[word_index][2] = x2;
