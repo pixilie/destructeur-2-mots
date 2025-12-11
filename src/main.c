@@ -508,7 +508,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     horizontal_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
     gtk_box_pack_start(GTK_BOX(vertical_box), horizontal_box, FALSE, FALSE, 5);
 
-    treatement_button = gtk_button_new_with_label("Treat");
+    treatement_button = gtk_button_new_with_label("Process");
     reset_button = gtk_button_new_with_label("Reset");
     save_button = gtk_button_new_with_label("Save");
     solver_button = gtk_button_new_with_label("Solve");
