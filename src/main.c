@@ -1,3 +1,11 @@
+/*
+ * src/main.c
+ *
+ * Simple GTK application for loading, processing and saving images,
+ * and managing a small neural network. Comments are short and follow the
+ * project's style.
+ */
+
 #include "../include/dataset.h"
 #include "../include/image/image.h"
 #include "../include/neural_network.h"
@@ -11,39 +19,26 @@
 #include <string.h>
 #include <unistd.h>
 
-/**
+/*
  * AppData:
- * Small container for application state passed to callbacks.
- *
- * Fields:
- *  - image         : GTK image widget showing the current pixbuf.
- *  - original      : original loaded GdkPixbuf (keep to allow reset).
- *  - transformed   : working copy that receives in-place treatments.
- *  - current       : pixbuf currently shown (may be rotated view of
- * transformed).
- *  - rotation_angle: accumulated rotation angle in degrees.
- *  - save_index    : counter used to generate unique filenames when saving.
+ * Simple container for widgets and pixbufs used by callbacks.
  */
 struct AppData
 {
-    GtkWidget *image;
-    GdkPixbuf *original;
-    GdkPixbuf *transformed;
-    GdkPixbuf *current;
+    GtkWidget *image;       /* image widget */
+    GdkPixbuf *original;    /* original loaded pixbuf (owned) */
+    GdkPixbuf *transformed; /* working copy (owned) */
+    GdkPixbuf *current;     /* displayed pixbuf (owned) */
     double rotation_angle;
     int save_index;
 };
 
-NeuralNetwork *neural;
-int treated = 0;
+NeuralNetwork *neural = NULL;
+int treated = 0; /* 0 = not treated, 1 = treated */
 
-/**
+/*
  * update_image:
- * Update the GTK image widget to display data->current and request redraw.
- *
- * Parameters:
-   - data: pointer to application state (must have data->image and
- * data->current).
+ * Update the GtkImage widget with data->current and queue a redraw.
  */
 void update_image(struct AppData *data)
 {
@@ -51,37 +46,26 @@ void update_image(struct AppData *data)
     gtk_widget_queue_draw(data->image);
 }
 
-/**
+/*
  * apply_transformations:
- * Recompute data->current from data->transformed applying the current rotation.
- *
- * Parameters:
- *  - data: pointer to application state.
+ * Recompute data->current from data->transformed applying rotation.
  */
 void apply_transformations(struct AppData *data)
 {
     if (data->current)
-    {
         g_object_unref(data->current);
-    }
+
     if (data->rotation_angle != 0.0)
-    {
         data->current = rotate_image(data->transformed, data->rotation_angle);
-    }
     else
-    {
         data->current = gdk_pixbuf_copy(data->transformed);
-    }
+
     update_image(data);
 }
 
-/**
+/*
  * on_reset_clicked:
- * GTK callback for the "Reset" button.
- *
- * Parameters:
- *  - button   : the clicked GtkButton (unused).
- *  - user_data: pointer to struct AppData.
+ * Restore the original image and reset transform state.
  */
 void on_reset_clicked(GtkButton *button, gpointer user_data)
 {
@@ -90,161 +74,136 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
 
     treated = 0;
 
-    if (!data->original)
-    {
+    if (!data || !data->original)
         return;
-    }
 
     if (data->current)
-    {
         g_object_unref(data->current);
-    }
     if (data->transformed)
-    {
         g_object_unref(data->transformed);
-    }
 
     data->rotation_angle = 0.0;
-
     data->transformed = gdk_pixbuf_copy(data->original);
     data->current = gdk_pixbuf_copy(data->original);
     update_image(data);
-    printf("Image reset to original\n");
 }
 
-/**
+/*
  * on_save_clicked:
- * GTK callback for the "Save" button.
- *
- * Parameters:
- *  - button   : the clicked GtkButton (unused).
- *  - user_data: pointer to struct AppData.
+ * Show save dialog and write data->current as PNG.
  */
-void on_save_clicked(GtkButton *button, gpointer user_data, GtkWidget *widget)
+void on_save_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
     struct AppData *data = user_data;
-
-    if (!data->current)
-    {
+    if (!data || !data->current)
         return;
-    }
 
+    GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(data->image));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir où sauvegarder", GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-        GTK_FILE_CHOOSER_ACTION_SAVE, "_Annuler", GTK_RESPONSE_CANCEL,
-        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+        "Choose where to save", parent, GTK_FILE_CHOOSER_ACTION_SAVE,
+        "_Cancel", GTK_RESPONSE_CANCEL, "_Save", GTK_RESPONSE_ACCEPT, NULL);
+
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename =
-            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
             data->save_index++;
             GError *error = NULL;
             if (!gdk_pixbuf_save(data->current, filename, "png", &error, NULL))
             {
-                g_printerr("Failed to save image: %s\n", error->message);
-                g_error_free(error);
-                return;
+                g_printerr("Failed to save image: %s\n", error ? error->message : "unknown");
+                if (error)
+                    g_error_free(error);
             }
-
-            printf("Image saved as %s\n", filename);
+            else
+            {
+                g_print("Image saved as: %s\n", filename);
+            }
+            g_free(filename);
         }
     }
 
     gtk_widget_destroy(dialog);
 }
 
-/**
+/*
  * free_app_data:
- * Cleanup handler called when the main window is destroyed.
- *
- * Parameters:
- *  - widget   : the widget that emitted the destroy signal (unused).
- *  - user_data: pointer to struct AppData to free.
+ * Free GdkPixbufs and the AppData struct.
  */
-void free_app_data(GtkWidget *widget __attribute__((unused)),
-                   gpointer user_data)
+void free_app_data(GtkWidget *widget __attribute__((unused)), gpointer user_data)
 {
     struct AppData *data = user_data;
-    if (data)
-    {
-        if (data->current)
-        {
-            g_object_unref(data->current);
-        }
-        if (data->original)
-        {
-            g_object_unref(data->original);
-        }
-        if (data->transformed)
-        {
-            g_object_unref(data->transformed);
-        }
-        g_free(data);
-    }
+    if (!data)
+        return;
+
+    if (data->current)
+        g_object_unref(data->current);
+    if (data->original)
+        g_object_unref(data->original);
+    if (data->transformed)
+        g_object_unref(data->transformed);
+
+    g_free(data);
 }
 
+/*
+ * pop_up_treated:
+ * Show a small popup indicating the image was already treated.
+ */
 void pop_up_treated()
 {
     GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
-
-    GtkWidget *text = gtk_label_new("Image already treated");
-
+    GtkWidget *label = gtk_label_new("Image already treated");
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), box);
-    gtk_box_pack_start(GTK_BOX(box), text, FALSE, FALSE, 0);
-
+    gtk_box_pack_start(GTK_BOX(box), label, FALSE, FALSE, 0);
     gtk_widget_show_all(window);
 }
 
 /*
- * Automatic treatment:
- * Applie the automatic treatement with these step :
- *  - Greyscale
- *  - Binarize
- *  - Median filter
- *  - Automatic rotation
+ * automatic_treatement:
+ * Apply grayscale, binarize, median filter and automatic rotation.
  */
 void automatic_treatement(GtkButton *button, gpointer user_data)
 {
     (void)button;
     struct AppData *data = user_data;
+    if (!data || !data->transformed)
+        return;
 
     if (treated == 0)
     {
-        if (!data->transformed)
-            return;
-
         convert_to_grayscale(data->transformed);
-        int treshold = convert_to_black_and_white(data->transformed);
-        printf("threshold = %i\n", treshold);
+        (void)convert_to_black_and_white(data->transformed); /* threshold not needed here */
         median_filter_3x3(data->transformed);
         data->transformed = rotate_image_automatic(data->transformed);
 
         apply_transformations(data);
-
         treated = 1;
     }
     else
     {
-        printf("Image already treated\n");
         pop_up_treated();
     }
 }
 
 /*
- * Solver:
- * Call the solver function when button clicked and then display
- * the solution
- *
- * Parameters :
- * - button    : the clicked button (unused)
- * - user_data : pointer to struct AppData
+ * solver:
+ * Placeholder for future solve action.
  */
-void solver(GtkButton *button, gpointer user_data) { (void)button; }
+void solver(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    (void)user_data;
+    /* Implement solution extraction and display here. */
+}
 
+/*
+ * change_image:
+ * Load image from filename and update AppData buffers.
+ */
 void change_image(const char *filename, gpointer user_data)
 {
     struct AppData *data = (struct AppData *)user_data;
@@ -252,36 +211,29 @@ void change_image(const char *filename, gpointer user_data)
 
     if (!data)
     {
-        g_printerr("Erreur : AppData invalide\n");
+        g_printerr("Error: invalid AppData\n");
         return;
     }
     if (!data->image)
     {
-        g_printerr("Erreur : data->image n'est pas initialisé\n");
+        g_printerr("Error: image widget not initialized\n");
         return;
     }
     if (!filename || filename[0] == '\0')
     {
-        g_printerr("Erreur : chemin d'image invalide\n");
+        g_printerr("Error: invalid image path\n");
         return;
     }
-
-    g_print("DEBUG: data=%p, data->image=%p, filename=%s\n", data, data->image,
-            filename);
 
     GError *error = NULL;
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(filename, &error);
     if (!pixbuf)
     {
-        g_printerr("Erreur chargement image '%s': %s\n", filename,
-                   error ? error->message : "unknown");
+        g_printerr("Failed to load image '%s': %s\n", filename, error ? error->message : "unknown");
         if (error)
             g_error_free(error);
         return;
     }
-
-    g_print("DEBUG: pixbuf=%p, width=%d, height=%d\n", pixbuf,
-            gdk_pixbuf_get_width(pixbuf), gdk_pixbuf_get_height(pixbuf));
 
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), pixbuf);
 
@@ -302,178 +254,173 @@ void change_image(const char *filename, gpointer user_data)
     }
 
     data->original = pixbuf;
-
     data->current = gdk_pixbuf_copy(pixbuf);
     if (!data->current)
-    {
-        g_printerr("DEBUG: impossible de copier pixbuf pour current\n");
-    }
-    else
-    {
-        g_print("DEBUG: current pixbuf=%p\n", data->current);
-    }
+        g_printerr("Warning: failed to copy pixbuf for current\n");
 
     data->transformed = gdk_pixbuf_copy(pixbuf);
     if (!data->transformed)
-    {
-        g_printerr("DEBUG: impossible de copier pixbuf pour transformed\n");
-    }
-    else
-    {
-        g_print("DEBUG: transformed pixbuf=%p\n", data->transformed);
-    }
+        g_printerr("Warning: failed to copy pixbuf for transformed\n");
 
     data->rotation_angle = 0.0;
     data->save_index = 1;
-
-    g_print("DEBUG: change_image terminé\n");
 }
 
+/*
+ * get_path_image:
+ * Show file chooser and call change_image() on selection.
+ */
 void get_path_image(GtkWidget *widget, gpointer user_data)
 {
     struct AppData *data = (struct AppData *)user_data;
     if (!data)
     {
-        g_printerr("Erreur : AppData invalide dans get_path_image\n");
+        g_printerr("Error: invalid AppData in get_path_image\n");
         return;
     }
 
+    GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir une image",
-        GTK_WINDOW(gtk_widget_get_toplevel(widget)), // parent window
-        GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler", GTK_RESPONSE_CANCEL,
-        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+        "Choose an image", parent, GTK_FILE_CHOOSER_ACTION_OPEN,
+        "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename =
-            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
-            printf("Image choisie : %s\n", filename);
             change_image(filename, data);
             g_free(filename);
         }
         else
         {
-            g_printerr("Erreur : aucun fichier sélectionné\n");
+            g_printerr("Error: no file selected\n");
         }
     }
 
     gtk_widget_destroy(dialog);
 }
 
+/*
+ * load_neural:
+ * Load neural network from file into global `neural`.
+ */
 void load_neural(const char *filename)
 {
-    printf("neural to load is here : %s\n", filename);
+    if (!filename)
+        return;
+
+    g_print("Loading neural network from: %s\n", filename);
     neural = load_network(filename);
 }
 
+/*
+ * get_neural_load_path:
+ * Show a file chooser to select a neural network file and load it.
+ */
 void get_neural_load_path(GtkWidget *widget)
 {
+    GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir le fichier :", GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-        GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler", GTK_RESPONSE_CANCEL,
-        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+        "Choose model file", parent, GTK_FILE_CHOOSER_ACTION_OPEN,
+        "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename =
-            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
-            printf("Neural choisi : %s\n", filename);
-
             load_neural(filename);
             g_free(filename);
         }
         else
         {
-            g_printerr("Erreur : aucun fichier selectionné\n");
+            g_printerr("Error: no file selected\n");
         }
     }
     gtk_widget_destroy(dialog);
 }
 
+/*
+ * train_neural:
+ * Create (if needed) and train a neural network using dataset.
+ */
 void train_neural(const char *filename)
 {
-    char *path = malloc(256);
-    if (path == NULL)
+    if (!filename)
         return;
-    path = filename;
 
     if (neural == NULL)
         neural = create_network(784, 128, 26);
 
     Dataset data = load_dataset(filename);
     train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
+    g_print("Training started for dataset: %s\n", filename);
 }
 
+/*
+ * get_neural_train_path:
+ * Show folder chooser and start training on selected dataset.
+ */
 void get_neural_train_path(GtkWidget *widget)
 {
+    GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir le Dataset", GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-        GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, "_Annuler", GTK_RESPONSE_CANCEL,
-        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+        "Choose dataset folder", parent, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+        "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename =
-            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
-            printf("Neural choisi : %s\n", filename);
-
             train_neural(filename);
             g_free(filename);
         }
         else
         {
-            g_printerr("Erreur : aucun fichier selectionné\n");
+            g_printerr("Error: no folder selected\n");
         }
     }
 
     gtk_widget_destroy(dialog);
 }
 
+/*
+ * save_neural:
+ * Show save dialog and serialize the current neural network.
+ */
 void save_neural(GtkWidget *widget)
 {
+    GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir où sauvegarder", GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-        GTK_FILE_CHOOSER_ACTION_SAVE, "_Annuler", GTK_RESPONSE_CANCEL,
-        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+        "Choose where to save model", parent, GTK_FILE_CHOOSER_ACTION_SAVE,
+        "_Cancel", GTK_RESPONSE_CANCEL, "_Save", GTK_RESPONSE_ACCEPT, NULL);
 
     if (neural == NULL)
     {
-        printf("Error : cannot save empty NeuralNetwork\n");
+        g_printerr("Error: cannot save, no neural network loaded\n");
         return;
     }
-    else
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        if (filename)
         {
-            char *filename =
-                gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-            if (filename)
-            {
-                save_network(neural, filename);
-                printf("Save neural at : %s\n", filename);
-            }
+            save_network(neural, filename);
+            g_print("Neural network saved to: %s\n", filename);
+            g_free(filename);
         }
-        gtk_widget_destroy(dialog);
     }
+
+    gtk_widget_destroy(dialog);
 }
 
 /*
  * on_activate:
- * Gtk "activate" signal handler that builds the app UI and loads
- * the image.
- *
- * Parameters :
- *  - app       : the GtkApplication instance
- *  - user_data : optional filename string (const char*) or NULL to use default
+ * Build UI, load initial image and connect callbacks.
  */
-
 static void on_activate(GtkApplication *app, gpointer user_data)
 {
     GtkWidget *window;
@@ -496,7 +443,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *title_neural;
 
     char **filename = (char **)user_data;
-    printf("Fichier à charger : %s\n", *filename);
 
     const char *image_path = get_image_path(*filename);
     if (!image_path)
@@ -504,23 +450,22 @@ static void on_activate(GtkApplication *app, gpointer user_data)
         g_printerr("Could not resolve image path for '%s'\n", *filename);
         return;
     }
-    printf("Loading image at: %s\n", image_path);
 
-    file_button = gtk_button_new_with_label("Charger l'image");
+    file_button = gtk_button_new_with_label("Load image");
 
     GError *error = NULL;
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
     if (!pixbuf)
     {
-        g_printerr("Failed to load image '%s': %s\n", image_path,
-                   error->message);
-        g_error_free(error);
+        g_printerr("Failed to load image '%s': %s\n", image_path, error ? error->message : "unknown");
+        if (error)
+            g_error_free(error);
         return;
     }
 
     window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(window), "Image");
-    gtk_window_set_default_size(GTK_WINDOW(window), 1920, 1000);
+    gtk_window_set_title(GTK_WINDOW(window), "Destructeur 2 mots");
+    gtk_window_set_default_size(GTK_WINDOW(window), 1200, 800);
 
     vertical_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), vertical_box);
@@ -534,25 +479,21 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     gtk_box_pack_start(GTK_BOX(top_bar), space, TRUE, TRUE, 0);
     GtkWidget *space2 = gtk_label_new(NULL);
     gtk_box_pack_start(GTK_BOX(top_bar), space2, TRUE, TRUE, 0);
-    GtkWidget *space3 = gtk_label_new(NULL);
-    gtk_box_pack_start(GTK_BOX(top_bar), space3, TRUE, TRUE, 0);
 
-    close_button = gtk_button_new_with_label("Quitter");
-    g_signal_connect_swapped(close_button, "clicked",
-                             G_CALLBACK(gtk_window_close), window);
+    close_button = gtk_button_new_with_label("Quit");
+    g_signal_connect_swapped(close_button, "clicked", G_CALLBACK(gtk_window_close), window);
     gtk_box_pack_start(GTK_BOX(top_bar), close_button, TRUE, TRUE, 15);
 
-    GdkPixbuf *scaled =
-        gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
+    GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 900, 600, GDK_INTERP_BILINEAR);
 
     scrolled = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
-                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
     image = gtk_image_new_from_pixbuf(scaled);
     if (!gtk_image_get_pixbuf(GTK_IMAGE(image)))
     {
-        g_print("ERROR: Image not loaded. Check image path\n");
+        g_printerr("ERROR: Image not loaded. Check image path\n");
+        g_object_unref(scaled);
         return;
     }
     gtk_container_add(GTK_CONTAINER(scrolled), image);
@@ -567,15 +508,14 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     horizontal_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
     gtk_box_pack_start(GTK_BOX(vertical_box), horizontal_box, FALSE, FALSE, 5);
 
-    treatement_button = gtk_button_new_with_label("Traiter");
-    reset_button = gtk_button_new_with_label("Réinitialiser");
-    save_button = gtk_button_new_with_label("Sauvegarder");
-    solver_button = gtk_button_new_with_label("Resoudre");
+    treatement_button = gtk_button_new_with_label("Treat");
+    reset_button = gtk_button_new_with_label("Reset");
+    save_button = gtk_button_new_with_label("Save");
+    solver_button = gtk_button_new_with_label("Solve");
 
-    description = gtk_label_new("Image :");
+    description = gtk_label_new("Image:");
 
-    gtk_box_pack_start(GTK_BOX(horizontal_box), treatement_button, TRUE, TRUE,
-                       5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), treatement_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), solver_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
@@ -588,70 +528,47 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->rotation_angle = 0.0;
     data->save_index = 1;
 
-    title_neural = gtk_label_new("Réseau de neurone :");
+    title_neural = gtk_label_new("Neural network:");
     gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
 
-    training_button = gtk_button_new_with_label("Entraîner et créer un réseau");
-    g_signal_connect(training_button, "clicked",
-                     G_CALLBACK(get_neural_train_path), NULL); // check NULL
+    training_button = gtk_button_new_with_label("Train and create network");
+    g_signal_connect(training_button, "clicked", G_CALLBACK(get_neural_train_path), NULL);
 
-    load_button = gtk_button_new_with_label("Charger un modèle déjà existant");
-    g_signal_connect(load_button, "clicked", G_CALLBACK(get_neural_load_path),
-                     NULL);
+    load_button = gtk_button_new_with_label("Load existing model");
+    g_signal_connect(load_button, "clicked", G_CALLBACK(get_neural_load_path), NULL);
 
-    save_neural_button =
-        gtk_button_new_with_label("Sauvegarder l'entraînement");
-    g_signal_connect(save_neural_button, "clicked", G_CALLBACK(save_neural),
-                     NULL);
+    save_neural_button = gtk_button_new_with_label("Save network");
+    g_signal_connect(save_neural_button, "clicked", G_CALLBACK(save_neural), NULL);
 
     gtk_box_pack_start(GTK_BOX(right_button), file_button, FALSE, TRUE, 5);
-    g_signal_connect(file_button, "clicked", G_CALLBACK(get_path_image),
-                     data); // here
+    g_signal_connect(file_button, "clicked", G_CALLBACK(get_path_image), data);
 
     gtk_box_pack_start(GTK_BOX(right_button), training_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(right_button), load_button, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(right_button), save_neural_button, TRUE, TRUE,
-                       5);
+    gtk_box_pack_start(GTK_BOX(right_button), save_neural_button, TRUE, TRUE, 5);
 
-    g_signal_connect(treatement_button, "clicked",
-                     G_CALLBACK(automatic_treatement), data);
-    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked),
-                     data);
+    g_signal_connect(treatement_button, "clicked", G_CALLBACK(automatic_treatement), data);
+    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked), data);
     g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
     g_signal_connect(solver_button, "clicked", G_CALLBACK(solver), data);
 
     gtk_widget_show_all(window);
 
     g_object_unref(scaled);
+
+    /* free AppData when window is destroyed */
+    g_signal_connect_swapped(window, "destroy", G_CALLBACK(free_app_data), data);
 }
 
-/**
+/*
  * on_command_line:
- * GApplication "command-line" handler that extracts the filename argument and
- * forwards it to the activate handler.
- *
- * Parameters:
- *  - app      : GApplication instance.
- *  - cmdline  : GApplicationCommandLine containing argc/argv.
- *  - user_data: unused.
- *
- * Returns:
- *  - int: status code (0).
+ * Extract filename from command line and emit activate signal.
  */
-int on_command_line(GApplication *app, GApplicationCommandLine *cmdline,
-                    gpointer user_data __attribute__((unused)))
+int on_command_line(GApplication *app, GApplicationCommandLine *cmdline, gpointer user_data __attribute__((unused)))
 {
     int argc;
     char **argv = g_application_command_line_get_arguments(cmdline, &argc);
-    const char *filename;
-    if (argc > 1)
-    {
-        filename = argv[1];
-    }
-    else
-    {
-        filename = "level_1_image_1.png";
-    }
+    const char *filename = (argc > 1) ? argv[1] : "level_1_image_1.png";
 
     g_signal_emit_by_name(app, "activate", (gpointer)filename);
 
@@ -659,17 +576,9 @@ int on_command_line(GApplication *app, GApplicationCommandLine *cmdline,
     return 0;
 }
 
-/**
+/*
  * main:
- * Program entry point. Creates a GtkApplication that handles command-line
- * arguments and runs the main loop.
- *
- * Parameters:
- *  - argc, argv: standard program arguments. Optional first argument is the
- *                image filename to load at startup.
- *
- * Returns:
- *  - int: application exit status.
+ * Program entry point.
  */
 int main(int argc, char *argv[])
 {
@@ -678,20 +587,16 @@ int main(int argc, char *argv[])
     char *filename;
 
     if (argc > 1)
-    {
         filename = g_strdup(argv[1]);
-    }
     else
-    {
         filename = g_strdup("level_1_image_1.png");
-    }
 
-    app = gtk_application_new("com.example.GtkApplication",
-                              G_APPLICATION_HANDLES_COMMAND_LINE);
+    app = gtk_application_new("com.example.GtkApplication", G_APPLICATION_HANDLES_COMMAND_LINE);
     g_signal_connect(app, "command-line", G_CALLBACK(on_command_line), NULL);
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), &filename);
     status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
+    g_free(filename);
 
     return status;
 }
