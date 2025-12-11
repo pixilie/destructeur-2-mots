@@ -60,7 +60,7 @@ int test_pipeline(char *test_name, char *filename, char *output_gw_file,
 
     int result = 1;
 
-    pipelineResult pipelineResult =
+    PipelineResult pipelineResult =
         pipeline(filename, output_gw_file, output_letter_file);
 
     result &=
@@ -74,6 +74,27 @@ int test_pipeline(char *test_name, char *filename, char *output_gw_file,
     result &= is_count_correct("Words letters", nb_letters_words,
                                pipelineResult.nb_letters_words);
     result &= is_count_correct("Words", nb_words, pipelineResult.nb_words);
+
+    Grid grid = pipelineResult.grid;
+    int nb_rows = grid.nb_rows;
+    for (int i = 0; i < nb_rows; i++)
+    {
+        free(grid.grid[i]);
+    }
+    free(grid.grid);
+
+    Words words = pipelineResult.words;
+    int words_count = words.detected_words_count;
+    for (int i = 0; i < words_count; i++)
+    {
+        free(words.words[i]);
+        free(words.solved_words_grid_coos[i]);
+        free(words.solved_words_image_coos[i]);
+    }
+
+    free(words.words);
+    free(words.solved_words_grid_coos);
+    free(words.solved_words_image_coos);
 
     return result;
 }
@@ -142,6 +163,7 @@ int main()
     {
         result = 0;
     }
+    
 
     if (result == 1)
     {

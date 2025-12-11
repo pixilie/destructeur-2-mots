@@ -130,18 +130,67 @@ int save_pixbuf_as_png(GdkPixbuf *pixbuf, const char *filename)
     return 1;
 }
 
-/**
- * Resize the input pixbuf to 28x28 using bilinear interpolation.
- *
- * Parameters:
- *  - src : original GdkPixbuf
- *
- * Returns:
- *  - new 28x28 GdkPixbuf
- */
 GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
 {
-    return gdk_pixbuf_scale_simple(src, 28, 28, GDK_INTERP_BILINEAR);
+    if (!src)
+    {
+        fprintf(stderr, "scale_pixbuf_to_28x28: src == NULL\n");
+        return NULL;
+    }
+
+    int src_w = gdk_pixbuf_get_width(src);
+    int src_h = gdk_pixbuf_get_height(src);
+
+    if (src_w <= 0 || src_h <= 0)
+    {
+        fprintf(stderr, "scale_pixbuf_to_28x28: invalid size %dx%d\n", src_w,
+                src_h);
+        return NULL;
+    }
+
+    int has_alpha = gdk_pixbuf_get_has_alpha(src);
+    int max_side = src_w > src_h ? src_w : src_h;
+
+    if (max_side < 1)
+        max_side = 1;
+
+    GdkPixbuf *square =
+        gdk_pixbuf_new(GDK_COLORSPACE_RGB, has_alpha, 8, max_side, max_side);
+    gdk_pixbuf_fill(square, 0xFFFFFFFF);
+
+    double padding_ratio = 0.90;
+    int new_w = (int)(src_w * padding_ratio);
+    int new_h = (int)(src_h * padding_ratio);
+
+    if (new_w < 1)
+        new_w = 1;
+    if (new_h < 1)
+        new_h = 1;
+
+    GdkPixbuf *scaled_src =
+        gdk_pixbuf_scale_simple(src, new_w, new_h, GDK_INTERP_BILINEAR);
+
+    if (!scaled_src)
+    {
+        fprintf(stderr, "scaled_src creation failed\n");
+        g_object_unref(square);
+        return NULL;
+    }
+
+    int offset_x = (max_side - new_w) / 2;
+    int offset_y = (max_side - new_h) / 2;
+
+    gdk_pixbuf_copy_area(scaled_src, 0, 0, new_w, new_h, square, offset_x,
+                         offset_y);
+
+    g_object_unref(scaled_src);
+
+    GdkPixbuf *final_28 =
+        gdk_pixbuf_scale_simple(square, 28, 28, GDK_INTERP_BILINEAR);
+
+    g_object_unref(square);
+
+    return final_28;
 }
 
 /**
@@ -170,4 +219,17 @@ void pixbuf_to_input_vector(GdkPixbuf *pixbuf, double *out)
             out[y * width + x] = (255.0 - (double)pixel) / 255.0;
         }
     }
+}
+
+char *get_executable_dir()
+{
+    static char buffer[4096];
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+    if (len == -1)
+    {
+        return NULL;
+    }
+
+    buffer[len] = '\0';
+    return dirname(buffer);
 }

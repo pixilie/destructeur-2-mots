@@ -68,3 +68,7 @@ tests/results/*
 compile_commands.json
 .cache
 .direnv
+helpers/dataset/
+helpers/fonts/
+__pycache__/
+*.pyc
