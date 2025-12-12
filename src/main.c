@@ -11,6 +11,7 @@
 #include "../include/dataset.h"
 #include "../include/neural_network.h"
 #include "../include/ui.h"
+#include "image/image_helpers.h"
 
 NeuralNetwork *neural;
 int treated = 0;
@@ -562,6 +563,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *description;
     GtkWidget *title_neural;
 
+    char *exe_dir = get_executable_dir();
+    
     char *filename = (char *)user_data;
     printf("Fichier à charger : %s\n", filename);
 
@@ -666,7 +669,15 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
-    data->pipelineResult = pipeline(filename, "ui_output/grid", "ui_output/letters");
+
+    char grid_path[512];
+    char letters_path[512];
+    snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
+             exe_dir);
+    snprintf(letters_path, sizeof(letters_path),
+             "%s/tests/results/ui_output/letters", exe_dir);
+
+    data->pipelineResult = pipeline(filename, grid_path, letters_path);
 
     // label
     title_neural = gtk_label_new("Réseau de neurone :");
