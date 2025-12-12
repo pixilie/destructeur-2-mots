@@ -225,6 +225,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
  */
 void solver(GtkButton *button, gpointer user_data)
 {
+
     (void)button;
     AppData *data = user_data;
 
@@ -233,6 +234,44 @@ void solver(GtkButton *button, gpointer user_data)
         return;
     }
 
+    double best_angle = detect_best_angle(data->transformed);
+    data->rotation_angle = best_angle;
+
+    apply_transformations(data);
+    if (best_angle == 0)
+    {
+        printf("Image is already upright, no rotation applied !\n");
+    }
+    else
+    {
+        printf("Image automatically rotated by best rotation angle : %.2f "
+               "degrees\n",
+               best_angle);
+    }
+}
+
+/**
+ * on_draw_rectangle_clicked_clicked:
+ * GTK callback for the "Draw Rectangle" button.
+ *
+ * Parameters:
+ *  - button   : the clicked GtkButton (unused).
+ *  - user_data: pointer to struct AppData.
+ */
+void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    AppData *data = user_data;
+
+    if (!data->transformed)
+    {
+        return;
+    }
+
+    //data->rotation_angle = data->pipelineResult.rotation_angle;
+    data->transformed = rotate_image(data->transformed, data->rotation_angle);
+    apply_transformations(data);
+    
     Words words = data->pipelineResult.words;
     if (!words.solved_words_image_coos)
     {
@@ -240,6 +279,8 @@ void solver(GtkButton *button, gpointer user_data)
                "words !\n");
         return;
     }
+
+    //int rectangle_ui_offset = 3; // Shrink the rectangle to make it appear slightly smaller in the ui
 
     for (int i = 0; i < words.detected_words_count; i++)
     {
@@ -257,49 +298,14 @@ void solver(GtkButton *button, gpointer user_data)
         {
             draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
                            5);
-            printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
+            printf("Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
                    "with thickness %i\n",
                    x1, y1, x2, y2, x3, y3, x4, y4, 5);
         }
     }
 
-    /*
-
-    // Straight rectangle
-    int x1 = 200, y1 = 100;
-    int x2 = 300, y2 = 100;
-    int x3 = 300, y3 = 300;
-    int x4 = 200, y4 = 300;
-
-    int thickness = 5;
-
-    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
-                   thickness);
-    printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) with "
-           "thickness %i\n",
-           x1, y1, x2, y2, x3, y3, x4, y4, thickness);
-
-    // Diagonal rectangle
-    x1 = 500, y1 = 300;
-    x2 = 600, y2 = 300;
-    x3 = 700, y3 = 400;
-    x4 = 600, y4 = 400;
-
-    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
-                   thickness);
-
-    */
-
-    apply_transformations(data);
-
-    /*
-
-    printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) with "
-           "thickness %i\n",
-           x1, y1, x2, y2, x3, y3, x4, y4, thickness);
-
-    */
-
+  
+    apply_transformations(data);  
 }
 
 void change_image(const char *filename, gpointer user_data)
@@ -670,6 +676,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->rotation_angle = 0.0;
     data->save_index = 1;
 
+    /*
     char grid_path[512];
     char letters_path[512];
     snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
@@ -678,7 +685,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
              "%s/tests/results/ui_output/letters", exe_dir);
 
     data->pipelineResult = pipeline(filename, grid_path, letters_path);
-
+    */
+    
     // label
     title_neural = gtk_label_new("Réseau de neurone :");
     gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
