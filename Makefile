@@ -24,24 +24,29 @@ IMG_FILES    = $(wildcard $(IMG_DIR)/*.c)
 UI_FILES     = $(wildcard $(UI_SRC_DIR)/*.c)
 TEST_FILES   = $(filter-out $(TEST_DIR)/test_helpers.c, $(wildcard $(TEST_DIR)/*.c))
 
-MAIN_SRC = $(filter-out \
-    $(SRC_DIR)/solver.c \
-    $(SRC_DIR)/neural_network.c \
-    $(SRC_DIR)/ui.c \
-    $(SRC_DIR)/line_detection.c, \
-    $(SRC_FILES))
+MAIN_SRC     = $(filter-out \
+    		   $(SRC_DIR)/ui/ui.c, \
+    		   $(SRC_FILES))
+
+MAIN_SRC    += $(SRC_DIR)/solver.c \
+               $(SRC_DIR)/neural_network.c \
+               $(SRC_DIR)/ui/ui_solve_grid.c
 
 IMG_UI_SRC   = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
 IMG_PIPE_SRC = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
 
 # ===================== Object Files =====================
-MAIN_OBJ          = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+MAIN_OBJ          = $(filter-out $(BUILD_DIR)/line_detection.o, \
+					$(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)) \
+					$(BUILD_DIR)/line_detection_testing.o \
+					$(BUILD_DIR)/ui/ui_solve_grid.o
+	
 CORE_OBJ          = $(filter-out $(BUILD_DIR)/image_main.o, \
                     $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)) \
                     $(BUILD_DIR)/dataset.o \
                     $(BUILD_DIR)/solver.o \
                     $(BUILD_DIR)/neural_network.o
-UI_OBJ            = $(CORE_OBJ) build/ui.o build/ui_solve_grid.o build/line_detection_testing.o
+UI_OBJ            = $(CORE_OBJ) build/ui.o build/ui/ui_solve_grid.o build/line_detection_testing.o
 IMG_OBJ           = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 PIPELINE_OBJ      = $(BUILD_DIR)/line_detection.o
 PIPELINE_IMG_OBJ  = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
@@ -55,17 +60,12 @@ all: $(TARGET) $(UI_BIN) $(IMAGE_BIN) $(PIPELINE_BIN)
 # ---------- Main Program ----------
 $(TARGET): $(MAIN_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(filter-out $(BUILD_DIR)/image_main.o, $(IMG_OBJ))
 	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)/ui
 	@echo "Linking Main..."
-	@$(CC) -o $@ $^ $(LDFLAGS)
-
-# ---------- UI ----------
-$(UI_BIN): $(UI_OBJ) $(NEURAL_NET_OBJ) $(DATASET_OBJ) 
-	@mkdir -p $(BUILD_DIR)
-	@echo "Linking UI..."
 	@$(CC) -DTESTING -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/ui.o: $(SRC_DIR)/main.c
-	@mkdir -p $(BUILD_DIR)
+$(BUILD_DIR)/ui/ui_solve_grid.o: $(SRC_DIR)/ui/ui_solve_grid.c
+	@mkdir -p $(BUILD_DIR)/ui
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
 

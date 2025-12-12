@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 
 #define PIPELINE_OUTPUT "tests/results/pipeline_output"
 
@@ -438,6 +439,10 @@ void sort_letter(int **coo, int nb_letter)
  */
 void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
 {
+    if (nb_letter == 0)
+    {
+        errx(EXIT_FAILURE, "No letters found for find_grid_and_words");
+    }
     sort_letter(coo, nb_letter);
     int *box1_coo = malloc(4 * sizeof(int));
     int *box2_coo = malloc(4 * sizeof(int));
@@ -451,7 +456,7 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
     {
         thresh += (coo[i][3] - coo[i][1]);
     }
-
+    
     thresh /= nb_letter;
     thresh *= 2;
     
