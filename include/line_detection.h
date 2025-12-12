@@ -20,6 +20,7 @@ typedef struct
 
 typedef struct
 {
+    double rotation_angle;
     int grid_coo[4];
     int words_coo[4];
     int nb_letters;
