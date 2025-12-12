@@ -544,6 +544,11 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
  */
 PipelineResult pipeline(char *filename, NeuralNetwork *nn)
 {
+    if (!nn)
+    {
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET "Le réseau de neurones n'a pas pu être chargé\n");
+    }
+    
     int nb_words = 50; // Max number of words in the words list
 
     PipelineResult pipelineResult;
@@ -607,15 +612,15 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
     Letter **words_letters_final = build_words_list_from_image(
         words_letters, nb_letters_words, &words_size, &detected_words_count);
     char **words_letters_list = build_words_list(
-        pixbuf, words_letters_final, detected_words_count, words_size, nn);
+        nn, pixbuf, words_letters_final, detected_words_count, words_size);
 
     pipelineResult.words.detected_words_count = detected_words_count;
     pipelineResult.words.words = words_letters_list;
 
     int rows;
     int cols;
-    char **grid_array = build_grid_array(pixbuf, grid_letters_array, nb_rows,
-                                         nb_cols, &rows, &cols, nn);
+    char **grid_array = build_grid_array(nn, pixbuf, grid_letters_array, nb_rows,
+                                         nb_cols, &rows, &cols);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);
@@ -691,17 +696,6 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
            " Number of words detected in the words list of the grid : %i\n",
            pipelineResult.nb_words);
 
-    Words words_pipeline = pipelineResult.words;
-    for (int i = 0; i < words_pipeline.detected_words_count; i++)
-    {
-        free(words_pipeline.solved_words_grid_coos[i]);
-        free(words_pipeline.solved_words_image_coos[i]);
-        free(words_pipeline.words[i]);
-    }
-    free(words_pipeline.solved_words_grid_coos);
-    free(words_pipeline.solved_words_image_coos);
-    free(words_pipeline.words);
-
     for (int i = 0; i < magic_nb_letter; i++)
     {
         free(coo[i]);
@@ -719,4 +713,18 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
     g_object_unref(pixbuf_to_slice);
 
     return pipelineResult;
+}
+
+void free_pipeline(PipelineResult pipelineResult)
+{
+    Words words_pipeline = pipelineResult.words;
+    for (int i = 0; i < words_pipeline.detected_words_count; i++)
+    {
+        free(words_pipeline.solved_words_grid_coos[i]);
+        free(words_pipeline.solved_words_image_coos[i]);
+        free(words_pipeline.words[i]);
+    }
+    free(words_pipeline.solved_words_grid_coos);
+    free(words_pipeline.solved_words_image_coos);
+    free(words_pipeline.words);
 }

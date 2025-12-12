@@ -1,7 +1,7 @@
+#include "solver.h"
 #include "../include/image/image.h"
 #include "../include/neural_network.h"
 #include "image/image_helpers.h"
-#include "solver.h"
 
 #include <ctype.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -224,14 +224,14 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
  * Recognize each Letter region from pixbuf using the neural network and build
  * a rows x cols char grid (A-Z). Returns malloc'd char** and writes rows/cols.
  */
-char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
-                        int cols, int *rows_out, int *cols_out,
-                        NeuralNetwork *nn)
+char **build_grid_array(NeuralNetwork *nn, GdkPixbuf *pixbuf,
+                        Letter **grid_letters, int rows, int cols,
+                        int *rows_out, int *cols_out)
 {
     if (!nn)
     {
-        printf("Neural network could not be loaded, check if a model exists in "
-               "tests/model\n");
+        printf(
+            "Neural network could not be loaded, check if the model exists\n");
         return NULL;
     }
 
@@ -346,7 +346,6 @@ char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
         free(grid_array[row]);
     }
     free(grid_array);
-    free_network(nn);
 
     return new_grid_array;
 }
@@ -456,8 +455,8 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
  * Recognize letters for each word region using the neural network and return
  * an array of null-terminated word strings (caller must free).
  */
-char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
-                        int *words_size, NeuralNetwork *nn)
+char **build_words_list(NeuralNetwork *nn, GdkPixbuf *pixbuf,
+                        Letter **words_letters, int nb_words, int *words_size)
 {
     if (!nn)
     {
@@ -541,7 +540,6 @@ char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
     }
     free(words_letters);
     free(words_size);
-    free_network(nn);
 
     return words_list;
 }

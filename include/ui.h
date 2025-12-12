@@ -16,6 +16,7 @@
  * transformed).
  *  - rotation_angle: accumulated rotation angle in degrees.
  *  - save_index    : counter used to generate unique filenames when saving.
+ *  - pipelineResult: result of the pipeline to draw rectangles when solving the grid.
  */
 typedef struct
 {
@@ -38,5 +39,3 @@ int **get_all_words_coordinates(int rows, int cols, char tab[rows][cols],
 
 int* get_word_image_coordinates(int grid_coos[4], int rows, int cols, int x1,
                                   int y1, int x2, int y2);
-
-void solve_grid();
