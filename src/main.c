@@ -17,17 +17,42 @@
  */
 struct AppData
 {
-    GtkWidget *image;       /* image widget */
-    GdkPixbuf *original;    /* original loaded pixbuf (owned) */
-    GdkPixbuf *transformed; /* working copy (owned) */
-    GdkPixbuf *current;     /* displayed pixbuf (owned) */
+    GtkWidget *image;
+    GdkPixbuf *original;
+    GdkPixbuf *transformed;
+    GdkPixbuf *current;
     double rotation_angle;
     int save_index;
 };
 
 NeuralNetwork *neural = NULL;
 // 0 = not processed, 1 = processed
-int processed = 0; 
+int processed = 0;
+
+void load_css(void)
+{
+    GtkCssProvider *provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(
+        provider,
+        "window { background-color: white; }"
+        "#app-title { font-size: 24px; font-weight: bold; margin: 10px; }"
+        ".quit-btn { color: red; background: white; border: 2px solid red; "
+        "border-radius: 5px; font-weight: bold; margin: 10px; }"
+        ".quit-btn:hover { background: #ffe6e6; }"
+        "#image-border { border: 4px solid #4CAF50; border-radius: 8px; "
+        "margin: 10px; background-color: white; }"
+        ".bold-label { font-weight: bold; font-size: 14px; margin-bottom: 5px; "
+        "}"
+        "button { background: white; border: 2px solid black; border-radius: "
+        "8px; padding: 5px 10px; font-weight: bold; margin: 5px; }"
+        "button:hover { background: #f0f0f0; }",
+        -1, NULL);
+
+    gtk_style_context_add_provider_for_screen(
+        gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider),
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    g_object_unref(provider);
+}
 
 /*
  * update_image:
@@ -94,19 +119,21 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
 
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(data->image));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choose where to save", parent, GTK_FILE_CHOOSER_ACTION_SAVE,
-        "_Cancel", GTK_RESPONSE_CANCEL, "_Save", GTK_RESPONSE_ACCEPT, NULL);
+        "Choose where to save", parent, GTK_FILE_CHOOSER_ACTION_SAVE, "_Cancel",
+        GTK_RESPONSE_CANCEL, "_Save", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
             data->save_index++;
             GError *error = NULL;
             if (!gdk_pixbuf_save(data->current, filename, "png", &error, NULL))
             {
-                g_printerr("Failed to save image: %s\n", error ? error->message : "unknown");
+                g_printerr("Failed to save image: %s\n",
+                           error ? error->message : "unknown");
                 if (error)
                     g_error_free(error);
             }
@@ -125,7 +152,8 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
  * free_app_data:
  * Free GdkPixbufs and the AppData struct.
  */
-void free_app_data(GtkWidget *widget __attribute__((unused)), gpointer user_data)
+void free_app_data(GtkWidget *widget __attribute__((unused)),
+                   gpointer user_data)
 {
     struct AppData *data = user_data;
     if (!data)
@@ -169,7 +197,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     if (processed == 0)
     {
         convert_to_grayscale(data->transformed);
-        (void)convert_to_black_and_white(data->transformed); /* threshold not needed here */
+        (void)convert_to_black_and_white(data->transformed);
         median_filter_3x3(data->transformed);
         data->transformed = rotate_image_automatic(data->transformed);
 
@@ -222,7 +250,8 @@ void change_image(const char *filename, gpointer user_data)
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(filename, &error);
     if (!pixbuf)
     {
-        g_printerr("Failed to load image '%s': %s\n", filename, error ? error->message : "unknown");
+        g_printerr("Failed to load image '%s': %s\n", filename,
+                   error ? error->message : "unknown");
         if (error)
             g_error_free(error);
         return;
@@ -274,12 +303,13 @@ void get_path_image(GtkWidget *widget, gpointer user_data)
 
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choose an image", parent, GTK_FILE_CHOOSER_ACTION_OPEN,
-        "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
+        "Choose an image", parent, GTK_FILE_CHOOSER_ACTION_OPEN, "_Cancel",
+        GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
             change_image(filename, data);
@@ -315,12 +345,13 @@ void get_neural_load_path(GtkWidget *widget)
 {
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choose model file", parent, GTK_FILE_CHOOSER_ACTION_OPEN,
-        "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
+        "Choose model file", parent, GTK_FILE_CHOOSER_ACTION_OPEN, "_Cancel",
+        GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
             load_neural(filename);
@@ -364,7 +395,8 @@ void get_neural_train_path(GtkWidget *widget)
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
             train_neural(filename);
@@ -398,7 +430,8 @@ void save_neural(GtkWidget *widget)
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename)
         {
             save_network(neural, filename);
@@ -416,23 +449,32 @@ void save_neural(GtkWidget *widget)
  */
 static void on_activate(GtkApplication *app, gpointer user_data)
 {
+    load_css();
+
     GtkWidget *window;
     GtkWidget *vertical_box;
-    GtkWidget *horizontal_box;
-    GtkWidget *reset_button;
-    GtkWidget *save_button;
+    GtkWidget *horizontal_center_box;
+    GtkWidget *image_container_box;
+    GtkWidget *sidebar_box;
+    GtkWidget *bottom_box;
+
+    GtkWidget *logo_image;
+    GtkWidget *title;
     GtkWidget *close_button;
     GtkWidget *image;
     GtkWidget *scrolled;
-    GtkWidget *treatement_button;
-    GtkWidget *solver_button;
-    GtkWidget *training_button;
-    GtkWidget *load_button;
-    GtkWidget *save_neural_button;
-    GtkWidget *file_button;
-    GtkWidget *center;
-    GtkWidget *right_button;
-    GtkWidget *title_neural;
+
+    GtkWidget *lbl_neural;
+    GtkWidget *btn_load_img_sidebar;
+    GtkWidget *btn_training;
+    GtkWidget *btn_load_neural;
+    GtkWidget *btn_save_neural;
+
+    GtkWidget *lbl_image;
+    GtkWidget *btn_process;
+    GtkWidget *btn_solve;
+    GtkWidget *btn_reset;
+    GtkWidget *btn_save_image;
 
     char **filename = (char **)user_data;
 
@@ -443,13 +485,12 @@ static void on_activate(GtkApplication *app, gpointer user_data)
         return;
     }
 
-    file_button = gtk_button_new_with_label("Load image");
-
     GError *error = NULL;
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(image_path, &error);
     if (!pixbuf)
     {
-        g_printerr("Failed to load image '%s': %s\n", image_path, error ? error->message : "unknown");
+        g_printerr("Failed to load image '%s': %s\n", image_path,
+                   error ? error->message : "unknown");
         if (error)
             g_error_free(error);
         return;
@@ -457,58 +498,77 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Destructeur 2 mots");
-    gtk_window_set_default_size(GTK_WINDOW(window), 1200, 800);
+    gtk_window_set_default_size(GTK_WINDOW(window), 1300, 900);
+    gtk_container_set_border_width(GTK_CONTAINER(window), 10);
 
-    vertical_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    vertical_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_add(GTK_CONTAINER(window), vertical_box);
 
     GtkWidget *top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_box_pack_start(GTK_BOX(vertical_box), top_bar, FALSE, FALSE, 0);
 
-    GtkWidget *title = gtk_label_new("Destructeur 2 mots");
+    GdkPixbuf *logo_pixbuf =
+        gdk_pixbuf_new_from_file("./assets/logo.png", &error);
+    if (logo_pixbuf)
+    {
+        GdkPixbuf *scaled_logo =
+            gdk_pixbuf_scale_simple(logo_pixbuf, 70, 70, GDK_INTERP_BILINEAR);
+        logo_image = gtk_image_new_from_pixbuf(scaled_logo);
+        gtk_box_pack_start(GTK_BOX(top_bar), logo_image, FALSE, FALSE, 5);
+        g_object_unref(logo_pixbuf);
+        g_object_unref(scaled_logo);
+    }
+    else
+    {
+        g_printerr("Failed to load logo: %s\n",
+                   error ? error->message : "unknown");
+        if (error)
+            g_error_free(error);
+    }
+
+    title = gtk_label_new("Destructeur 2 Mots");
+    gtk_widget_set_name(title, "app-title");
     gtk_box_pack_start(GTK_BOX(top_bar), title, FALSE, FALSE, 0);
+
     GtkWidget *space = gtk_label_new(NULL);
     gtk_box_pack_start(GTK_BOX(top_bar), space, TRUE, TRUE, 0);
-    GtkWidget *space2 = gtk_label_new(NULL);
-    gtk_box_pack_start(GTK_BOX(top_bar), space2, TRUE, TRUE, 0);
 
-    close_button = gtk_button_new_with_label("Quit");
-    g_signal_connect_swapped(close_button, "clicked", G_CALLBACK(gtk_window_close), window);
-    gtk_box_pack_start(GTK_BOX(top_bar), close_button, TRUE, TRUE, 15);
+    close_button = gtk_button_new_with_label("Quitter");
+    GtkStyleContext *ctx = gtk_widget_get_style_context(close_button);
+    gtk_style_context_add_class(ctx, "quit-btn");
+    g_signal_connect_swapped(close_button, "clicked",
+                             G_CALLBACK(gtk_window_close), window);
+    gtk_box_pack_start(GTK_BOX(top_bar), close_button, FALSE, FALSE, 0);
 
-    GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 900, 600, GDK_INTERP_BILINEAR);
+    GdkPixbuf *scaled =
+        gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
+
+    horizontal_center_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 20);
+    gtk_box_pack_start(GTK_BOX(vertical_box), horizontal_center_box, TRUE, TRUE,
+                       0);
+
+    image_container_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_widget_set_name(image_container_box, "image-border");
+    gtk_box_pack_start(GTK_BOX(horizontal_center_box), image_container_box,
+                       TRUE, TRUE, 0);
 
     scrolled = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_box_pack_start(GTK_BOX(image_container_box), scrolled, TRUE, TRUE, 5);
 
     image = gtk_image_new_from_pixbuf(scaled);
-    if (!gtk_image_get_pixbuf(GTK_IMAGE(image)))
-    {
-        g_printerr("ERROR: Image not loaded. Check image path\n");
-        g_object_unref(scaled);
-        return;
-    }
     gtk_container_add(GTK_CONTAINER(scrolled), image);
 
-    center = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_pack_start(GTK_BOX(vertical_box), center, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(center), scrolled, TRUE, TRUE, 0);
+    sidebar_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 15);
+    gtk_widget_set_size_request(sidebar_box, 300, -1);
+    gtk_box_pack_start(GTK_BOX(horizontal_center_box), sidebar_box, FALSE,
+                       FALSE, 0);
 
-    right_button = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    gtk_box_pack_start(GTK_BOX(center), right_button, FALSE, FALSE, 0);
-
-    horizontal_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-    gtk_box_pack_start(GTK_BOX(vertical_box), horizontal_box, FALSE, FALSE, 5);
-
-    treatement_button = gtk_button_new_with_label("Process");
-    reset_button = gtk_button_new_with_label("Reset");
-    save_button = gtk_button_new_with_label("Save");
-    solver_button = gtk_button_new_with_label("Solve");
-
-    gtk_box_pack_start(GTK_BOX(horizontal_box), treatement_button, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(horizontal_box), solver_button, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
+    lbl_neural = gtk_label_new("Réseau de neurones");
+    ctx = gtk_widget_get_style_context(lbl_neural);
+    gtk_style_context_add_class(ctx, "bold-label");
+    gtk_box_pack_start(GTK_BOX(sidebar_box), lbl_neural, FALSE, FALSE, 5);
 
     struct AppData *data = g_new(struct AppData, 1);
     data->image = image;
@@ -518,43 +578,67 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->rotation_angle = 0.0;
     data->save_index = 1;
 
-    title_neural = gtk_label_new("Neural network:");
-    gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
+    btn_load_img_sidebar = gtk_button_new_with_label("Charger une image");
+    gtk_box_pack_start(GTK_BOX(sidebar_box), btn_load_img_sidebar, FALSE, FALSE,
+                       5);
+    g_signal_connect(btn_load_img_sidebar, "clicked",
+                     G_CALLBACK(get_path_image), data);
 
-    training_button = gtk_button_new_with_label("Train and create network");
-    g_signal_connect(training_button, "clicked", G_CALLBACK(get_neural_train_path), NULL);
+    btn_training = gtk_button_new_with_label("Entrainement");
+    gtk_box_pack_start(GTK_BOX(sidebar_box), btn_training, FALSE, FALSE, 5);
+    g_signal_connect(btn_training, "clicked", G_CALLBACK(get_neural_train_path),
+                     NULL);
 
-    load_button = gtk_button_new_with_label("Load existing model");
-    g_signal_connect(load_button, "clicked", G_CALLBACK(get_neural_load_path), NULL);
+    btn_load_neural = gtk_button_new_with_label("Charger");
+    gtk_box_pack_start(GTK_BOX(sidebar_box), btn_load_neural, FALSE, FALSE, 5);
+    g_signal_connect(btn_load_neural, "clicked",
+                     G_CALLBACK(get_neural_load_path), NULL);
 
-    save_neural_button = gtk_button_new_with_label("Save network");
-    g_signal_connect(save_neural_button, "clicked", G_CALLBACK(save_neural), NULL);
+    btn_save_neural = gtk_button_new_with_label("Sauvegarder");
+    gtk_box_pack_start(GTK_BOX(sidebar_box), btn_save_neural, FALSE, FALSE, 5);
+    g_signal_connect(btn_save_neural, "clicked", G_CALLBACK(save_neural), NULL);
 
-    gtk_box_pack_start(GTK_BOX(right_button), file_button, FALSE, TRUE, 5);
-    g_signal_connect(file_button, "clicked", G_CALLBACK(get_path_image), data);
+    bottom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 15);
+    gtk_box_pack_start(GTK_BOX(vertical_box), bottom_box, FALSE, FALSE, 10);
 
-    gtk_box_pack_start(GTK_BOX(right_button), training_button, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(right_button), load_button, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(right_button), save_neural_button, TRUE, TRUE, 5);
+    lbl_image = gtk_label_new("Image :");
+    ctx = gtk_widget_get_style_context(lbl_image);
+    gtk_style_context_add_class(ctx, "bold-label");
+    gtk_box_pack_start(GTK_BOX(bottom_box), lbl_image, FALSE, FALSE, 10);
 
-    g_signal_connect(treatement_button, "clicked", G_CALLBACK(automatic_treatement), data);
-    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked), data);
-    g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
-    g_signal_connect(solver_button, "clicked", G_CALLBACK(solver), data);
+    btn_process = gtk_button_new_with_label("Traiter");
+    gtk_box_pack_start(GTK_BOX(bottom_box), btn_process, TRUE, TRUE, 0);
+    g_signal_connect(btn_process, "clicked", G_CALLBACK(automatic_treatement),
+                     data);
+
+    btn_solve = gtk_button_new_with_label("Résoudre");
+    gtk_box_pack_start(GTK_BOX(bottom_box), btn_solve, TRUE, TRUE, 0);
+    g_signal_connect(btn_solve, "clicked", G_CALLBACK(solver), data);
+
+    btn_reset = gtk_button_new_with_label("Réinitialiser");
+    gtk_box_pack_start(GTK_BOX(bottom_box), btn_reset, TRUE, TRUE, 0);
+    g_signal_connect(btn_reset, "clicked", G_CALLBACK(on_reset_clicked), data);
+
+    btn_save_image = gtk_button_new_with_label("Sauvegarder");
+    gtk_box_pack_start(GTK_BOX(bottom_box), btn_save_image, TRUE, TRUE, 0);
+    g_signal_connect(btn_save_image, "clicked", G_CALLBACK(on_save_clicked),
+                     data);
 
     gtk_widget_show_all(window);
 
     g_object_unref(scaled);
 
     /* free AppData when window is destroyed */
-    g_signal_connect_swapped(window, "destroy", G_CALLBACK(free_app_data), data);
+    g_signal_connect_swapped(window, "destroy", G_CALLBACK(free_app_data),
+                             data);
 }
 
 /*
  * on_command_line:
  * Extract filename from command line and emit activate signal.
  */
-int on_command_line(GApplication *app, GApplicationCommandLine *cmdline, gpointer user_data __attribute__((unused)))
+int on_command_line(GApplication *app, GApplicationCommandLine *cmdline,
+                    gpointer user_data __attribute__((unused)))
 {
     int argc;
     char **argv = g_application_command_line_get_arguments(cmdline, &argc);
@@ -581,7 +665,8 @@ int main(int argc, char *argv[])
     else
         filename = g_strdup("level_1_image_1.png");
 
-    app = gtk_application_new("com.example.GtkApplication", G_APPLICATION_HANDLES_COMMAND_LINE);
+    app = gtk_application_new("com.example.GtkApplication",
+                              G_APPLICATION_HANDLES_COMMAND_LINE);
     g_signal_connect(app, "command-line", G_CALLBACK(on_command_line), NULL);
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), &filename);
     status = g_application_run(G_APPLICATION(app), argc, argv);

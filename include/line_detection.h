@@ -1,5 +1,6 @@
 #pragma once
 
+#include "neural_network.h"
 #include "solver.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
@@ -54,4 +55,4 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo,
 int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
                       int nb_words);
 
-PipelineResult pipeline(char *filename);
+PipelineResult pipeline(char *filename, NeuralNetwork *nn);

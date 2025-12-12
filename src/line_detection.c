@@ -2,6 +2,7 @@
 #include "../include/image/image_helpers.h"
 #include "../include/line_detection.h"
 #include "../include/solver.h"
+#include "neural_network.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -279,7 +280,8 @@ int compare_letter_y(const void *a, const void *b)
  * (likely same row) sort by Y (top-to-bottom).
  *
  * Parameters:
- *  - coo: array of int* where each points to an int[4] bbox [xmin,ymin,xmax,ymax]
+ *  - coo: array of int* where each points to an int[4] bbox
+ * [xmin,ymin,xmax,ymax]
  *  - nb_letter: number of entries in coo
  */
 void sort_letter(int **coo, int nb_letter)
@@ -498,7 +500,7 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
  *  - output_gw_file   : output directory for grid and word crops.
  *  - output_letter_file: output directory for individual letter images.
  */
-PipelineResult pipeline(char *filename)
+PipelineResult pipeline(char *filename, NeuralNetwork *nn)
 {
     int nb_words = 50; // Max number of words in the words list
 
@@ -563,7 +565,7 @@ PipelineResult pipeline(char *filename)
     Letter **words_letters_final = build_words_list_from_image(
         words_letters, nb_letters_words, &words_size, &detected_words_count);
     char **words_letters_list = build_words_list(
-        pixbuf, words_letters_final, detected_words_count, words_size);
+        pixbuf, words_letters_final, detected_words_count, words_size, nn);
 
     pipelineResult.words.detected_words_count = detected_words_count;
     pipelineResult.words.words = words_letters_list;
@@ -571,7 +573,7 @@ PipelineResult pipeline(char *filename)
     int rows;
     int cols;
     char **grid_array = build_grid_array(pixbuf, grid_letters_array, nb_rows,
-                                         nb_cols, &rows, &cols);
+                                         nb_cols, &rows, &cols, nn);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);
