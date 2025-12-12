@@ -605,6 +605,7 @@ int **get_solved_words_image_coos_drawing(int **words_grid_coos,
     int start_y = grid_coos[1];
 
     float extension = width_per_letter / 2.0f;
+    float rectangle_skrink = 2.0f;
 
     for (int w = 0; w < words_count; w++)
     {
@@ -665,6 +666,8 @@ int **get_solved_words_image_coos_drawing(int **words_grid_coos,
         {
             thickness = (width_per_letter + height_per_letter) / 4.0f;
         }
+
+        thickness -= rectangle_skrink;
 
         // Four corners of rotated rectangle
         words_coos_image[w][0] = (int)(x1 + px * thickness - 0.5f);

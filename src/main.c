@@ -17,8 +17,7 @@
 #define DEFAULT_MODEL_PATH "assets/ocr_model"
 
 NeuralNetwork *neural = NULL;
-// 0 = not processed, 1 = processed
-int processed = 0;
+int is_processed = 0; // 0 = not processed, 1 = processed
 
 void load_css(void)
 {
@@ -81,7 +80,7 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     AppData *data = user_data;
 
-    processed = 0;
+    is_processed = 0;
 
     if (!data || !data->original)
         return;
@@ -186,7 +185,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     if (!data || !data->transformed)
         return;
 
-    if (processed == 0)
+    if (is_processed == 0)
     {
         convert_to_grayscale(data->transformed);
         (void)convert_to_black_and_white(data->transformed);
@@ -194,7 +193,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
         data->transformed = rotate_image_automatic(data->transformed);
 
         apply_transformations(data);
-        processed = 1;
+        is_processed = 1;
     }
     else
     {
@@ -228,9 +227,8 @@ void solver(GtkButton *button, gpointer user_data)
         return;
     }
 
-    // int rectangle_ui_offset = 3; // Shrink the rectangle to make it appear
-    // slightly smaller in the ui
-
+    int thickness = 3;
+    
     for (int i = 0; i < words.detected_words_count; i++)
     {
         int x1 = words.solved_words_image_coos[i][0];
@@ -246,10 +244,10 @@ void solver(GtkButton *button, gpointer user_data)
             x4 > 0 && y4 > 0)
         {
             draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
-                           5);
+                           thickness);
             printf("Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
                    "with thickness %i\n",
-                   x1, y1, x2, y2, x3, y3, x4, y4, 5);
+                   x1, y1, x2, y2, x3, y3, x4, y4, thickness);
         }
     }
 
@@ -276,7 +274,7 @@ PipelineResult load_pipeline(char *filename, NeuralNetwork *nn)
 void change_image(const char *filename, gpointer user_data)
 {
     AppData *data = user_data;
-    processed = 0;
+    is_processed = 0;
 
     if (!data)
     {
