@@ -147,11 +147,6 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     int row_count = 1; // The number of rows in the grid
     int col_count = 1; // The number of columns in the grid
 
-    printf("Sorted grid letter 0 in row 0, col 0, with "
-    "coordinates (%i, %i)(%i, %i)\n",
-    grid_letters[0].x1, grid_letters[0].y1, grid_letters[0].x2,
-    grid_letters[0].y2);
-
     int first_letter_in_row = 0;
     for (int i = 1; i < nb_letters; i++)
     {
@@ -174,12 +169,6 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
             temp_rows[row_count - 1][0] = grid_letters[i];
             row_sizes[row_count - 1] = 1;
         }
-
-        printf("Sorted grid letter %i in row %i, col %i, with "
-        "coordinates (%i, %i)(%i, %i)\n",
-        i, row_count - 1, row_sizes[row_count - 1] - 1,
-        grid_letters[i].x1, grid_letters[i].y1, grid_letters[i].x2,
-        grid_letters[i].y2);
     }
 
     // Number of columns = Row with the maximum number of letters
@@ -648,7 +637,8 @@ int **get_solved_words_grid_coos(char **words, int words_count, char **grid,
 
         char *word = words[word_index];
         solve(rows, cols, grid, word, &x1, &y1, &x2, &y2);
-        
+
+        /*
         if (x1 > x2) // Swap if word is reversed horizontally
         {
             int tmp = x2;
@@ -661,7 +651,8 @@ int **get_solved_words_grid_coos(char **words, int words_count, char **grid,
             y2 = y1;
             y1 = tmp;
         }
-
+        */
+        
         words_coos[word_index][0] = x1;
         words_coos[word_index][1] = y1;
         words_coos[word_index][2] = x2;

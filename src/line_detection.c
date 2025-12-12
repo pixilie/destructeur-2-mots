@@ -671,6 +671,7 @@ PipelineResult pipeline(char *filename, char *output_gw_file,
     convert_to_grayscale(pixbuf);
 
     double best_angle = detect_best_angle(pixbuf);
+    pipelineResult.rotation_angle = best_angle;
     if (best_angle != 0)
     {
         GdkPixbuf *rotated = rotate_image(pixbuf, best_angle);
