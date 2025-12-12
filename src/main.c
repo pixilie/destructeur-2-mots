@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "../include/image/image.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
@@ -9,8 +8,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../include/neural_network.h" 
 #include "../include/dataset.h"
+#include "../include/neural_network.h"
 
 /**
  * AppData:
@@ -37,7 +36,6 @@ struct AppData
 
 NeuralNetwork *neural;
 int treated = 0;
-
 
 /**
  * update_image:
@@ -77,8 +75,6 @@ void apply_transformations(struct AppData *data)
     update_image(data);
 }
 
-
-
 /**
  * on_reset_clicked:
  * GTK callback for the "Reset" button.
@@ -92,8 +88,8 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    treated = 0; 
-    //because we reset the img, it become untreated again
+    treated = 0;
+    // because we reset the img, it become untreated again
 
     if (!data->original)
     {
@@ -136,17 +132,15 @@ void on_save_clicked(GtkButton *button, gpointer user_data, GtkWidget *widget)
     }
 
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-		    "Choisir où sauvegarder",
-		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-		    GTK_FILE_CHOOSER_ACTION_SAVE,
-		    "_Annuler", GTK_RESPONSE_CANCEL,
-		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
-		    NULL);
-    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+        "Choisir où sauvegarder", GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+        GTK_FILE_CHOOSER_ACTION_SAVE, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-	char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-	if(filename)
-	{
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        if (filename)
+        {
             data->save_index++;
             GError *error = NULL;
             if (!gdk_pixbuf_save(data->current, filename, "png", &error, NULL))
@@ -157,7 +151,7 @@ void on_save_clicked(GtkButton *button, gpointer user_data, GtkWidget *widget)
             }
 
             printf("Image saved as %s\n", filename);
-	}
+        }
     }
 
     gtk_widget_destroy(dialog);
@@ -193,13 +187,12 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
     }
 }
 
-
 void pop_up_treated()
 {
     GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
 
-    GtkWidget *text= gtk_label_new("Image already treated");
-    
+    GtkWidget *text = gtk_label_new("Image already treated");
+
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), box);
     gtk_box_pack_start(GTK_BOX(box), text, FALSE, FALSE, 0);
@@ -220,42 +213,38 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    if(treated == 0)
+    if (treated == 0)
     {
-        if(!data->transformed)
-		return;
+        if (!data->transformed)
+            return;
 
         convert_to_grayscale(data->transformed);
         int treshold = convert_to_black_and_white(data->transformed);
         printf("threshold = %i\n", treshold);
-	median_filter_3x3(data->transformed);
+        median_filter_3x3(data->transformed);
         data->transformed = rotate_image_automatic(data->transformed);
 
         apply_transformations(data);
 
-	treated = 1;
+        treated = 1;
     }
     else
     {
-	printf("Image already treated\n");
-	pop_up_treated();
+        printf("Image already treated\n");
+        pop_up_treated();
     }
 }
 
 /*
  * Solver:
  * Call the solver function when button clicked and then display
- * the solution 
+ * the solution
  *
  * Parameters :
  * - button    : the clicked button (unused)
  * - user_data : pointer to struct AppData
  */
-void solver(GtkButton *button, gpointer user_data)
-{
-    (void)button;
-}
-
+void solver(GtkButton *button, gpointer user_data) { (void)button; }
 
 void change_image(const char *filename, gpointer user_data)
 {
@@ -264,49 +253,56 @@ void change_image(const char *filename, gpointer user_data)
     treated = 0;
 
     // Basics verification
-    if (!data) {
+    if (!data)
+    {
         g_printerr("Erreur : AppData invalide\n");
         return;
     }
-    if (!data->image) {
+    if (!data->image)
+    {
         g_printerr("Erreur : data->image n'est pas initialisé\n");
         return;
     }
-    if (!filename || filename[0] == '\0') {
+    if (!filename || filename[0] == '\0')
+    {
         g_printerr("Erreur : chemin d'image invalide\n");
         return;
     }
 
-    g_print("DEBUG: data=%p, data->image=%p, filename=%s\n",
-            data, data->image, filename);
+    g_print("DEBUG: data=%p, data->image=%p, filename=%s\n", data, data->image,
+            filename);
 
     // load pixbuf from file
     GError *error = NULL;
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(filename, &error);
-    if (!pixbuf) {
-        g_printerr("Erreur chargement image '%s': %s\n",
-                   filename, error ? error->message : "unknown");
-        if (error) g_error_free(error);
+    if (!pixbuf)
+    {
+        g_printerr("Erreur chargement image '%s': %s\n", filename,
+                   error ? error->message : "unknown");
+        if (error)
+            g_error_free(error);
         return;
     }
 
     g_print("DEBUG: pixbuf=%p, width=%d, height=%d\n", pixbuf,
-            gdk_pixbuf_get_width(pixbuf),
-            gdk_pixbuf_get_height(pixbuf));
+            gdk_pixbuf_get_width(pixbuf), gdk_pixbuf_get_height(pixbuf));
 
-    // Change to the new image 
+    // Change to the new image
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), pixbuf);
 
     // Free older pixbuf if needed
-    if (data->original) {
+    if (data->original)
+    {
         g_object_unref(data->original);
         data->original = NULL;
     }
-    if (data->current) {
+    if (data->current)
+    {
         g_object_unref(data->current);
         data->current = NULL;
     }
-    if (data->transformed) {
+    if (data->transformed)
+    {
         g_object_unref(data->transformed);
         data->transformed = NULL;
     }
@@ -314,16 +310,22 @@ void change_image(const char *filename, gpointer user_data)
     data->original = pixbuf;
 
     data->current = gdk_pixbuf_copy(pixbuf);
-    if (!data->current) {
+    if (!data->current)
+    {
         g_printerr("DEBUG: impossible de copier pixbuf pour current\n");
-    } else {
+    }
+    else
+    {
         g_print("DEBUG: current pixbuf=%p\n", data->current);
     }
 
     data->transformed = gdk_pixbuf_copy(pixbuf);
-    if (!data->transformed) {
+    if (!data->transformed)
+    {
         g_printerr("DEBUG: impossible de copier pixbuf pour transformed\n");
-    } else {
+    }
+    else
+    {
         g_print("DEBUG: transformed pixbuf=%p\n", data->transformed);
     }
 
@@ -334,29 +336,28 @@ void change_image(const char *filename, gpointer user_data)
     g_print("DEBUG: change_image terminé\n");
 }
 
-
 void get_path_image(GtkWidget *widget, gpointer user_data)
 {
     struct AppData *data = (struct AppData *)user_data;
-    if (!data) {
+    if (!data)
+    {
         g_printerr("Erreur : AppData invalide dans get_path_image\n");
         return;
     }
 
-    // Creation of dialog 
+    // Creation of dialog
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
         "Choisir une image",
         GTK_WINDOW(gtk_widget_get_toplevel(widget)), // parent window
-        GTK_FILE_CHOOSER_ACTION_OPEN,
-        "_Annuler", GTK_RESPONSE_CANCEL,
-        "_Ouvrir", GTK_RESPONSE_ACCEPT,
-        NULL
-    );
+        GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
-    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-        char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-        if (filename) 
-	{
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    {
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        if (filename)
+        {
             printf("Image choisie : %s\n", filename);
 
             // Call to the function to change the image
@@ -364,8 +365,8 @@ void get_path_image(GtkWidget *widget, gpointer user_data)
 
             g_free(filename);
         }
-       	else 
-	{
+        else
+        {
             g_printerr("Erreur : aucun fichier sélectionné\n");
         }
     }
@@ -373,118 +374,106 @@ void get_path_image(GtkWidget *widget, gpointer user_data)
     gtk_widget_destroy(dialog);
 }
 
-
 void load_neural(const char *filename)
 {
-    printf("neural to load is here : %s\n", filename);
+    printf("Neural network to load is here : %s\n", filename);
     neural = load_network(filename);
 }
 
 void get_neural_load_path(GtkWidget *widget)
 {
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-		    "Choisir le fichier :",
-		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-		    GTK_FILE_CHOOSER_ACTION_OPEN,
-		    "_Annuler", GTK_RESPONSE_CANCEL,
-		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
-		    NULL);
+        "Choisir le fichier :", GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+        GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
-    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-	char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-	if(filename)
-	{
-	    printf("Neural choisi : %s\n", filename);
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        if (filename)
+        {
+            printf("Neural choisi : %s\n", filename);
 
-	    load_neural(filename);
-	    g_free(filename);
-	}
-	else
-	{
-	    g_printerr("Erreur : aucun fichier selectionné\n");
-	}
+            load_neural(filename);
+            g_free(filename);
+        }
+        else
+        {
+            g_printerr("Erreur : aucun fichier selectionné\n");
+        }
     }
     gtk_widget_destroy(dialog);
 }
 
-
 void train_neural(const char *filename)
 {
-    char *path = malloc(256);
-    if(path == NULL)
-	    return;
+    const char *path = malloc(256);
+    if (path == NULL)
+        return;
     path = filename;
 
-    if(neural == NULL)
-	    neural = create_network(784, 128, 26);
+    if (neural == NULL)
+        neural = create_network(784, 128, 26);
 
     Dataset data = load_dataset(filename);
     train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
 }
 
-
 void get_neural_train_path(GtkWidget *widget)
 {
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-		    "Choisir le Dataset",
-		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-		    GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-		    "_Annuler", GTK_RESPONSE_CANCEL,
-		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
-		    NULL);
+        "Choisir le Dataset", GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+        GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
-    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
-	char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-	if(filename)
-	{
-	    printf("Neural choisi : %s\n", filename);
+        char *filename =
+            gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        if (filename)
+        {
+            printf("Neural choisi : %s\n", filename);
 
-	    train_neural(filename);
-	    g_free(filename);
-	}
-	else
-	{
-	    g_printerr("Erreur : aucun fichier selectionné\n");
-	}
+            train_neural(filename);
+            g_free(filename);
+        }
+        else
+        {
+            g_printerr("Erreur : aucun fichier selectionné\n");
+        }
     }
 
     gtk_widget_destroy(dialog);
 }
 
-
 void save_neural(GtkWidget *widget)
 {
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-		    "Choisir où sauvegarder",
-		    GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-		    GTK_FILE_CHOOSER_ACTION_SAVE,
-		    "_Annuler", GTK_RESPONSE_CANCEL,
-		    "_Ouvrir", GTK_RESPONSE_ACCEPT,
-		    NULL);
+        "Choisir où sauvegarder", GTK_WINDOW(gtk_widget_get_toplevel(widget)),
+        GTK_FILE_CHOOSER_ACTION_SAVE, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
-    if(neural == NULL)
+    if (neural == NULL)
     {
         printf("Error : cannot save empty NeuralNetwork\n");
         return;
     }
     else
     {
-        if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+        if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
         {
-	    char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-	    if(filename)
-	    {
-	        save_network(neural, filename);
-	        printf("Save neural at : %s\n", filename);
-	    }
+            char *filename =
+                gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+            if (filename)
+            {
+                save_network(neural, filename);
+                printf("Save neural at : %s\n", filename);
+            }
         }
         gtk_widget_destroy(dialog);
     }
 }
-
-
 
 /*
  * on_activate:
@@ -518,7 +507,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *description;
     GtkWidget *title_neural;
 
-    char **filename = (char**)user_data;
+    char **filename = (char **)user_data;
     printf("Fichier à charger : %s\n", *filename);
 
     const char *image_path = get_image_path(*filename);
@@ -529,8 +518,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     }
     printf("Loading image at: %s\n", image_path);
 
-
-    //button to choose file
+    // button to choose file
     file_button = gtk_button_new_with_label("Charger l'image");
 
     GError *error = NULL;
@@ -543,37 +531,35 @@ static void on_activate(GtkApplication *app, gpointer user_data)
         return;
     }
 
-   // Create a new window
+    // Create a new window
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Image");
-    //Size of window, check if size-auto possible
+    // Size of window, check if size-auto possible
     gtk_window_set_default_size(GTK_WINDOW(window), 1920, 1000);
-    
 
     // Create a vertical box
     vertical_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), vertical_box);
 
-
-    //Create vertical box for header
+    // Create vertical box for header
     GtkWidget *top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_box_pack_start(GTK_BOX(vertical_box),top_bar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vertical_box), top_bar, FALSE, FALSE, 0);
 
-    //label
+    // label
     GtkWidget *title = gtk_label_new("Destructeur 2 mots");
     gtk_box_pack_start(GTK_BOX(top_bar), title, FALSE, FALSE, 0);
-    //space between title and quit
+    // space between title and quit
     GtkWidget *space = gtk_label_new(NULL);
     gtk_box_pack_start(GTK_BOX(top_bar), space, TRUE, TRUE, 0);
     GtkWidget *space2 = gtk_label_new(NULL);
     gtk_box_pack_start(GTK_BOX(top_bar), space2, TRUE, TRUE, 0);
     GtkWidget *space3 = gtk_label_new(NULL);
     gtk_box_pack_start(GTK_BOX(top_bar), space3, TRUE, TRUE, 0);
-    //Quit button
+    // Quit button
     close_button = gtk_button_new_with_label("Quitter");
-    g_signal_connect_swapped(close_button, "clicked", G_CALLBACK(gtk_window_close), window);
+    g_signal_connect_swapped(close_button, "clicked",
+                             G_CALLBACK(gtk_window_close), window);
     gtk_box_pack_start(GTK_BOX(top_bar), close_button, TRUE, TRUE, 15);
-
 
     GdkPixbuf *scaled =
         gdk_pixbuf_scale_simple(pixbuf, 1000, 700, GDK_INTERP_BILINEAR);
@@ -590,36 +576,34 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     }
     gtk_container_add(GTK_CONTAINER(scrolled), image);
 
-
-    //Create box for neural training
+    // Create box for neural training
     center = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start(GTK_BOX(vertical_box), center, TRUE, TRUE, 0);
-    
+
     gtk_box_pack_start(GTK_BOX(center), scrolled, TRUE, TRUE, 0);
-    
-    //right button for neural
+
+    // right button for neural
     right_button = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_box_pack_start(GTK_BOX(center), right_button, FALSE, FALSE, 0);
 
-
     horizontal_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
     gtk_box_pack_start(GTK_BOX(vertical_box), horizontal_box, FALSE, FALSE, 5);
-   //Create new buttons for image action
+    // Create new buttons for image action
 
-   treatement_button = gtk_button_new_with_label("Traiter");
-   reset_button = gtk_button_new_with_label("Réinitialiser");
-   save_button = gtk_button_new_with_label("Sauvegarder");
-   solver_button = gtk_button_new_with_label("Resoudre");
+    treatement_button = gtk_button_new_with_label("Traiter");
+    reset_button = gtk_button_new_with_label("Réinitialiser");
+    save_button = gtk_button_new_with_label("Sauvegarder");
+    solver_button = gtk_button_new_with_label("Resoudre");
 
-   description = gtk_label_new("Image :");
+    description = gtk_label_new("Image :");
 
-   gtk_box_pack_start(GTK_BOX(horizontal_box), treatement_button, TRUE, TRUE, 5);
-   gtk_box_pack_start(GTK_BOX(horizontal_box), solver_button, TRUE, TRUE, 5);
-   gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
-   gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), treatement_button, TRUE, TRUE,
+                       5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), solver_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), reset_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(horizontal_box), save_button, TRUE, TRUE, 5);
 
-
-   // Initialize AppData
+    // Initialize AppData
     struct AppData *data = g_new(struct AppData, 1);
     data->image = image;
     data->original = pixbuf;
@@ -627,43 +611,46 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
-   
-    
-    //label
-   title_neural = gtk_label_new("Réseau de neurone :");
-   gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
-   //Create new button for neural training
-   training_button = gtk_button_new_with_label("Entraîner et créer un réseau");
-   g_signal_connect(training_button, "clicked", G_CALLBACK(get_neural_train_path), NULL); //check NULL
 
-   load_button = gtk_button_new_with_label("Charger un modèle déjà existant");
-   g_signal_connect(load_button, "clicked", G_CALLBACK(get_neural_load_path), NULL);
+    // label
+    title_neural = gtk_label_new("Réseau de neurone :");
+    gtk_box_pack_start(GTK_BOX(right_button), title_neural, FALSE, FALSE, 0);
+    // Create new button for neural training
+    training_button = gtk_button_new_with_label("Entraîner et créer un réseau");
+    g_signal_connect(training_button, "clicked",
+                     G_CALLBACK(get_neural_train_path), NULL); // check NULL
 
-   save_neural_button = gtk_button_new_with_label("Sauvegarder l'entraînement");
-   g_signal_connect(save_neural_button, "clicked", G_CALLBACK(save_neural), NULL);
+    load_button = gtk_button_new_with_label("Charger un modèle déjà existant");
+    g_signal_connect(load_button, "clicked", G_CALLBACK(get_neural_load_path),
+                     NULL);
 
+    save_neural_button =
+        gtk_button_new_with_label("Sauvegarder l'entraînement");
+    g_signal_connect(save_neural_button, "clicked", G_CALLBACK(save_neural),
+                     NULL);
 
-   gtk_box_pack_start(GTK_BOX(right_button), file_button, FALSE, TRUE, 5);
-   g_signal_connect(file_button, "clicked", G_CALLBACK(get_path_image), data); //here
+    gtk_box_pack_start(GTK_BOX(right_button), file_button, FALSE, TRUE, 5);
+    g_signal_connect(file_button, "clicked", G_CALLBACK(get_path_image),
+                     data); // here
 
+    gtk_box_pack_start(GTK_BOX(right_button), training_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(right_button), load_button, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(right_button), save_neural_button, TRUE, TRUE,
+                       5);
 
-   gtk_box_pack_start(GTK_BOX(right_button), training_button, TRUE, TRUE, 5);
-   gtk_box_pack_start(GTK_BOX(right_button), load_button, TRUE, TRUE, 5);
-   gtk_box_pack_start(GTK_BOX(right_button), save_neural_button, TRUE, TRUE, 5);
-
-
-    g_signal_connect(treatement_button, "clicked", G_CALLBACK(automatic_treatement), data);
-    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked), data);
+    g_signal_connect(treatement_button, "clicked",
+                     G_CALLBACK(automatic_treatement), data);
+    g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_clicked),
+                     data);
     g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked), data);
     g_signal_connect(solver_button, "clicked", G_CALLBACK(solver), data);
 
-    //Show all widgets
+    // Show all widgets
     gtk_widget_show_all(window);
 
-    //free pixbufs
+    // free pixbufs
     g_object_unref(scaled);
 }
-
 
 /**
  * on_command_line:
@@ -718,13 +705,13 @@ int main(int argc, char *argv[])
     char *filename;
     if (argc > 1)
     {
-        //filename = argv[1];
-	filename = g_strdup(argv[1]);
+        // filename = argv[1];
+        filename = g_strdup(argv[1]);
     }
     else
     {
-        //filename = "level_1_image_1.png";
-	filename = g_strdup("level_1_image_1.png");
+        // filename = "level_1_image_1.png";
+        filename = g_strdup("level_1_image_1.png");
     }
 
     // Create a new application
@@ -737,6 +724,3 @@ int main(int argc, char *argv[])
 
     return status;
 }
-
-
-//int main() { return EXIT_SUCCESS; }
