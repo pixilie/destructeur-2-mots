@@ -1,6 +1,9 @@
 #include "../include/dataset.h"
 #include "../include/image/image.h"
 #include "../include/neural_network.h"
+#include "image/image_helpers.h"
+#include "../include/line_detection.h"
+#include "../include/ui.h"
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
@@ -11,19 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 
-/*
- * AppData:
- * Simple container for widgets and pixbufs used by callbacks.
- */
-struct AppData
-{
-    GtkWidget *image;
-    GdkPixbuf *original;
-    GdkPixbuf *transformed;
-    GdkPixbuf *current;
-    double rotation_angle;
-    int save_index;
-};
+#define DEFAULT_MODEL_PATH "assets/ocr_model"
 
 NeuralNetwork *neural = NULL;
 // 0 = not processed, 1 = processed
@@ -58,7 +49,7 @@ void load_css(void)
  * update_image:
  * Update the GtkImage widget with data->current and queue a redraw.
  */
-void update_image(struct AppData *data)
+void update_image(AppData *data)
 {
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
     gtk_widget_queue_draw(data->image);
@@ -68,7 +59,7 @@ void update_image(struct AppData *data)
  * apply_transformations:
  * Recompute data->current from data->transformed applying rotation.
  */
-void apply_transformations(struct AppData *data)
+void apply_transformations(AppData *data)
 {
     if (data->current)
         g_object_unref(data->current);
@@ -88,7 +79,7 @@ void apply_transformations(struct AppData *data)
 void on_reset_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
 
     processed = 0;
 
@@ -113,7 +104,7 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
 void on_save_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
     if (!data || !data->current)
         return;
 
@@ -155,7 +146,7 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
 void free_app_data(GtkWidget *widget __attribute__((unused)),
                    gpointer user_data)
 {
-    struct AppData *data = user_data;
+    AppData *data = user_data;
     if (!data)
         return;
 
@@ -190,7 +181,7 @@ void pop_up_treated()
 void automatic_treatement(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    struct AppData *data = user_data;
+    AppData *data = user_data;
     if (!data || !data->transformed)
         return;
 
@@ -217,8 +208,51 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
 void solver(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    (void)user_data;
-    /* Implement solution extraction and display here. */
+    AppData *data = user_data;
+
+    if (!data->transformed)
+    {
+        return;
+    }
+
+    //data->rotation_angle = data->pipelineResult.rotation_angle;
+    data->transformed = rotate_image(data->transformed, data->rotation_angle);
+    apply_transformations(data);
+    
+    Words words = data->pipelineResult.words;
+    if (!words.solved_words_image_coos)
+    {
+        printf("No solved words image coordinates found to draw around solved "
+               "words !\n");
+        return;
+    }
+
+    //int rectangle_ui_offset = 3; // Shrink the rectangle to make it appear slightly smaller in the ui
+
+    for (int i = 0; i < words.detected_words_count; i++)
+    {
+        int x1 = words.solved_words_image_coos[i][0];
+        int y1 = words.solved_words_image_coos[i][1];
+        int x2 = words.solved_words_image_coos[i][2];
+        int y2 = words.solved_words_image_coos[i][3];
+        int x3 = words.solved_words_image_coos[i][4];
+        int y3 = words.solved_words_image_coos[i][5];
+        int x4 = words.solved_words_image_coos[i][6];
+        int y4 = words.solved_words_image_coos[i][7];
+
+        if (x1 > 0 && y1 > 0 && x2 > 0 && y2 > 0 && x3 > 0 && y3 > 0 &&
+            x4 > 0 && y4 > 0)
+        {
+            draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
+                           5);
+            printf("Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
+                   "with thickness %i\n",
+                   x1, y1, x2, y2, x3, y3, x4, y4, 5);
+        }
+    }
+
+  
+    apply_transformations(data);
 }
 
 /*
@@ -227,7 +261,7 @@ void solver(GtkButton *button, gpointer user_data)
  */
 void change_image(const char *filename, gpointer user_data)
 {
-    struct AppData *data = (struct AppData *)user_data;
+    AppData *data = user_data;
     processed = 0;
 
     if (!data)
@@ -294,7 +328,7 @@ void change_image(const char *filename, gpointer user_data)
  */
 void get_path_image(GtkWidget *widget, gpointer user_data)
 {
-    struct AppData *data = (struct AppData *)user_data;
+    AppData *data = user_data;
     if (!data)
     {
         g_printerr("Error: invalid AppData in get_path_image\n");
@@ -478,6 +512,8 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     char **filename = (char **)user_data;
 
+    char *exe_dir = get_executable_dir();
+
     const char *image_path = get_image_path(*filename);
     if (!image_path)
     {
@@ -570,13 +606,22 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     gtk_style_context_add_class(ctx, "bold-label");
     gtk_box_pack_start(GTK_BOX(sidebar_box), lbl_neural, FALSE, FALSE, 5);
 
-    struct AppData *data = g_new(struct AppData, 1);
+    AppData *data = g_new(AppData, 1);
     data->image = image;
     data->original = pixbuf;
     data->current = gdk_pixbuf_copy(pixbuf);
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
+
+    char grid_path[512];
+    char letters_path[512];
+    snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
+             exe_dir);
+    snprintf(letters_path, sizeof(letters_path),
+             "%s/tests/results/ui_output/letters", exe_dir);
+
+    data->pipelineResult = pipeline(*filename, neural);
 
     btn_load_img_sidebar = gtk_button_new_with_label("Charger une image");
     gtk_box_pack_start(GTK_BOX(sidebar_box), btn_load_img_sidebar, FALSE, FALSE,
@@ -659,6 +704,12 @@ int main(int argc, char *argv[])
     GtkApplication *app;
     int status;
     char *filename;
+
+    char neural_path[1024];
+    char *exe_dir = get_executable_dir();
+    snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir, DEFAULT_MODEL_PATH);
+    printf("Chemin du réseau de neurones chargé par défaut : %s\n", neural_path);
+    neural = load_network(neural_path);
 
     if (argc > 1)
         filename = g_strdup(argv[1]);
