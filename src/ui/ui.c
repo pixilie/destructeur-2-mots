@@ -176,6 +176,10 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
         return;
     }
 
+    //data->rotation_angle = data->pipelineResult.rotation_angle;
+    data->transformed = rotate_image(data->transformed, data->rotation_angle);
+    apply_transformations(data);
+    
     Words words = data->pipelineResult.words;
     if (!words.solved_words_image_coos)
     {
@@ -183,6 +187,8 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
                "words !\n");
         return;
     }
+
+    //int rectangle_ui_offset = 3; // Shrink the rectangle to make it appear slightly smaller in the ui
 
     for (int i = 0; i < words.detected_words_count; i++)
     {
@@ -200,48 +206,14 @@ void on_draw_rectangle_clicked(GtkButton *button, gpointer user_data)
         {
             draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
                            5);
-            printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
+            printf("Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
                    "with thickness %i\n",
                    x1, y1, x2, y2, x3, y3, x4, y4, 5);
         }
     }
 
-    /*
-
-    // Straight rectangle
-    int x1 = 200, y1 = 100;
-    int x2 = 300, y2 = 100;
-    int x3 = 300, y3 = 300;
-    int x4 = 200, y4 = 300;
-
-    int thickness = 5;
-
-    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
-                   thickness);
-    printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) with "
-           "thickness %i\n",
-           x1, y1, x2, y2, x3, y3, x4, y4, thickness);
-
-    // Diagonal rectangle
-    x1 = 500, y1 = 300;
-    x2 = 600, y2 = 300;
-    x3 = 700, y3 = 400;
-    x4 = 600, y4 = 400;
-
-    draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
-                   thickness);
-
-    */
-
+  
     apply_transformations(data);
-
-    /*
-
-    printf("Red rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) with "
-           "thickness %i\n",
-           x1, y1, x2, y2, x3, y3, x4, y4, thickness);
-
-    */
 }
 
 /**
