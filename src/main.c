@@ -1,9 +1,9 @@
 #include "../include/dataset.h"
 #include "../include/image/image.h"
-#include "../include/neural_network.h"
-#include "image/image_helpers.h"
 #include "../include/line_detection.h"
+#include "../include/neural_network.h"
 #include "../include/ui.h"
+#include "image/image_helpers.h"
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
@@ -157,6 +157,7 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
     if (data->transformed)
         g_object_unref(data->transformed);
 
+    free_pipeline(data->pipelineResult);
     g_free(data);
 }
 
@@ -215,10 +216,10 @@ void solver(GtkButton *button, gpointer user_data)
         return;
     }
 
-    //data->rotation_angle = data->pipelineResult.rotation_angle;
+    // data->rotation_angle = data->pipelineResult.rotation_angle;
     data->transformed = rotate_image(data->transformed, data->rotation_angle);
     apply_transformations(data);
-    
+
     Words words = data->pipelineResult.words;
     if (!words.solved_words_image_coos)
     {
@@ -227,7 +228,8 @@ void solver(GtkButton *button, gpointer user_data)
         return;
     }
 
-    //int rectangle_ui_offset = 3; // Shrink the rectangle to make it appear slightly smaller in the ui
+    // int rectangle_ui_offset = 3; // Shrink the rectangle to make it appear
+    // slightly smaller in the ui
 
     for (int i = 0; i < words.detected_words_count; i++)
     {
@@ -251,8 +253,20 @@ void solver(GtkButton *button, gpointer user_data)
         }
     }
 
-  
     apply_transformations(data);
+}
+
+PipelineResult load_pipeline(char *filename, NeuralNetwork *nn)
+{
+    char *exe_dir = get_executable_dir();
+    char grid_path[512];
+    char letters_path[512];
+    snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
+             exe_dir);
+    snprintf(letters_path, sizeof(letters_path),
+             "%s/tests/results/ui_output/letters", exe_dir);
+
+    return pipeline(filename, nn);
 }
 
 /*
@@ -320,6 +334,7 @@ void change_image(const char *filename, gpointer user_data)
 
     data->rotation_angle = 0.0;
     data->save_index = 1;
+    data->pipelineResult = load_pipeline((char *)filename, neural);
 }
 
 /*
@@ -512,8 +527,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     char **filename = (char **)user_data;
 
-    char *exe_dir = get_executable_dir();
-
     const char *image_path = get_image_path(*filename);
     if (!image_path)
     {
@@ -613,15 +626,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
-
-    char grid_path[512];
-    char letters_path[512];
-    snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
-             exe_dir);
-    snprintf(letters_path, sizeof(letters_path),
-             "%s/tests/results/ui_output/letters", exe_dir);
-
-    data->pipelineResult = pipeline(*filename, neural);
+    data->pipelineResult = load_pipeline(*filename, neural);
 
     btn_load_img_sidebar = gtk_button_new_with_label("Charger une image");
     gtk_box_pack_start(GTK_BOX(sidebar_box), btn_load_img_sidebar, FALSE, FALSE,
@@ -673,7 +678,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
 
     g_object_unref(scaled);
 
-    /* free AppData when window is destroyed */
+    // Free AppData and pipelineResult when window is destroyed
     g_signal_connect_swapped(window, "destroy", G_CALLBACK(free_app_data),
                              data);
 }
@@ -707,8 +712,10 @@ int main(int argc, char *argv[])
 
     char neural_path[1024];
     char *exe_dir = get_executable_dir();
-    snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir, DEFAULT_MODEL_PATH);
-    printf("Chemin du réseau de neurones chargé par défaut : %s\n", neural_path);
+    snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
+             DEFAULT_MODEL_PATH);
+    printf("Chemin du réseau de neurones chargé par défaut : %s\n",
+           neural_path);
     neural = load_network(neural_path);
 
     if (argc > 1)

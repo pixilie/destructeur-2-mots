@@ -1,14 +1,10 @@
-#include <gdk-pixbuf/gdk-pixbuf.h>
+#include "../include/solver.h"
 
-/*
- * draw_pixel:
- * Draw a red square of size thickness x thickness centered at (x, y) in the
- * pixbuf. Parameters:
- *  - pixbuf: target GdkPixbuf (modified in-place).
- *  - x, y: center coordinates of the pixel to draw.
- *  - thickness: size of the square in pixels (odd values center neatly).
- */
-void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness)
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <math.h>
+
+// Draws a pixel of size thickness * thickness with custom GDB color
+void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness, int color[3])
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
@@ -28,41 +24,34 @@ void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness)
             }
 
             guchar *pixel = pixels + new_y * rowstride + new_x * n_channels;
-            pixel[0] = 255; // Red
-            pixel[1] = 0;
-            pixel[2] = 0;
+            pixel[0] = color[0];
+            pixel[1] = color[1];
+            pixel[2] = color[2];
         }
     }
 }
 
-/*
- * draw_line:
- * Draw a red line from (x1, y1) to (x2, y2) into the pixbuf using Bresenham's
- * algorithm. Parameters:
- *  - pixbuf: target GdkPixbuf (modified in-place).
- *  - x1,y1: start coordinates.
- *  - x2,y2: end coordinates.
- *  - thickness: line thickness in pixels.
- */
-void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
-{
+// Draws a red line from (x1, y1) to (x2, y2) in the UI colored image
+// Uses Bresenham's line algorithm to draw the ideal straight line
+void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness, int color[3])
+{    
     if (x1 == x2 && y1 == y2)
     {
-        draw_pixel(pixbuf, x1, y1, thickness);
+        draw_pixel(pixbuf, x1, y1, thickness, color);
         return;
     }
-
+    
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
 
     int step_x = (x1 < x2) ? 1 : -1; // The direction of the horizontal movement
     int step_y = (y1 < y2) ? 1 : -1;
-
+        
     int error_term = dx - dy;
 
     while (1)
     {
-        draw_pixel(pixbuf, x1, y1, thickness);
+        draw_pixel(pixbuf, x1, y1, thickness, color);
 
         if (x1 == x2 && y1 == y2)
         {
@@ -85,24 +74,38 @@ void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness)
     }
 }
 
-/*
- * draw_rectangle:
- * Draw a red closed polygon connecting four points on the pixbuf. Used to mark
- * a solved word. Supports horizontal, vertical and diagonal orientations.
- *
- * Parameters:
- *  - pixbuf: target GdkPixbuf (modified in-place).
- *  - (x1,y1): first corner (top-left for standard orientation).
- *  - (x2,y2): second corner (top-right).
- *  - (x3,y3): third corner (bottom-right).
- *  - (x4,y4): fourth corner (bottom-left).
- *  - thickness: line thickness in pixels.
- */
+// Draws a red rectangle connecting 4 points on the UI image, marking a word as
+// resolved
+// Can mark horizontal, vertical and diagonal words as resolved
+// (x1, y1) : Top left corner
+// (x2, y2) : Top right corner
+// (x3, y3) : Bottom right corner
+// (x4, y4) : Bottom left corner
 void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
                     int y3, int x4, int y4, int thickness)
 {
-    draw_line(pixbuf, x1, y1, x2, y2, thickness);
-    draw_line(pixbuf, x2, y2, x3, y3, thickness);
-    draw_line(pixbuf, x3, y3, x4, y4, thickness);
-    draw_line(pixbuf, x4, y4, x1, y1, thickness);
+    // Draw color based on orintation of word
+    int color[3] = {0, 0, 0};
+    int rectangle_width = abs(x3 - x1);
+    int rectangle_height = abs(y3 - y1);
+
+    int min_width = 100;
+    int min_height = 100;
+    if (rectangle_width > min_width && rectangle_height < min_height)
+    {
+        color[0] = 255; // Horizontal words : Red rectangle
+    }
+    else if (rectangle_width < min_width && rectangle_height > min_height)
+    {
+        color[1] = 200; // Vertical words : Green rectangle
+    }
+    else
+    {
+        color[2] = 255; // Diagonal words : Blue rectangle
+    }
+       
+    draw_line(pixbuf, x1, y1, x2, y2, thickness, color);
+    draw_line(pixbuf, x2, y2, x3, y3, thickness, color);
+    draw_line(pixbuf, x3, y3, x4, y4, thickness, color);
+    draw_line(pixbuf, x4, y4, x1, y1, thickness, color);
 }

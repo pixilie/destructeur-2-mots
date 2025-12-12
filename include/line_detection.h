@@ -56,3 +56,5 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
                       int nb_words);
 
 PipelineResult pipeline(char *filename, NeuralNetwork *nn);
+
+void free_pipeline(PipelineResult pipelineResult);
