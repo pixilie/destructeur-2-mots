@@ -12,9 +12,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-// Path to the model useb by the neural network to recognise letters
-#define MODEL_PATH "ocr_model"
-
 /*
  * len_word:
  * Return the length of a null-terminated string.
@@ -228,14 +225,9 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
  * a rows x cols char grid (A-Z). Returns malloc'd char** and writes rows/cols.
  */
 char **build_grid_array(GdkPixbuf *pixbuf, Letter **grid_letters, int rows,
-                        int cols, int *rows_out, int *cols_out)
+                        int cols, int *rows_out, int *cols_out,
+                        NeuralNetwork *nn)
 {
-    char *exe_dir = get_executable_dir();
-    char model_path[512];
-    snprintf(model_path, sizeof(model_path), "%s/../assets/%s", exe_dir,
-             MODEL_PATH);
-
-    NeuralNetwork *nn = load_network(get_image_path(model_path));
     if (!nn)
     {
         printf("Neural network could not be loaded, check if a model exists in "
@@ -465,14 +457,8 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
  * an array of null-terminated word strings (caller must free).
  */
 char **build_words_list(GdkPixbuf *pixbuf, Letter **words_letters, int nb_words,
-                        int *words_size)
+                        int *words_size, NeuralNetwork *nn)
 {
-    char *exe_dir = get_executable_dir();
-    char model_path[512];
-    snprintf(model_path, sizeof(model_path), "%s/../assets/%s", exe_dir,
-             MODEL_PATH);
-
-    NeuralNetwork *nn = load_network(get_image_path(model_path));
     if (!nn)
     {
         printf("Neural network could not be loaded, check if a model exists in "

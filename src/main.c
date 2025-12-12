@@ -1,11 +1,3 @@
-/*
- * src/main.c
- *
- * Simple GTK application for loading, processing and saving images,
- * and managing a small neural network. Comments are short and follow the
- * project's style.
- */
-
 #include "../include/dataset.h"
 #include "../include/image/image.h"
 #include "../include/neural_network.h"
@@ -34,7 +26,8 @@ struct AppData
 };
 
 NeuralNetwork *neural = NULL;
-int treated = 0; /* 0 = not treated, 1 = treated */
+// 0 = not processed, 1 = processed
+int processed = 0; 
 
 /*
  * update_image:
@@ -72,7 +65,7 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     struct AppData *data = user_data;
 
-    treated = 0;
+    processed = 0;
 
     if (!data || !data->original)
         return;
@@ -173,7 +166,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     if (!data || !data->transformed)
         return;
 
-    if (treated == 0)
+    if (processed == 0)
     {
         convert_to_grayscale(data->transformed);
         (void)convert_to_black_and_white(data->transformed); /* threshold not needed here */
@@ -181,7 +174,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
         data->transformed = rotate_image_automatic(data->transformed);
 
         apply_transformations(data);
-        treated = 1;
+        processed = 1;
     }
     else
     {
@@ -207,7 +200,7 @@ void solver(GtkButton *button, gpointer user_data)
 void change_image(const char *filename, gpointer user_data)
 {
     struct AppData *data = (struct AppData *)user_data;
-    treated = 0;
+    processed = 0;
 
     if (!data)
     {
@@ -439,7 +432,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *file_button;
     GtkWidget *center;
     GtkWidget *right_button;
-    GtkWidget *description;
     GtkWidget *title_neural;
 
     char **filename = (char **)user_data;
@@ -512,8 +504,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     reset_button = gtk_button_new_with_label("Reset");
     save_button = gtk_button_new_with_label("Save");
     solver_button = gtk_button_new_with_label("Solve");
-
-    description = gtk_label_new("Image:");
 
     gtk_box_pack_start(GTK_BOX(horizontal_box), treatement_button, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(horizontal_box), solver_button, TRUE, TRUE, 5);
