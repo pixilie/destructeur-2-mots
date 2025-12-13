@@ -150,12 +150,13 @@ void selection_sort(guchar *neighborhood)
  * Parameters: pixbuf (target), copy (source pixels), x, y, width, height,
  * rowstride, n_channels.
  */
-void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
+void filter_neighborhood_3x3(GdkPixbuf *pixbuf, GdkPixbuf *copy, int x, int y,
                              int width, int height, int rowstride,
                              int n_channels)
 {
     guchar neighborhood[9]; // The 9 neighboring pixels array
     int neighborhood_count = 0;
+    guchar *copy_pixels = gdk_pixbuf_get_pixels(copy);
 
     for (int dy = -1; dy <= 1; dy++)
     {
@@ -181,7 +182,7 @@ void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
                 new_y = height - 1;
             }
 
-            guchar *p = copy + new_y * rowstride + new_x * n_channels;
+            guchar *p = copy_pixels + new_y * rowstride + new_x * n_channels;
 
             neighborhood[neighborhood_count] = p[0];
             neighborhood_count++;
@@ -210,11 +211,9 @@ void median_filter_3x3(GdkPixbuf *pixbuf)
     int height = gdk_pixbuf_get_height(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     // Copy pixbuf to get the raw pixels before applying the median filter
-    guchar *copy = g_malloc(rowstride * height);
-    memcpy(copy, pixels, rowstride * height);
+    GdkPixbuf *copy = gdk_pixbuf_copy(pixbuf);
 
     // Filter every pixel in a 3x3 neighborhood
     for (int y = 0; y < height; y++)
@@ -226,5 +225,5 @@ void median_filter_3x3(GdkPixbuf *pixbuf)
         }
     }
 
-    g_free(copy);
+    g_object_unref(copy);
 }

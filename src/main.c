@@ -194,8 +194,8 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     if (is_processed == 0)
     {
         convert_to_grayscale(data->transformed);
-        (void)convert_to_black_and_white(data->transformed);
         median_filter_3x3(data->transformed);
+        (void)convert_to_black_and_white(data->transformed);
         GdkPixbuf *rotated = rotate_image_automatic(data->transformed);
         //g_object_unref(data->transformed);
         data->transformed = rotated;
