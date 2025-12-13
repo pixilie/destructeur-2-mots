@@ -156,22 +156,22 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
     return var;
 }
 
+/*
+* detect_best_angle:
+* Search candidate rotation angles and return the best angle (degrees).
+* The function evaluates rotated images and picks the angle with highest score.
+* Works best on binarized/black-and-white input.
+*/
 double detect_best_angle(GdkPixbuf *pixbuf)
 {
-    /*
-     * detect_best_angle:
-     * Search candidate rotation angles and return the best angle (degrees).
-     * The function evaluates rotated images and picks the angle with highest score.
-     * Works best on binarized/black-and-white input.
-     */
-
+    
     // Downscale to speed up rotation to 100 pixels width (less pixels)
     GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 150);
 
     double best_angle = 0.0;
     double best_score = -1.0;
 
-    // First search : check every 5 degrees from -45° to 45° (= 90 tests)
+    // First search : check every 5 degrees from -45° to 45° (= 19 tests)
     for (double angle = -45.0; angle <= 45.0; angle += 5.0)
     {
         GdkPixbuf *rotated_pixbuf = rotate_image(downscaled_pixbuf, angle);
@@ -186,7 +186,7 @@ double detect_best_angle(GdkPixbuf *pixbuf)
     }
 
     // More refined second search : check every 0.1 degree around the previous
-    // best angle
+    // best angle (60 tests)
     double search_start = best_angle - 3.0;
     double search_end = best_angle + 3.0;
     for (double angle = search_start; angle <= search_end; angle += 0.1)
