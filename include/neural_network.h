@@ -18,6 +18,9 @@ typedef struct
     double *output;
 } NeuralNetwork;
 
+typedef void (*ProgressCallback)(int current_epoch, int total_epochs,
+                                 void *user_data);
+
 NeuralNetwork *create_network(int input_size, int hidden_size, int output_size);
 NeuralNetwork *load_network(const char *filename);
 void save_network(NeuralNetwork *nn, const char *filename);
@@ -30,5 +33,5 @@ void init_weights_he(double *weights, int size, int fan_in);
 
 void forward(NeuralNetwork *nn, double *inputs);
 void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
-           double lr, int epochs);
+           double lr, int epochs, ProgressCallback cb, void *user_data);
 char predict_letter(NeuralNetwork *nn, GdkPixbuf *pixbuf);

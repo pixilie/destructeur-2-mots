@@ -62,6 +62,27 @@ void update_image(AppData *data)
 }
 
 /*
+ * update_progress_ui:
+ * Update the progress bar.
+ */
+void update_progress_ui(int current_epoch, int total_epochs, void *user_data)
+{
+    GtkProgressBar *bar = GTK_PROGRESS_BAR(user_data);
+
+    double fraction = (double)current_epoch / total_epochs;
+    gtk_progress_bar_set_fraction(bar, fraction);
+
+    char text[32];
+    snprintf(text, sizeof(text), "Epoch %d/%d", current_epoch, total_epochs);
+    gtk_progress_bar_set_text(bar, text);
+
+    while (gtk_events_pending())
+    {
+        gtk_main_iteration();
+    }
+}
+
+/*
  * apply_transformations:
  * Recompute data->current from data->transformed applying rotation.
  */
@@ -481,12 +502,36 @@ void train_neural(const char *filename)
         neural = create_network(784, 128, 26);
 
     Dataset data = load_dataset(filename);
-    train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
-    printf(
-        COLOR_GREEN
-        "[SUCCES] " COLOR_RESET
-        "Le réseau de neurones a commencé à s'entraîner sur le dataset: %s\n",
-        filename);
+
+    GtkWidget *progress_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(progress_window),
+                         "Entraînement en cours...");
+    gtk_window_set_default_size(GTK_WINDOW(progress_window), 300, 100);
+    gtk_window_set_position(GTK_WINDOW(progress_window), GTK_WIN_POS_CENTER);
+
+    gtk_window_set_modal(GTK_WINDOW(progress_window), TRUE);
+    gtk_window_set_deletable(GTK_WINDOW(progress_window), FALSE);
+
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(progress_window), 20);
+    gtk_container_add(GTK_CONTAINER(progress_window), vbox);
+
+    GtkWidget *label = gtk_label_new("Entraînement du réseau de neurones...");
+    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
+
+    GtkWidget *progress_bar = gtk_progress_bar_new();
+    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress_bar), TRUE);
+    gtk_box_pack_start(GTK_BOX(vbox), progress_bar, TRUE, TRUE, 0);
+
+    gtk_widget_show_all(progress_window);
+
+    while (gtk_events_pending())
+        gtk_main_iteration();
+
+    train(neural, data.inputs, data.targets, data.samples, 0.01, 1000,
+          update_progress_ui, progress_bar);
+
+    gtk_widget_destroy(progress_window);
 }
 
 /*
