@@ -196,7 +196,8 @@ GdkPixbuf *scale_pixbuf_to_28x28(GdkPixbuf *src)
 /*
  * pixbuf_to_input_vector:
  * Convert a GdkPixbuf into a normalized input vector for the neural network.
- * Normalizes pixels to [0.0,1.0] and inverts color (assumes dark text on light bg).
+ * Normalizes pixels to [0.0,1.0] and inverts color (assumes dark text on light
+ * bg).
  *
  * Parameters:
  * - pixbuf : the source image (must be valid)

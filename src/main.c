@@ -1,6 +1,6 @@
 #include "../include/dataset.h"
+#include "../include/grid_cutting.h"
 #include "../include/image/image.h"
-#include "../include/line_detection.h"
 #include "../include/neural_network.h"
 #include "../include/ui.h"
 #include "image/image_helpers.h"
@@ -824,8 +824,7 @@ int main(int argc, char *argv[])
     char *exe_dir = get_executable_dir();
     snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
              DEFAULT_MODEL_PATH);
-    printf("Default neural netwotk path loaded: %s\n",
-           neural_path);
+    printf("Default neural netwotk path loaded: %s\n", neural_path);
     neural = load_network(neural_path);
 
     if (argc > 1)

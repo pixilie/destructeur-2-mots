@@ -157,14 +157,14 @@ double compute_projection_variance(GdkPixbuf *pixbuf)
 }
 
 /*
-* detect_best_angle:
-* Search candidate rotation angles and return the best angle (degrees).
-* The function evaluates rotated images and picks the angle with highest score.
-* Works best on binarized/black-and-white input.
-*/
+ * detect_best_angle:
+ * Search candidate rotation angles and return the best angle (degrees).
+ * The function evaluates rotated images and picks the angle with highest score.
+ * Works best on binarized/black-and-white input.
+ */
 double detect_best_angle(GdkPixbuf *pixbuf)
 {
-    
+
     // Downscale to speed up rotation to 100 pixels width (less pixels)
     GdkPixbuf *downscaled_pixbuf = downscale_pixbuf(pixbuf, 150);
 
@@ -202,9 +202,9 @@ double detect_best_angle(GdkPixbuf *pixbuf)
         }
     }
 
-    if(downscaled_pixbuf)
+    if (downscaled_pixbuf)
         g_object_unref(downscaled_pixbuf);
-    
+
     if (best_angle > -1.0 &&
         best_angle < 1.0) // Avoid small angles for straight images
     {
@@ -217,7 +217,8 @@ double detect_best_angle(GdkPixbuf *pixbuf)
 /*
  * rotate_image_automatic:
  * Detect the best rotation angle and rotate the image accordingly.
- * Returns the rotated pixbuf (new reference) or the original if no rotation needed.
+ * Returns the rotated pixbuf (new reference) or the original if no rotation
+ * needed.
  */
 GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
 {
@@ -227,6 +228,7 @@ GdkPixbuf *rotate_image_automatic(GdkPixbuf *pixbuf)
         printf("Image is already upright, no rotation needed\n");
         return pixbuf;
     }
-    printf("Image automatically rotated by best rotation angle : %.2f°\n",best_angle);
+    printf("Image automatically rotated by best rotation angle : %.2f°\n",
+           best_angle);
     return rotate_image(pixbuf, best_angle);
 }

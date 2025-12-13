@@ -1,4 +1,4 @@
-#include "../include/line_detection.h"
+#include "../include/grid_cutting.h"
 #include "../include/image/image.h"
 #include "../include/image/image_helpers.h"
 #include "../include/solver.h"

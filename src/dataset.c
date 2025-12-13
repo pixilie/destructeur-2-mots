@@ -33,8 +33,8 @@ char index_to_char(int index) { return 'A' + index; }
  * Parameters:
  *  - label: class index in [0,25]
  * Returns:
- *  - pointer to malloc'd double[26] with 1.0 at position label and 0.0 elsewhere.
- *    Caller is responsible for freeing the returned array.
+ *  - pointer to malloc'd double[26] with 1.0 at position label and 0.0
+ * elsewhere. Caller is responsible for freeing the returned array.
  */
 double *one_hot(int label)
 {
@@ -81,8 +81,7 @@ double *load_letter_image(const char *filename, int *input_size)
         for (int x = 0; x < w; x++)
         {
             guchar p = pixels[y * rowstride + x * n_channels];
-            vec[y * w + x] = (255.0 - (double
-)p) / 255.0;
+            vec[y * w + x] = (255.0 - (double)p) / 255.0;
         }
     }
 
@@ -154,7 +153,8 @@ Dataset load_dataset(const char *path)
             }
 
             char file_path[4096];
-            snprintf(file_path, sizeof(file_path), "%s/%s", letter_path, img->d_name);
+            snprintf(file_path, sizeof(file_path), "%s/%s", letter_path,
+                     img->d_name);
 
             int size;
             double *vec = load_letter_image(file_path, &size);

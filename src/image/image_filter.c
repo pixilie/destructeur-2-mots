@@ -1,6 +1,5 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <string.h>
-#include <stdlib.h>
 
 /*
  * erode_3x3:
