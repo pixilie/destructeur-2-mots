@@ -667,7 +667,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     gtk_style_context_add_class(ctx, "bold-label");
     gtk_box_pack_start(GTK_BOX(sidebar_box), lbl_neural, FALSE, FALSE, 5);
 
-    AppData *data = g_new(AppData, 1);
+    AppData *data = g_new0(AppData, 1);
     data->image = image;
     data->original = pixbuf;
     data->current = gdk_pixbuf_copy(pixbuf);
@@ -727,7 +727,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     g_object_unref(scaled);
 
     // Free AppData and pipelineResult when window is destroyed
-    g_signal_connect_swapped(window, "destroy", G_CALLBACK(free_app_data),
+    g_signal_connect(window, "destroy", G_CALLBACK(free_app_data),
                              data);
 }
 
