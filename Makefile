@@ -1,7 +1,7 @@
 # ===================== Compiler & Flags =====================
 CC        = gcc
-CFLAGS    = -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -Iinclude -Iinclude/image $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0 fontconfig) -fsanitize=address -g
-LDFLAGS   = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0 fontconfig) -fsanitize=address -g
+CFLAGS    = -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -Iinclude -Iinclude/image $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0) -fsanitize=address -g
+LDFLAGS   = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0) -fsanitize=address -g
 
 # ===================== Directories =====================
 SRC_DIR      = src
