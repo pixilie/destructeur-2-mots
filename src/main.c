@@ -16,6 +16,12 @@
 
 #define DEFAULT_MODEL_PATH "assets/ocr_model"
 
+// Terminal colors
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[31m"
+#define COLOR_GREEN "\033[32m"
+#define COLOR_YELLOW "\033[33m"
+
 NeuralNetwork *neural = NULL;
 int is_processed = 0; // 0 = not processed, 1 = processed
 
@@ -109,8 +115,8 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
 
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(data->image));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choose where to save", parent, GTK_FILE_CHOOSER_ACTION_SAVE, "_Cancel",
-        GTK_RESPONSE_CANCEL, "_Save", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir l'emplacement où enregistrer l'image", parent, GTK_FILE_CHOOSER_ACTION_SAVE, "_Annuler",
+        GTK_RESPONSE_CANCEL, "_Enregistrer", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
@@ -129,7 +135,7 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
             }
             else
             {
-                g_print("Image saved as: %s\n", filename);
+                printf(COLOR_GREEN "[SUCCES] " COLOR_RESET "Image sauvegardée dans : %s\n", filename);
             }
             g_free(filename);
         }
@@ -167,7 +173,7 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
 void pop_up_treated()
 {
     GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
-    GtkWidget *label = gtk_label_new("Image already treated");
+    GtkWidget *label = gtk_label_new("L'image a déja été traitée");
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), box);
     gtk_box_pack_start(GTK_BOX(box), label, FALSE, FALSE, 0);
@@ -190,7 +196,9 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
         convert_to_grayscale(data->transformed);
         (void)convert_to_black_and_white(data->transformed);
         median_filter_3x3(data->transformed);
-        data->transformed = rotate_image_automatic(data->transformed);
+        GdkPixbuf *rotated = rotate_image_automatic(data->transformed);
+        g_object_unref(data->transformed);
+        data->transformed = rotated;
 
         apply_transformations(data);
         is_processed = 1;
@@ -215,46 +223,70 @@ void solver(GtkButton *button, gpointer user_data)
         return;
     }
 
-    // data->rotation_angle = data->pipelineResult.rotation_angle;
-    data->transformed = rotate_image(data->transformed, data->rotation_angle);
+    double rotation_angle = data->pipelineResult->rotation_angle;
+    if (rotation_angle != 0.0)
+    {
+        GdkPixbuf *rotated = rotate_image(data->transformed, rotation_angle);
+        g_object_unref(data->transformed);
+        data->transformed = rotated;
+        data->rotation_angle = rotation_angle;
+    }
+
     apply_transformations(data);
 
-    Words words = data->pipelineResult.words;
-    if (!words.solved_words_image_coos)
+    Words *words = &data->pipelineResult->words;
+    if (!words->solved_words_image_coos)
     {
-        printf("No solved words image coordinates found to draw around solved "
-               "words !\n");
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET
+                         "Les coordonnées des mots n'ont pas été trouvées dans "
+                         "le solver pour dessiner autour des mots!\n");
+        return;
+    }
+
+    if (words->detected_words_count == 0)
+    {
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET
+                         "Aucun mot n'a été détecté dans la grille!\n");
         return;
     }
 
     int thickness = 3;
-    
-    for (int i = 0; i < words.detected_words_count; i++)
+    int is_drawn = 0;
+
+    for (int i = 0; i < words->detected_words_count; i++)
     {
-        int x1 = words.solved_words_image_coos[i][0];
-        int y1 = words.solved_words_image_coos[i][1];
-        int x2 = words.solved_words_image_coos[i][2];
-        int y2 = words.solved_words_image_coos[i][3];
-        int x3 = words.solved_words_image_coos[i][4];
-        int y3 = words.solved_words_image_coos[i][5];
-        int x4 = words.solved_words_image_coos[i][6];
-        int y4 = words.solved_words_image_coos[i][7];
+        int x1 = words->solved_words_image_coos[i][0];
+        int y1 = words->solved_words_image_coos[i][1];
+        int x2 = words->solved_words_image_coos[i][2];
+        int y2 = words->solved_words_image_coos[i][3];
+        int x3 = words->solved_words_image_coos[i][4];
+        int y3 = words->solved_words_image_coos[i][5];
+        int x4 = words->solved_words_image_coos[i][6];
+        int y4 = words->solved_words_image_coos[i][7];
 
         if (x1 > 0 && y1 > 0 && x2 > 0 && y2 > 0 && x3 > 0 && y3 > 0 &&
             x4 > 0 && y4 > 0)
         {
             draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
                            thickness);
+            is_drawn = 1;
             printf("Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
                    "with thickness %i\n",
                    x1, y1, x2, y2, x3, y3, x4, y4, thickness);
         }
     }
 
+    if (is_drawn == 0)
+    {
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET "Aucun mot n'a été marqué comme résolu dans la grille\n");
+    }
+
+    data->rotation_angle = 0;
     apply_transformations(data);
+    data->rotation_angle = rotation_angle;
 }
 
-PipelineResult load_pipeline(char *filename, NeuralNetwork *nn)
+PipelineResult *load_pipeline(char *filename, NeuralNetwork *nn)
 {
     char *exe_dir = get_executable_dir();
     char grid_path[512];
@@ -332,7 +364,18 @@ void change_image(const char *filename, gpointer user_data)
 
     data->rotation_angle = 0.0;
     data->save_index = 1;
+    is_processed = 0;
+
+    gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
+    gtk_widget_queue_draw(data->image);
+
+    // Free old pipelineResult fully
+    free_pipeline(data->pipelineResult);
+    data->pipelineResult = NULL;
+
     data->pipelineResult = load_pipeline((char *)filename, neural);
+
+    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Image changed: %s\n", filename);
 }
 
 /*
@@ -350,8 +393,8 @@ void get_path_image(GtkWidget *widget, gpointer user_data)
 
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choose an image", parent, GTK_FILE_CHOOSER_ACTION_OPEN, "_Cancel",
-        GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir une nouvelle image à charger", parent, GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler",
+        GTK_RESPONSE_CANCEL, "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
@@ -380,8 +423,11 @@ void load_neural(const char *filename)
     if (!filename)
         return;
 
-    g_print("Loading neural network from: %s\n", filename);
     neural = load_network(filename);
+    if (neural)
+    {
+        printf(COLOR_YELLOW "[INFO] " COLOR_RESET "Modèle du réseau de neurones chargé : %s\n", filename);
+    }
 }
 
 /*
@@ -392,8 +438,8 @@ void get_neural_load_path(GtkWidget *widget)
 {
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choose model file", parent, GTK_FILE_CHOOSER_ACTION_OPEN, "_Cancel",
-        GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir le fichier du modèle du réseau de neurones", parent, GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler",
+        GTK_RESPONSE_CANCEL, "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
@@ -426,7 +472,7 @@ void train_neural(const char *filename)
 
     Dataset data = load_dataset(filename);
     train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
-    g_print("Training started for dataset: %s\n", filename);
+    printf(COLOR_GREEN "[SUCCES] " COLOR_RESET "Le réseau de neurones a commencé à s'entraîner sur le dataset: %s\n", filename);
 }
 
 /*
@@ -437,8 +483,8 @@ void get_neural_train_path(GtkWidget *widget)
 {
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choose dataset folder", parent, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-        "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir le modèle du réseau de neurones à charger", parent, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+        "_Annuler", GTK_RESPONSE_CANCEL, "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
@@ -466,12 +512,12 @@ void save_neural(GtkWidget *widget)
 {
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choose where to save model", parent, GTK_FILE_CHOOSER_ACTION_SAVE,
-        "_Cancel", GTK_RESPONSE_CANCEL, "_Save", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir le fichier où enregistrer le modèle du réseau de neurones", parent, GTK_FILE_CHOOSER_ACTION_SAVE,
+        "_Annuler", GTK_RESPONSE_CANCEL, "_Enregistrer", GTK_RESPONSE_ACCEPT, NULL);
 
     if (neural == NULL)
     {
-        g_printerr("Error: cannot save, no neural network loaded\n");
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET "Le modèle du réseau de neurones est vide!\n");
         return;
     }
 
@@ -482,7 +528,7 @@ void save_neural(GtkWidget *widget)
         if (filename)
         {
             save_network(neural, filename);
-            g_print("Neural network saved to: %s\n", filename);
+            printf(COLOR_GREEN "[SUCCESS] " COLOR_RESET "Neural network saved to: %s\n", filename);
             g_free(filename);
         }
     }
@@ -554,8 +600,12 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_box_pack_start(GTK_BOX(vertical_box), top_bar, FALSE, FALSE, 0);
 
+    char *exe_dir = get_executable_dir();
+    char logo_path[1024];
+    snprintf(logo_path, sizeof(logo_path), "%s/../assets/logo.png", exe_dir);
+
     GdkPixbuf *logo_pixbuf =
-        gdk_pixbuf_new_from_file("./assets/logo.png", &error);
+        gdk_pixbuf_new_from_file(logo_path, &error);
     if (logo_pixbuf)
     {
         GdkPixbuf *scaled_logo =

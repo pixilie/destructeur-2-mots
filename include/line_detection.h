@@ -21,8 +21,11 @@ typedef struct
 
 typedef struct
 {
+    double rotation_angle;
+    
     int grid_coo[4];
     int words_coo[4];
+    
     int nb_letters;
     int nb_letters_grid;
     int nb_letters_words;
@@ -55,6 +58,6 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo,
 int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
                       int nb_words);
 
-PipelineResult pipeline(char *filename, NeuralNetwork *nn);
+PipelineResult *pipeline(char *filename, NeuralNetwork *nn);
 
-void free_pipeline(PipelineResult pipelineResult);
+void free_pipeline(PipelineResult *pipelineResult);

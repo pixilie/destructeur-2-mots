@@ -24,7 +24,7 @@ ALL_OBJS     = $(CORE_OBJS) $(IMG_OBJS)
 
 # ===================== Main Rules =====================
 all: $(TARGET)
-	@echo "Starting the application..."
+	@echo "Lancement de l'application..."
 	@./$(TARGET)
 
 $(TARGET): $(MAIN_OBJ) $(ALL_OBJS)

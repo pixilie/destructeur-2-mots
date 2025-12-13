@@ -418,6 +418,12 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
     }
 
     med_width /= nb_letter;
+
+    if (med_width == 0)
+    {
+        printf("Med width is equal to 0\n");
+        return;
+    }
     
     for (int i = 0; i < nb_letter; i++)
     {
@@ -542,7 +548,7 @@ int find_word_by_word(int **coo, int **word_list, int *words_coo, int nb_letter,
  *  - output_gw_file   : output directory for grid and word crops.
  *  - output_letter_file: output directory for individual letter images.
  */
-PipelineResult pipeline(char *filename, NeuralNetwork *nn)
+PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
 {
     if (!nn)
     {
@@ -551,13 +557,20 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
     
     int nb_words = 50; // Max number of words in the words list
 
-    PipelineResult pipelineResult;
+    PipelineResult *pipelineResult = malloc(sizeof(PipelineResult));
+    if (!pipelineResult)
+    {
+        printf("Failed to allocate pipelineResult\n");
+        return NULL;
+    }
+    
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
 
     convert_to_grayscale(pixbuf);
 
     double best_angle = detect_best_angle(pixbuf);
+    pipelineResult->rotation_angle = best_angle;
     if (best_angle != 0)
     {
         GdkPixbuf *rotated = rotate_image(pixbuf, best_angle);
@@ -587,7 +600,7 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
 
     int nb_letter =
         find_letter(pixbuf, coo); // Number of letters in the grid + words list
-    pipelineResult.nb_letters = nb_letter;
+    pipelineResult->nb_letters = nb_letter;
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
 
@@ -600,8 +613,8 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
     generate_letter(grid_coo, words_coo, coo, nb_letter, &nb_letters_grid,
                     &nb_letters_words, &grid_letters, &words_letters);
 
-    pipelineResult.nb_letters_grid = nb_letters_grid;
-    pipelineResult.nb_letters_words = nb_letters_words;
+    pipelineResult->nb_letters_grid = nb_letters_grid;
+    pipelineResult->nb_letters_words = nb_letters_words;
 
     Letter **grid_letters_array = build_grid_from_image(
         grid_letters, nb_letters_grid, &nb_rows, &nb_cols);
@@ -614,8 +627,8 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
     char **words_letters_list = build_words_list(
         nn, pixbuf, words_letters_final, detected_words_count, words_size);
 
-    pipelineResult.words.detected_words_count = detected_words_count;
-    pipelineResult.words.words = words_letters_list;
+    pipelineResult->words.detected_words_count = detected_words_count;
+    pipelineResult->words.words = words_letters_list;
 
     int rows;
     int cols;
@@ -631,14 +644,14 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
     final_grid.grid = grid_array;
     final_grid.nb_rows = rows;
     final_grid.nb_cols = cols;
-    pipelineResult.grid = final_grid;
+    pipelineResult->grid = final_grid;
 
     int **solved_words_grid_coos = get_solved_words_grid_coos(
         words_letters_list, detected_words_count, grid_array, rows, cols);
-    pipelineResult.words.solved_words_grid_coos = solved_words_grid_coos;
+    pipelineResult->words.solved_words_grid_coos = solved_words_grid_coos;
     int **solved_words_image_coos = get_solved_words_image_coos_drawing(
         solved_words_grid_coos, detected_words_count, grid_coo, rows, cols);
-    pipelineResult.words.solved_words_image_coos = solved_words_image_coos;
+    pipelineResult->words.solved_words_image_coos = solved_words_image_coos;
 
     int **word_list = malloc(nb_words * sizeof(int *));
     for (int i = 0; i < nb_words; i++)
@@ -648,11 +661,11 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
 
     int nb_detected_words =
         find_word_by_word(coo, word_list, words_coo, nb_letter, nb_words);
-    pipelineResult.nb_words = nb_detected_words;
+    pipelineResult->nb_words = nb_detected_words;
 
     for (int i = 0; i < 4; i++)
     {
-        pipelineResult.grid_coo[i] = grid_coo[i];
+        pipelineResult->grid_coo[i] = grid_coo[i];
     }
     GdkPixbuf *grid = crop(pixbuf_to_slice, grid_coo[0], grid_coo[1],
                            grid_coo[2], grid_coo[3]);
@@ -660,7 +673,7 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
 
     for (int i = 0; i < 4; i++)
     {
-        pipelineResult.words_coo[i] = words_coo[i];
+        pipelineResult->words_coo[i] = words_coo[i];
     }
     GdkPixbuf *words = crop(pixbuf_to_slice, words_coo[0], words_coo[1],
                             words_coo[2], words_coo[3]);
@@ -671,30 +684,30 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
 
     printf(COLOR_YELLOW "[INFO][SOLVER]" COLOR_RESET
                         " Built grid with %i rows and %i columns\n",
-           pipelineResult.grid.nb_rows, pipelineResult.grid.nb_cols);
+           pipelineResult->grid.nb_rows, pipelineResult->grid.nb_cols);
     printf(COLOR_YELLOW "[INFO][SOLVER]" COLOR_RESET
                         " Built words list with %i words detected\n",
-           pipelineResult.words.detected_words_count);
+           pipelineResult->words.detected_words_count);
 
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected grid coordinates : (%i, %i)(%i, %i)\n",
-           pipelineResult.grid_coo[0], pipelineResult.grid_coo[1],
-           pipelineResult.grid_coo[2], pipelineResult.grid_coo[3]);
+           pipelineResult->grid_coo[0], pipelineResult->grid_coo[1],
+           pipelineResult->grid_coo[2], pipelineResult->grid_coo[3]);
 
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Detected words list coordinates : (%i, %i)(%i, %i)\n",
-           pipelineResult.words_coo[0], pipelineResult.words_coo[1],
-           pipelineResult.words_coo[2], pipelineResult.words_coo[3]);
+           pipelineResult->words_coo[0], pipelineResult->words_coo[1],
+           pipelineResult->words_coo[2], pipelineResult->words_coo[3]);
 
     printf(COLOR_YELLOW "[INFO]" COLOR_RESET
                         " Number of letters detected : %i (In the grid : %i, "
                         "in the words list : %i)\n",
-           pipelineResult.nb_letters, pipelineResult.nb_letters_grid,
-           pipelineResult.nb_letters_words);
+           pipelineResult->nb_letters, pipelineResult->nb_letters_grid,
+           pipelineResult->nb_letters_words);
     printf(COLOR_YELLOW
            "[INFO]" COLOR_RESET
            " Number of words detected in the words list of the grid : %i\n",
-           pipelineResult.nb_words);
+           pipelineResult->nb_words);
 
     for (int i = 0; i < magic_nb_letter; i++)
     {
@@ -715,9 +728,9 @@ PipelineResult pipeline(char *filename, NeuralNetwork *nn)
     return pipelineResult;
 }
 
-void free_pipeline(PipelineResult pipelineResult)
+void free_pipeline(PipelineResult *pipelineResult)
 {
-    Words words_pipeline = pipelineResult.words;
+    Words words_pipeline = pipelineResult->words;
     for (int i = 0; i < words_pipeline.detected_words_count; i++)
     {
         free(words_pipeline.solved_words_grid_coos[i]);
@@ -727,4 +740,6 @@ void free_pipeline(PipelineResult pipelineResult)
     free(words_pipeline.solved_words_grid_coos);
     free(words_pipeline.solved_words_image_coos);
     free(words_pipeline.words);
+
+    free(pipelineResult);
 }

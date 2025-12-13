@@ -12,6 +12,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+// Terminal colors
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[31m"
+#define COLOR_GREEN "\033[32m"
+#define COLOR_YELLOW "\033[33m"
+
 /*
  * len_word:
  * Return the length of a null-terminated string.
@@ -347,6 +353,21 @@ char **build_grid_array(NeuralNetwork *nn, GdkPixbuf *pixbuf,
     }
     free(grid_array);
 
+    printf(COLOR_YELLOW "[INFO] " COLOR_RESET "Grille détectée : %i lignes, %i colonnes\n", row_count, col_count);
+    for (int row = 0; row < row_count; row++)
+    {
+        printf("[");
+        for (int col = 0; col < col_count; col++)
+        {
+            printf("%c", new_grid_array[row][col]);
+            if (col < col_count - 1)
+            {
+                printf(" ");
+            }
+        }
+        printf("]\n");
+    }
+
     return new_grid_array;
 }
 
@@ -540,6 +561,12 @@ char **build_words_list(NeuralNetwork *nn, GdkPixbuf *pixbuf,
     }
     free(words_letters);
     free(words_size);
+
+    printf(COLOR_YELLOW "[INFO] " COLOR_RESET "Mots détéctés dans la liste de mots : %i\n", nb_words);
+    for (int word = 0; word < nb_words; word++)
+    {
+        printf("Mot %i : %s\n", word + 1, words_list[word]);
+    }
 
     return words_list;
 }
