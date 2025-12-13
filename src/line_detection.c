@@ -421,7 +421,9 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
 
     if (med_width == 0)
     {
-        printf(COLOR_RED "[ERREUR] " COLOR_RESET "Line detection : find_grid_and_words : La longueur médiane des lettres est égale à 0\n");
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET
+                         "Line detection : find_grid_and_words : La longueur "
+                         "médiane des lettres est égale à 0\n");
         return;
     }
 

@@ -3,7 +3,19 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
 
-// Draws a pixel of size thickness * thickness with custom GDB color
+/**
+ * draw_pixel:
+ * Draws a colored pixel on the (x, y) coordinates in the pixbuf with a size of
+ * thickness.
+ *
+ * Parameters:
+ *  - pixbuf    : pointer to a RGB GdkPixbuf.
+ *  - x         : the x coordinate of the pixel.
+ *  - y         : the y coordinate of the pixel.
+ *  - thickness : the size of the pixel.
+ *  - color     : int array of [R, G, B] containing the RGB color of the pixel
+ * to draw.
+ */
 void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness, int color[3])
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -31,22 +43,36 @@ void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness, int color[3])
     }
 }
 
-// Draws a red line from (x1, y1) to (x2, y2) in the UI colored image
-// Uses Bresenham's line algorithm to draw the ideal straight line
-void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness, int color[3])
-{    
+/**
+ * draw_line:
+ * Draws a colored line from (x1, y1) to (x2, y2) in the pixbuf with a size of
+ * thickness. Uses Bresenham's line algorithm to draw the ideal straight line.
+ *
+ * Parameters:
+ *  - pixbuf    : pointer to a RGB GdkPixbuf.
+ *  - x1        : the starting x coordinate of the line to draw.
+ *  - y1        : the starting y coordinate of the line to draw.
+ *  - x2        : the ending x coordinate of the line to draw.
+ *  - y2        : the ending y coordinate of the line to draw.
+ *  - thickness : the size of the line.
+ *  - color     : int array of [R, G, B] containing the RGB color of the line to
+ * draw.
+ */
+void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness,
+               int color[3])
+{
     if (x1 == x2 && y1 == y2)
     {
         draw_pixel(pixbuf, x1, y1, thickness, color);
         return;
     }
-    
+
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
 
     int step_x = (x1 < x2) ? 1 : -1; // The direction of the horizontal movement
-    int step_y = (y1 < y2) ? 1 : -1;
-        
+    int step_y = (y1 < y2) ? 1 : -1; // The direction of the vertical movement
+
     int error_term = dx - dy;
 
     while (1)
@@ -74,13 +100,19 @@ void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int thickness,
     }
 }
 
-// Draws a red rectangle connecting 4 points on the UI image, marking a word as
-// resolved
-// Can mark horizontal, vertical and diagonal words as resolved
-// (x1, y1) : Top left corner
-// (x2, y2) : Top right corner
-// (x3, y3) : Bottom right corner
-// (x4, y4) : Bottom left corner
+/**
+ * draw_rectangle:
+ * Draws a colored rectangle from 4 points in the pixbuf with a size of
+ * thickness.
+ *
+ * Parameters:
+ *  - pixbuf    : pointer to a RGB GdkPixbuf.
+ *  - (x1, y1)        : top left corner coordinates.
+ *  - (x2, y2)        : top right corner coordinates.
+ *  - (x3, y3)        : bottom right corner coordinates.
+ *  - (x4, y4)        : bottom left corner coordinates.
+ *  - thickness : the size of the rectangle lines.
+ */
 void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
                     int y3, int x4, int y4, int thickness)
 {
@@ -103,7 +135,7 @@ void draw_rectangle(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2, int x3,
     {
         color[2] = 255; // Diagonal words : Blue rectangle
     }
-       
+
     draw_line(pixbuf, x1, y1, x2, y2, thickness, color);
     draw_line(pixbuf, x2, y2, x3, y3, thickness, color);
     draw_line(pixbuf, x3, y3, x4, y4, thickness, color);
