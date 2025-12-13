@@ -1,6 +1,6 @@
+#include "../include/line_detection.h"
 #include "../include/image/image.h"
 #include "../include/image/image_helpers.h"
-#include "../include/line_detection.h"
 #include "../include/solver.h"
 #include "neural_network.h"
 
@@ -405,7 +405,7 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
 
     int med_width = 0;
     int seuil = 20;
-    
+
     for (int i = 0; i < nb_letter; i++)
     {
         if (!(coo[i][2] < word_coo[0] - seuil ||
@@ -421,10 +421,10 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
 
     if (med_width == 0)
     {
-        printf("Med width is equal to 0\n");
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET "Line detection : find_grid_and_words : La longueur médiane des lettres est égale à 0\n");
         return;
     }
-    
+
     for (int i = 0; i < nb_letter; i++)
     {
         if (!(coo[i][2] < word_coo[0] - seuil ||
@@ -432,15 +432,15 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
               coo[i][3] < word_coo[1] - seuil ||
               coo[i][1] > word_coo[3] + seuil))
         {
-            if(coo[i][2] - coo[i][0] > med_width*1.5)
+            if (coo[i][2] - coo[i][0] > med_width * 1.5)
             {
-                int nb_to_add = (coo[i][2] - coo[i][0])/med_width;
+                int nb_to_add = (coo[i][2] - coo[i][0]) / med_width;
                 int new_width = coo[i][0];
-                for(int j = 0; j < nb_to_add; j ++)
+                for (int j = 0; j < nb_to_add; j++)
                 {
                     coo[nb_letter + j + 1][0] = new_width;
                     coo[nb_letter + j + 1][1] = coo[i][1];
-                    new_width += (coo[i][2] - coo[i][0])/nb_to_add;
+                    new_width += (coo[i][2] - coo[i][0]) / nb_to_add;
                     coo[nb_letter + j + 1][2] = new_width;
                     coo[nb_letter + j + 1][3] = coo[i][3];
                 }
@@ -448,8 +448,6 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
         }
     }
 
-    
-    
     free(box1_coo);
     free(box2_coo);
 }
@@ -552,18 +550,19 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
 {
     if (!nn)
     {
-        printf(COLOR_RED "[ERREUR] " COLOR_RESET "Le réseau de neurones n'a pas pu être chargé\n");
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET
+                         "Le réseau de neurones n'a pas pu être chargé\n");
     }
-    
+
     int nb_words = 50; // Max number of words in the words list
 
-    PipelineResult *pipelineResult = malloc(sizeof(PipelineResult));
+    PipelineResult *pipelineResult = calloc(1, sizeof(PipelineResult));
     if (!pipelineResult)
     {
         printf("Failed to allocate pipelineResult\n");
         return NULL;
     }
-    
+
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = load_image(filename);
 
@@ -585,17 +584,16 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     convert_to_black_and_white(pixbuf);
     invert_color(pixbuf);
 
-    int *grid_coo = malloc(4 * sizeof(int));
-    int *words_coo = malloc(4 * sizeof(int));
+    int *grid_coo = calloc(4, sizeof(int));
+    int *words_coo = calloc(4, sizeof(int));
 
     int magic_nb_letter = 1000;
 
-    int **coo = malloc(magic_nb_letter * sizeof(int *));
+    int **coo = calloc(magic_nb_letter, sizeof(int *));
     for (int i = 0; i < magic_nb_letter; i++)
     {
-        coo[i] = malloc(4 * sizeof(int)); // coo[i][0] = x1 coo[i][1] = y1
-                                          // coo[i][2] = x2 coo[i][3] = y2
-        coo[i][0] = coo[i][1] = coo[i][2] = coo[i][3] = 0;
+        coo[i] = calloc(4, sizeof(int)); // coo[i][0] = x1 coo[i][1] = y1
+                                         // coo[i][2] = x2 coo[i][3] = y2
     }
 
     int nb_letter =
@@ -632,8 +630,8 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
 
     int rows;
     int cols;
-    char **grid_array = build_grid_array(nn, pixbuf, grid_letters_array, nb_rows,
-                                         nb_cols, &rows, &cols);
+    char **grid_array = build_grid_array(nn, pixbuf, grid_letters_array,
+                                         nb_rows, nb_cols, &rows, &cols);
     for (int i = 0; i < nb_rows; i++)
     {
         free(grid_letters_array[i]);
@@ -653,7 +651,7 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
         solved_words_grid_coos, detected_words_count, grid_coo, rows, cols);
     pipelineResult->words.solved_words_image_coos = solved_words_image_coos;
 
-    int **word_list = malloc(nb_words * sizeof(int *));
+    int **word_list = calloc(nb_words, sizeof(int *));
     for (int i = 0; i < nb_words; i++)
     {
         word_list[i] = calloc(4, sizeof(int));
@@ -740,6 +738,12 @@ void free_pipeline(PipelineResult *pipelineResult)
     free(words_pipeline.solved_words_grid_coos);
     free(words_pipeline.solved_words_image_coos);
     free(words_pipeline.words);
+
+    for (int i = 0; i < pipelineResult->grid.nb_rows; i++)
+    {
+        free(pipelineResult->grid.grid[i]);
+    }
+    free(pipelineResult->grid.grid);
 
     free(pipelineResult);
 }

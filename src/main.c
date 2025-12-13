@@ -197,7 +197,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
         (void)convert_to_black_and_white(data->transformed);
         median_filter_3x3(data->transformed);
         GdkPixbuf *rotated = rotate_image_automatic(data->transformed);
-        g_object_unref(data->transformed);
+        //g_object_unref(data->transformed);
         data->transformed = rotated;
 
         apply_transformations(data);
@@ -373,9 +373,9 @@ void change_image(const char *filename, gpointer user_data)
     free_pipeline(data->pipelineResult);
     data->pipelineResult = NULL;
 
-    data->pipelineResult = load_pipeline((char *)filename, neural);
+    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Image changée: %s\n", filename);
 
-    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Image changed: %s\n", filename);
+    data->pipelineResult = load_pipeline((char *)filename, neural);
 }
 
 /*

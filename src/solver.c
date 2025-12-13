@@ -19,18 +19,6 @@
 #define COLOR_YELLOW "\033[33m"
 
 /*
- * len_word:
- * Return the length of a null-terminated string.
- */
-int len_word(char word[])
-{
-    int i = 0;
-    while (word[i] != '\0')
-        i++;
-    return i;
-}
-
-/*
  * solve:
  * Search for a word inside a 2D character grid. If found, write the start
  * (x1,y1) and end (x2,y2) grid coordinates. Otherwise set all outputs to -1.
@@ -38,7 +26,7 @@ int len_word(char word[])
 void solve(int rows, int cols, char **grid, char word[], int *x1, int *y1,
            int *x2, int *y2)
 {
-    int len = len_word(word);
+    int len = strlen(word);
     int dir[8][2] = {{1, 1},   {1, 0},  {1, -1}, {0, -1},
                      {-1, -1}, {-1, 0}, {-1, 1}, {0, 1}};
 
@@ -147,7 +135,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
 
     int row_threshold = 30; // The tolerance between 2 y letter values to group
                             // them in the same row
-    Letter **temp_rows = malloc(nb_letters * sizeof(Letter *));
+    Letter **temp_rows = calloc(nb_letters, sizeof(Letter *));
     int *row_sizes = calloc(nb_letters, sizeof(int));
 
     temp_rows[0] = calloc(nb_letters, sizeof(Letter));
@@ -196,7 +184,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     }
 
     // Create the sorted grid
-    Letter **grid = malloc(row_count * sizeof(Letter *));
+    Letter **grid = calloc(row_count, sizeof(Letter *));
     for (int row = 0; row < row_count; row++)
     {
         grid[row] = calloc(col_count, sizeof(Letter));
@@ -241,7 +229,7 @@ char **build_grid_array(NeuralNetwork *nn, GdkPixbuf *pixbuf,
         return NULL;
     }
 
-    char **grid_array = malloc(rows * sizeof(char *));
+    char **grid_array = calloc(rows, sizeof(char *));
     for (int row = 0; row < rows; row++)
     {
         grid_array[row] = calloc(cols, sizeof(char));
@@ -334,7 +322,7 @@ char **build_grid_array(NeuralNetwork *nn, GdkPixbuf *pixbuf,
 
     int row_count = end_row - start_row + 1;
 
-    char **new_grid_array = malloc(row_count * sizeof(char *));
+    char **new_grid_array = calloc(row_count, sizeof(char *));
     for (int row = 0; row < row_count; row++)
     {
         new_grid_array[row] = calloc(col_count, sizeof(char));
@@ -393,7 +381,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 
     int row_threshold = 10; // The tolerance between 2 y letter values to group
                             // them in the same row
-    Letter **temp_rows = malloc(nb_letters * sizeof(Letter *));
+    Letter **temp_rows = calloc(nb_letters, sizeof(Letter *));
     int *row_sizes = calloc(nb_letters, sizeof(int));
 
     temp_rows[0] = calloc(nb_letters, sizeof(Letter));
@@ -502,7 +490,7 @@ char **build_words_list(NeuralNetwork *nn, GdkPixbuf *pixbuf,
         return NULL;
     }
 
-    char **words_list = malloc(nb_words * sizeof(char *));
+    char **words_list = calloc(nb_words, sizeof(char *));
     for (int row = 0; row < nb_words; row++)
     {
         int word_size = words_size[row];
