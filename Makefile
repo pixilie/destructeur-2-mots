@@ -24,7 +24,7 @@ ALL_OBJS     = $(CORE_OBJS) $(IMG_OBJS)
 
 # ===================== Main Rules =====================
 all: $(TARGET)
-	@echo "Lancement de l'application..."
+	@echo "Starting the app..."
 	@LSAN_OPTIONS=suppressions=lsan.supp ./$(TARGET)
 
 $(TARGET): $(MAIN_OBJ) $(ALL_OBJS)

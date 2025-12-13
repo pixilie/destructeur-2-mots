@@ -341,7 +341,7 @@ char **build_grid_array(NeuralNetwork *nn, GdkPixbuf *pixbuf,
     }
     free(grid_array);
 
-    printf(COLOR_YELLOW "[INFO] " COLOR_RESET "Grille détectée : %i lignes, %i colonnes\n", row_count, col_count);
+    printf(COLOR_YELLOW "[INFO] " COLOR_RESET "Grid detected: %i rows, %i columns\n", row_count, col_count);
     for (int row = 0; row < row_count; row++)
     {
         printf("[");
@@ -550,7 +550,7 @@ char **build_words_list(NeuralNetwork *nn, GdkPixbuf *pixbuf,
     free(words_letters);
     free(words_size);
 
-    printf(COLOR_YELLOW "[INFO] " COLOR_RESET "Mots détéctés dans la liste de mots : %i\n", nb_words);
+    printf(COLOR_YELLOW "[INFO] " COLOR_RESET "Words detected in words list: %i\n", nb_words);
     for (int word = 0; word < nb_words; word++)
     {
         printf("Mot %i : %s\n", word + 1, words_list[word]);

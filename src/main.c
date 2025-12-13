@@ -824,7 +824,7 @@ int main(int argc, char *argv[])
     char *exe_dir = get_executable_dir();
     snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
              DEFAULT_MODEL_PATH);
-    printf("Chemin du réseau de neurones chargé par défaut : %s\n",
+    printf("Default neural netwotk path loaded: %s\n",
            neural_path);
     neural = load_network(neural_path);
 
