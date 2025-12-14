@@ -182,7 +182,8 @@ void save_network(NeuralNetwork *nn, const char *filename)
 
 /*
  * load_network:
- * Load a network saved with save_network. Returns allocated NeuralNetwork or NULL.
+ * Load a network saved with save_network. Returns allocated NeuralNetwork or
+ * NULL.
  */
 NeuralNetwork *load_network(const char *filename)
 {
@@ -245,8 +246,8 @@ NeuralNetwork *load_network(const char *filename)
 
 /*
  * forward:
- * Run a forward pass: input -> hidden (linear + ReLU) -> output (linear + softmax).
- * Stores results in nn->hidden and nn->output.
+ * Run a forward pass: input -> hidden (linear + ReLU) -> output (linear +
+ * softmax). Stores results in nn->hidden and nn->output.
  */
 void forward(NeuralNetwork *nn, double *inputs)
 {
@@ -297,10 +298,15 @@ void forward(NeuralNetwork *nn, double *inputs)
  *  - epochs: number of epochs
  */
 void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
-           double lr, int epochs)
+           double lr, int epochs, ProgressCallback cb, void *user_data)
 {
     for (int epoch = 0; epoch < epochs; epoch++)
     {
+        if (cb != NULL)
+        {
+            cb(epoch + 1, epochs, user_data);
+        }
+
         for (int s = 0; s < samples; s++)
         {
             forward(nn, inputs[s]);

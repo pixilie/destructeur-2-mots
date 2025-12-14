@@ -1,10 +1,11 @@
 #include "../include/dataset.h"
+#include "../include/grid_cutting.h"
 #include "../include/image/image.h"
-#include "../include/line_detection.h"
 #include "../include/neural_network.h"
 #include "../include/ui.h"
 #include "image/image_helpers.h"
 
+#include <fontconfig/fontconfig.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 #include <libgen.h>
@@ -58,6 +59,27 @@ void update_image(AppData *data)
 {
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
     gtk_widget_queue_draw(data->image);
+}
+
+/*
+ * update_progress_ui:
+ * Update the progress bar.
+ */
+void update_progress_ui(int current_epoch, int total_epochs, void *user_data)
+{
+    GtkProgressBar *bar = GTK_PROGRESS_BAR(user_data);
+
+    double fraction = (double)current_epoch / total_epochs;
+    gtk_progress_bar_set_fraction(bar, fraction);
+
+    char text[32];
+    snprintf(text, sizeof(text), "Epoch %d/%d", current_epoch, total_epochs);
+    gtk_progress_bar_set_text(bar, text);
+
+    while (gtk_events_pending())
+    {
+        gtk_main_iteration();
+    }
 }
 
 /*
@@ -115,8 +137,9 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
 
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(data->image));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir l'emplacement où enregistrer l'image", parent, GTK_FILE_CHOOSER_ACTION_SAVE, "_Annuler",
-        GTK_RESPONSE_CANCEL, "_Enregistrer", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir l'emplacement où enregistrer l'image", parent,
+        GTK_FILE_CHOOSER_ACTION_SAVE, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Enregistrer", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
@@ -135,7 +158,9 @@ void on_save_clicked(GtkButton *button, gpointer user_data)
             }
             else
             {
-                printf(COLOR_GREEN "[SUCCES] " COLOR_RESET "Image sauvegardée dans : %s\n", filename);
+                printf(COLOR_GREEN "[SUCCES] " COLOR_RESET
+                                   "Image sauvegardée dans : %s\n",
+                       filename);
             }
             g_free(filename);
         }
@@ -197,7 +222,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
         median_filter_3x3(data->transformed);
         (void)convert_to_black_and_white(data->transformed);
         GdkPixbuf *rotated = rotate_image_automatic(data->transformed);
-        //g_object_unref(data->transformed);
+        // g_object_unref(data->transformed);
         data->transformed = rotated;
 
         apply_transformations(data);
@@ -278,7 +303,9 @@ void solver(GtkButton *button, gpointer user_data)
 
     if (is_drawn == 0)
     {
-        printf(COLOR_RED "[ERREUR] " COLOR_RESET "Aucun mot n'a été marqué comme résolu dans la grille\n");
+        printf(COLOR_RED
+               "[ERREUR] " COLOR_RESET
+               "Aucun mot n'a été marqué comme résolu dans la grille\n");
     }
 
     data->rotation_angle = 0;
@@ -393,8 +420,9 @@ void get_path_image(GtkWidget *widget, gpointer user_data)
 
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir une nouvelle image à charger", parent, GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler",
-        GTK_RESPONSE_CANCEL, "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir une nouvelle image à charger", parent,
+        GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
@@ -426,7 +454,9 @@ void load_neural(const char *filename)
     neural = load_network(filename);
     if (neural)
     {
-        printf(COLOR_YELLOW "[INFO] " COLOR_RESET "Modèle du réseau de neurones chargé : %s\n", filename);
+        printf(COLOR_YELLOW "[INFO] " COLOR_RESET
+                            "Modèle du réseau de neurones chargé : %s\n",
+               filename);
     }
 }
 
@@ -438,8 +468,9 @@ void get_neural_load_path(GtkWidget *widget)
 {
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir le fichier du modèle du réseau de neurones", parent, GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler",
-        GTK_RESPONSE_CANCEL, "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir le fichier du modèle du réseau de neurones", parent,
+        GTK_FILE_CHOOSER_ACTION_OPEN, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
@@ -471,8 +502,36 @@ void train_neural(const char *filename)
         neural = create_network(784, 128, 26);
 
     Dataset data = load_dataset(filename);
-    train(neural, data.inputs, data.targets, data.samples, 0.01, 1000);
-    printf(COLOR_GREEN "[SUCCES] " COLOR_RESET "Le réseau de neurones a commencé à s'entraîner sur le dataset: %s\n", filename);
+
+    GtkWidget *progress_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(progress_window),
+                         "Entraînement en cours...");
+    gtk_window_set_default_size(GTK_WINDOW(progress_window), 300, 100);
+    gtk_window_set_position(GTK_WINDOW(progress_window), GTK_WIN_POS_CENTER);
+
+    gtk_window_set_modal(GTK_WINDOW(progress_window), TRUE);
+    gtk_window_set_deletable(GTK_WINDOW(progress_window), FALSE);
+
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_container_set_border_width(GTK_CONTAINER(progress_window), 20);
+    gtk_container_add(GTK_CONTAINER(progress_window), vbox);
+
+    GtkWidget *label = gtk_label_new("Entraînement du réseau de neurones...");
+    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
+
+    GtkWidget *progress_bar = gtk_progress_bar_new();
+    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress_bar), TRUE);
+    gtk_box_pack_start(GTK_BOX(vbox), progress_bar, TRUE, TRUE, 0);
+
+    gtk_widget_show_all(progress_window);
+
+    while (gtk_events_pending())
+        gtk_main_iteration();
+
+    train(neural, data.inputs, data.targets, data.samples, 0.01, 1000,
+          update_progress_ui, progress_bar);
+
+    gtk_widget_destroy(progress_window);
 }
 
 /*
@@ -483,8 +542,9 @@ void get_neural_train_path(GtkWidget *widget)
 {
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir le modèle du réseau de neurones à charger", parent, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-        "_Annuler", GTK_RESPONSE_CANCEL, "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir le modèle du réseau de neurones à charger", parent,
+        GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Ouvrir", GTK_RESPONSE_ACCEPT, NULL);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
@@ -512,12 +572,14 @@ void save_neural(GtkWidget *widget)
 {
     GtkWindow *parent = GTK_WINDOW(gtk_widget_get_toplevel(widget));
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        "Choisir le fichier où enregistrer le modèle du réseau de neurones", parent, GTK_FILE_CHOOSER_ACTION_SAVE,
-        "_Annuler", GTK_RESPONSE_CANCEL, "_Enregistrer", GTK_RESPONSE_ACCEPT, NULL);
+        "Choisir le fichier où enregistrer le modèle du réseau de neurones",
+        parent, GTK_FILE_CHOOSER_ACTION_SAVE, "_Annuler", GTK_RESPONSE_CANCEL,
+        "_Enregistrer", GTK_RESPONSE_ACCEPT, NULL);
 
     if (neural == NULL)
     {
-        printf(COLOR_RED "[ERREUR] " COLOR_RESET "Le modèle du réseau de neurones est vide!\n");
+        printf(COLOR_RED "[ERREUR] " COLOR_RESET
+                         "Le modèle du réseau de neurones est vide!\n");
         return;
     }
 
@@ -528,7 +590,9 @@ void save_neural(GtkWidget *widget)
         if (filename)
         {
             save_network(neural, filename);
-            printf(COLOR_GREEN "[SUCCESS] " COLOR_RESET "Neural network saved to: %s\n", filename);
+            printf(COLOR_GREEN "[SUCCESS] " COLOR_RESET
+                               "Neural network saved to: %s\n",
+                   filename);
             g_free(filename);
         }
     }
@@ -604,8 +668,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     char logo_path[1024];
     snprintf(logo_path, sizeof(logo_path), "%s/../assets/logo.png", exe_dir);
 
-    GdkPixbuf *logo_pixbuf =
-        gdk_pixbuf_new_from_file(logo_path, &error);
+    GdkPixbuf *logo_pixbuf = gdk_pixbuf_new_from_file(logo_path, &error);
     if (logo_pixbuf)
     {
         GdkPixbuf *scaled_logo =
@@ -727,8 +790,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     g_object_unref(scaled);
 
     // Free AppData and pipelineResult when window is destroyed
-    g_signal_connect(window, "destroy", G_CALLBACK(free_app_data),
-                             data);
+    g_signal_connect(window, "destroy", G_CALLBACK(free_app_data), data);
 }
 
 /*
@@ -762,8 +824,7 @@ int main(int argc, char *argv[])
     char *exe_dir = get_executable_dir();
     snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
              DEFAULT_MODEL_PATH);
-    printf("Chemin du réseau de neurones chargé par défaut : %s\n",
-           neural_path);
+    printf("Default neural netwotk path loaded: %s\n", neural_path);
     neural = load_network(neural_path);
 
     if (argc > 1)
@@ -778,6 +839,7 @@ int main(int argc, char *argv[])
     status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
     g_free(filename);
+    //FcFini();
 
     return status;
 }

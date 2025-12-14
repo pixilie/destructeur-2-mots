@@ -1,6 +1,6 @@
 #pragma once
 
-#include "line_detection.h"
+#include "grid_cutting.h"
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 

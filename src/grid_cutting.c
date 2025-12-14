@@ -1,4 +1,4 @@
-#include "../include/line_detection.h"
+#include "../include/grid_cutting.h"
 #include "../include/image/image.h"
 #include "../include/image/image_helpers.h"
 #include "../include/solver.h"
@@ -401,53 +401,6 @@ void find_grid_and_words(int *grid_coo, int *word_coo, int **coo, int nb_letter)
         grid_coo[1] = box1_coo[1];
         grid_coo[2] = box1_coo[2];
         grid_coo[3] = box1_coo[3];
-    }
-
-    int med_width = 0;
-    int seuil = 20;
-
-    for (int i = 0; i < nb_letter; i++)
-    {
-        if (!(coo[i][2] < word_coo[0] - seuil ||
-              coo[i][0] > word_coo[2] + seuil ||
-              coo[i][3] < word_coo[1] - seuil ||
-              coo[i][1] > word_coo[3] + seuil))
-        {
-            med_width += (coo[i][2] - coo[i][0]);
-        }
-    }
-
-    med_width /= nb_letter;
-
-    if (med_width == 0)
-    {
-        printf(COLOR_RED "[ERREUR] " COLOR_RESET
-                         "Line detection : find_grid_and_words : La longueur "
-                         "médiane des lettres est égale à 0\n");
-        return;
-    }
-
-    for (int i = 0; i < nb_letter; i++)
-    {
-        if (!(coo[i][2] < word_coo[0] - seuil ||
-              coo[i][0] > word_coo[2] + seuil ||
-              coo[i][3] < word_coo[1] - seuil ||
-              coo[i][1] > word_coo[3] + seuil))
-        {
-            if (coo[i][2] - coo[i][0] > med_width * 1.5)
-            {
-                int nb_to_add = (coo[i][2] - coo[i][0]) / med_width;
-                int new_width = coo[i][0];
-                for (int j = 0; j < nb_to_add; j++)
-                {
-                    coo[nb_letter + j + 1][0] = new_width;
-                    coo[nb_letter + j + 1][1] = coo[i][1];
-                    new_width += (coo[i][2] - coo[i][0]) / nb_to_add;
-                    coo[nb_letter + j + 1][2] = new_width;
-                    coo[nb_letter + j + 1][3] = coo[i][3];
-                }
-            }
-        }
     }
 
     free(box1_coo);

@@ -1,6 +1,6 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /*
  * convert_to_grayscale:

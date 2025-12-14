@@ -1,7 +1,4 @@
-#include "../include/solver.h"
-
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <math.h>
 
 /**
  * draw_pixel:

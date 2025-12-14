@@ -138,15 +138,14 @@ GdkPixbuf *crop(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2)
     x2 = CLAMP(x2, 0, image_width - 1);
     y2 = CLAMP(y2, 0, image_height - 1);
 
-    
     int width = x2 - x1;
     int height = y2 - y1;
-   
+
     if (width <= 0 || height <= 0)
     {
         printf("[FAIL] Coordinates are outside of source pixbuf\n");
         return NULL;
     }
-  
+
     return gdk_pixbuf_new_subpixbuf(pixbuf, x1, y1, width, height);
 }
