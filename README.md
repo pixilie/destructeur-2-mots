@@ -1,6 +1,8 @@
 # Destructeur2Mots
 An OCR (Optical Character Recognition) system that reads an image of a word-search puzzle and solves the hidden-words grid.  
 
+=> Switch to branch [submit-version](https://github.com/pixilie/destructeur-2-mots/tree/submit-version) to test the project.
+
 ## Project structure
 `destructeur-2-mots`  
 - `assets`: Assets used in the project (images, datasets, models...)
