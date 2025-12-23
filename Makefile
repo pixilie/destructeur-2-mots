@@ -50,6 +50,11 @@ $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
+	
+$(BUILD_DIR)/solver_%.o: $(SOLVER_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # ===================== Clean =====================
 clean:
