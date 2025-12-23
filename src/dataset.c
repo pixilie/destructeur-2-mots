@@ -1,5 +1,5 @@
 #include "../include/dataset.h"
-#include "../include/image/image.h"
+#include "../include/image_processing/image_processing.h"
 
 #include <ctype.h>
 #include <dirent.h>

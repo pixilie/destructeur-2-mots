@@ -1,7 +1,8 @@
 #pragma once
 
 #include "neural_network.h"
-#include "solver.h"
+#include "solver/letter.h"
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 typedef struct
@@ -22,10 +23,10 @@ typedef struct
 typedef struct
 {
     double rotation_angle;
-    
+
     int grid_coo[4];
     int words_coo[4];
-    
+
     int nb_letters;
     int nb_letters_grid;
     int nb_letters_words;

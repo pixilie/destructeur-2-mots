@@ -1,9 +1,8 @@
 #include "../include/dataset.h"
 #include "../include/grid_cutting.h"
-#include "../include/image/image.h"
+#include "../include/image_processing/image_processing.h"
 #include "../include/neural_network.h"
 #include "../include/ui.h"
-#include "image/image_helpers.h"
 
 #include <fontconfig/fontconfig.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>

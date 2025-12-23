@@ -1,3 +1,5 @@
+#include "../../include/image_processing/filter.h"
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <string.h>
 

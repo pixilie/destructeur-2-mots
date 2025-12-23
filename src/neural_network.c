@@ -1,5 +1,5 @@
 #include "../include/neural_network.h"
-#include "image/image_helpers.h"
+#include "../include/image_processing/helpers.h"
 
 #include <math.h>
 #include <stddef.h>

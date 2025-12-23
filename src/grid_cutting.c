@@ -1,8 +1,10 @@
 #include "../include/grid_cutting.h"
-#include "../include/image/image.h"
-#include "../include/image/image_helpers.h"
-#include "../include/solver.h"
-#include "neural_network.h"
+#include "../include/image_processing/image_processing.h"
+#include "../include/solver/letter.h"
+#include "../include/solver/grid.h"
+#include "../include/solver/words_list.h"
+#include "../include/solver/words_coordinates.h"
+#include "../include/neural_network.h"
 
 #include <stdio.h>
 #include <stdlib.h>
