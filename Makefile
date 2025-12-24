@@ -5,8 +5,9 @@ LDFLAGS   = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0) -fsanitize=ad
 
 # ===================== Directories =====================
 SRC_DIR      = src
-SOLVER_DIR   = $(SRC_DIR)/solver
 IMG_DIR      = $(SRC_DIR)/image_processing
+GRID_CUT_DIR = $(SRC_DIR)/grid_cutting
+SOLVER_DIR   = $(SRC_DIR)/solver
 BUILD_DIR    = build
 TEST_DIR     = tests
 
@@ -15,15 +16,17 @@ TARGET       = $(BUILD_DIR)/main
 
 # ===================== Source Files =====================
 IMG_SRCS     = $(wildcard $(IMG_DIR)/*.c)
+GRID_CUT_SRCS= $(wildcard $(GRID_CUT_DIR)/*.c)
 SOLVER_SRCS  = $(wildcard $(SOLVER_DIR)/*.c)
 CORE_SRCS    = $(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/*.c))
 
 # ===================== Object Files =====================
 IMG_OBJS     = $(IMG_SRCS:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
+GRID_CUT_OBJS= $(GRID_CUT_SRCS:$(GRID_CUT_DIR)/%.c=$(BUILD_DIR)/grid_cutting_%.o)
 SOLVER_OBJS  = $(SOLVER_SRCS:$(SOLVER_DIR)/%.c=$(BUILD_DIR)/solver_%.o)
 CORE_OBJS    = $(CORE_SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 MAIN_OBJ     = $(BUILD_DIR)/main.o
-ALL_OBJS     = $(CORE_OBJS) $(IMG_OBJS) $(SOLVER_OBJS)
+ALL_OBJS     = $(CORE_OBJS) $(IMG_OBJS) $(GRID_CUT_OBJS) $(SOLVER_OBJS)
 
 # ===================== Main Rules =====================
 all: $(TARGET)
@@ -52,6 +55,11 @@ $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
 	@$(CC) $(CFLAGS) -c $< -o $@
 	
 $(BUILD_DIR)/solver_%.o: $(SOLVER_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/grid_cutting_%.o: $(GRID_CUT_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
