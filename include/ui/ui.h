@@ -1,6 +1,11 @@
 #pragma once
 
-#include "grid_cutting.h"
+#include "../grid_cutting/grid_cutting.h"
+#include "css.h"
+#include "image_processing_buttons.h"
+#include "neural_network.h"
+#include "neural_network_buttons.h"
+#include "popups.h"
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
@@ -30,6 +35,12 @@ typedef struct
     int save_index;
     PipelineResult *pipelineResult;
 } AppData;
+
+extern NeuralNetwork *neural;
+extern int is_processed;
+
+void update_image(AppData *data);
+void apply_transformations(AppData *data);
 
 void draw_pixel(GdkPixbuf *pixbuf, int x, int y, int thickness);
 void draw_line(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2,
