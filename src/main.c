@@ -191,10 +191,10 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
 }
 
 /*
- * pop_up_treated:
- * Show a small popup indicating the image was already treated.
+ * pop_up_already_processed:
+ * Show a small popup indicating the image was already processed.
  */
-void pop_up_treated()
+void pop_up_already_processed()
 {
     GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
     GtkWidget *label = gtk_label_new("L'image a déja été traitée");
@@ -229,8 +229,22 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     }
     else
     {
-        pop_up_treated();
+        pop_up_already_processed();
     }
+}
+
+/*
+ * pop_up_solver_failure:
+ * Show a small popup indicating the solver couldn't find any solved words in the image given due to an error.
+ */
+void pop_up_solver_failure()
+{
+    GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
+    GtkWidget *label = gtk_label_new("Aucun mot n'a été détecté dans la grille !");
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_container_add(GTK_CONTAINER(window), box);
+    gtk_box_pack_start(GTK_BOX(box), label, FALSE, FALSE, 0);
+    gtk_widget_show_all(window);
 }
 
 /*
@@ -264,6 +278,7 @@ void solver(GtkButton *button, gpointer user_data)
         printf(COLOR_RED "[ERREUR] " COLOR_RESET
                          "Les coordonnées des mots n'ont pas été trouvées dans "
                          "le solver pour dessiner autour des mots!\n");
+        pop_up_solver_failure();
         return;
     }
 
@@ -271,6 +286,7 @@ void solver(GtkButton *button, gpointer user_data)
     {
         printf(COLOR_RED "[ERREUR] " COLOR_RESET
                          "Aucun mot n'a été détecté dans la grille!\n");
+        pop_up_solver_failure();
         return;
     }
 
