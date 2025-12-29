@@ -2,12 +2,14 @@
 #include "../include/image_processing/image_processing.h"
 #include "../include/neural_network.h"
 #include "../include/ui/ui.h"
+#include "ui/image_processing_buttons.h"
 
 #include <fontconfig/fontconfig.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 #include <libgen.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,10 +30,12 @@ int is_processed = 0;
  * update_image:
  * Update the GtkImage widget with data->current and queue a redraw.
  */
-void update_image(AppData *data)
+gboolean update_image(gpointer user_data)
 {
+    AppData *data = (AppData *)user_data;
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
     gtk_widget_queue_draw(data->image);
+    return FALSE;
 }
 
 /*
@@ -74,10 +78,40 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
 }
 
 /*
+ * load_pipeline_thread:
+ * Load the pipeline in a separate thread to prevent UI from being blocked while
+ * the pipeline is running and update pipelineResult field of AppData.
+ */
+gpointer load_pipeline_thread(gpointer user_data)
+{
+    AppData *data = user_data;
+    data->pipelineResult = load_pipeline(data->filename, neural);
+    g_idle_add(update_image, data);
+    return NULL;
+}
+
+/*
+ * load_neural_thread:
+ * Load the neural network in a separate thread to prevent UI from being blocked while
+ * the neural network is loading and update neural variable.
+ */
+gpointer load_neural_thread(gpointer user_data)
+{
+    (void)user_data;
+    char neural_path[1024];
+    char *exe_dir = get_executable_dir();
+    snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
+             DEFAULT_MODEL_PATH);
+    neural = load_network(neural_path);
+    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Default neural netwotk path loaded: %s\n", neural_path);
+    return NULL;
+}
+
+/*
  * on_activate:
  * Build UI, load initial image and connect callbacks.
  */
-static void on_activate(GtkApplication *app, gpointer user_data)
+void on_activate(GtkApplication *app, gpointer user_data)
 {
     load_css();
 
@@ -107,7 +141,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *btn_save_image;
 
     char **filename = (char **)user_data;
-
     const char *image_path = get_image_path(*filename);
     if (!image_path)
     {
@@ -204,13 +237,17 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     gtk_box_pack_start(GTK_BOX(sidebar_box), lbl_neural, FALSE, FALSE, 5);
 
     AppData *data = g_new0(AppData, 1);
+    data->filename = g_strdup(*(char **)user_data);
     data->image = image;
     data->original = pixbuf;
     data->current = gdk_pixbuf_copy(pixbuf);
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
-    data->pipelineResult = load_pipeline(*filename, neural);
+
+    // Load pipeline in a separate thread to prevent UI from being blocked while
+    // the pipeline is running
+    g_thread_new("pipeline_thread", load_pipeline_thread, data);
 
     btn_load_img_sidebar = gtk_button_new_with_label("Charger une image");
     gtk_box_pack_start(GTK_BOX(sidebar_box), btn_load_img_sidebar, FALSE, FALSE,
@@ -293,12 +330,7 @@ int main(int argc, char *argv[])
     int status;
     char *filename;
 
-    char neural_path[1024];
-    char *exe_dir = get_executable_dir();
-    snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
-             DEFAULT_MODEL_PATH);
-    printf("Default neural netwotk path loaded: %s\n", neural_path);
-    neural = load_network(neural_path);
+    g_thread_new("neural_thread", load_neural_thread, NULL);
 
     if (argc > 1)
         filename = g_strdup(argv[1]);
@@ -312,7 +344,7 @@ int main(int argc, char *argv[])
     status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
     g_free(filename);
-    //FcFini();
+    // FcFini();
 
     return status;
 }

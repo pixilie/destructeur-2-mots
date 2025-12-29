@@ -114,7 +114,7 @@ void solver(GtkButton *button, gpointer user_data)
             draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
                            thickness);
             is_drawn = 1;
-            printf("Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
+            printf(COLOR_YELLOW "[SOLVER] " COLOR_RESET "Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
                    "with thickness %i\n",
                    x1, y1, x2, y2, x3, y3, x4, y4, thickness);
         }
@@ -125,6 +125,7 @@ void solver(GtkButton *button, gpointer user_data)
         printf(COLOR_RED
                "[ERREUR] " COLOR_RESET
                "Aucun mot n'a été marqué comme résolu dans la grille\n");
+        pop_up_solver_failure();
     }
 
     data->rotation_angle = 0;
@@ -170,6 +171,10 @@ void change_image(const char *filename, gpointer user_data)
 
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), pixbuf);
 
+    if (data->filename)
+    {
+        g_free(data->filename);
+    }
     if (data->original)
     {
         g_object_unref(data->original);
@@ -185,7 +190,8 @@ void change_image(const char *filename, gpointer user_data)
         g_object_unref(data->transformed);
         data->transformed = NULL;
     }
-
+    
+    data->filename = g_strdup(filename);
     data->original = pixbuf;
     data->current = gdk_pixbuf_copy(pixbuf);
     if (!data->current)
@@ -208,7 +214,9 @@ void change_image(const char *filename, gpointer user_data)
 
     printf(COLOR_YELLOW "[APP] " COLOR_RESET "Image changée: %s\n", filename);
 
-    data->pipelineResult = load_pipeline((char *)filename, neural);
+    // Load pipeline in a separate thread to prevent UI from being blocked while
+    // the pipeline is running
+    g_thread_new("pipeline_thread", load_pipeline_thread, data);
 }
 
 /*
