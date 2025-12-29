@@ -60,10 +60,16 @@ void solver(GtkButton *button, gpointer user_data)
     (void)button;
     AppData *data = user_data;
 
-    if (!data->transformed)
-    {
+    if (!data || !data->original || !data->transformed)
         return;
-    }
+
+    if (data->current)
+        g_object_unref(data->current);
+    if (data->transformed)
+        g_object_unref(data->transformed);
+
+    data->transformed = gdk_pixbuf_copy(data->original);
+    data->current = gdk_pixbuf_copy(data->original);
 
     double rotation_angle = data->pipelineResult->rotation_angle;
     if (rotation_angle != 0.0)
