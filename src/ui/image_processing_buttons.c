@@ -141,6 +141,7 @@ void change_image(const char *filename, gpointer user_data)
 {
     AppData *data = user_data;
     is_processed = 0;
+    gtk_widget_set_sensitive(solve_button, FALSE);
 
     if (!data)
     {

@@ -23,6 +23,9 @@
 #define COLOR_GREEN "\033[32m"
 #define COLOR_YELLOW "\033[33m"
 
+// Enable or disable solve button when pipeline is running
+GtkWidget *solve_button;
+
 NeuralNetwork *neural = NULL;
 int is_processed = 0;
 
@@ -87,13 +90,14 @@ gpointer load_pipeline_thread(gpointer user_data)
     AppData *data = user_data;
     data->pipelineResult = load_pipeline(data->filename, neural);
     g_idle_add(update_image, data);
+    gtk_widget_set_sensitive(solve_button, TRUE);
     return NULL;
 }
 
 /*
  * load_neural_thread:
- * Load the neural network in a separate thread to prevent UI from being blocked while
- * the neural network is loading and update neural variable.
+ * Load the neural network in a separate thread to prevent UI from being blocked
+ * while the neural network is loading and update neural variable.
  */
 gpointer load_neural_thread(gpointer user_data)
 {
@@ -103,7 +107,9 @@ gpointer load_neural_thread(gpointer user_data)
     snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
              DEFAULT_MODEL_PATH);
     neural = load_network(neural_path);
-    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Default neural netwotk path loaded: %s\n", neural_path);
+    printf(COLOR_YELLOW "[APP] " COLOR_RESET
+                        "Default neural netwotk path loaded: %s\n",
+           neural_path);
     return NULL;
 }
 
@@ -285,6 +291,8 @@ void on_activate(GtkApplication *app, gpointer user_data)
     btn_solve = gtk_button_new_with_label("Résoudre");
     gtk_box_pack_start(GTK_BOX(bottom_box), btn_solve, TRUE, TRUE, 0);
     g_signal_connect(btn_solve, "clicked", G_CALLBACK(solver), data);
+    gtk_widget_set_sensitive(btn_solve, FALSE);
+    solve_button = btn_solve;
 
     btn_reset = gtk_button_new_with_label("Réinitialiser");
     gtk_box_pack_start(GTK_BOX(bottom_box), btn_reset, TRUE, TRUE, 0);

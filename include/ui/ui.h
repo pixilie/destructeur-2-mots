@@ -39,6 +39,7 @@ typedef struct
     PipelineResult *pipelineResult;
 } AppData;
 
+extern GtkWidget *solve_button;
 extern NeuralNetwork *neural;
 extern int is_processed;
 
