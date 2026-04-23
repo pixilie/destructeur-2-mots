@@ -43,13 +43,36 @@ CORE_OBJ          = $(filter-out $(BUILD_DIR)/image_main.o, \
                     $(BUILD_DIR)/neural_network.o
 UI_OBJ            = $(CORE_OBJ) build/ui.o build/ui_solve_grid.o build/line_detection_testing.o
 IMG_OBJ           = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
-PIPELINE_OBJ      = $(BUILD_DIR)/line_detection.o
+PIPELINE_OBJ      = $(BUILD_DIR)/grid_cutting.o
 PIPELINE_IMG_OBJ  = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 SOLVER_OBJ        = $(BUILD_DIR)/solver.o
 NEURAL_NET_OBJ    = $(BUILD_DIR)/neural_network.o
 
 # ===================== Main Rules =====================
-all: $(TARGET) $(UI_BIN) $(IMAGE_BIN) $(PIPELINE_BIN)
+all: $(TARGET)
+	@echo "Starting the app..."
+	@LSAN_OPTIONS=suppressions=lsan.supp ./$(TARGET)
+
+$(TARGET): $(MAIN_OBJ) $(ALL_OBJS)
+	@mkdir -p $(BUILD_DIR)
+	@echo "Linking $@"
+	@$(CC) -o $@ $^ $(LDFLAGS)
+
+# ===================== Compilation Rules =====================
+$(BUILD_DIR)/main.o: $(SRC_DIR)/main.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling $<..."
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 # ---------- Main Program ----------
 $(TARGET): $(MAIN_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(filter-out $(BUILD_DIR)/image_main.o, $(IMG_OBJ))
