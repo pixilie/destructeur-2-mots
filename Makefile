@@ -6,7 +6,6 @@ LDFLAGS  = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0) -fsanitize=add
 # ===================== Directories =====================
 SRC_DIR      = src
 IMG_DIR      = $(SRC_DIR)/image
-UI_SRC_DIR   = $(SRC_DIR)/ui
 INCLUDE_DIR  = include
 TEST_DIR     = tests
 BUILD_DIR    = build
@@ -14,20 +13,17 @@ RESULTS_DIR  = $(TEST_DIR)/results
 
 # ===================== Target Binaries =====================
 TARGET       = $(BUILD_DIR)/main
-UI_BIN       = $(BUILD_DIR)/ui
 IMAGE_BIN    = $(BUILD_DIR)/image
 PIPELINE_BIN = $(BUILD_DIR)/pipeline
 
 # ===================== Source Files =====================
 SRC_FILES    = $(wildcard $(SRC_DIR)/*.c)
 IMG_FILES    = $(wildcard $(IMG_DIR)/*.c)
-UI_FILES     = $(wildcard $(UI_SRC_DIR)/*.c)
 TEST_FILES   = $(filter-out $(TEST_DIR)/test_helpers.c, $(wildcard $(TEST_DIR)/*.c))
 
 MAIN_SRC = $(filter-out \
     $(SRC_DIR)/solver.c \
     $(SRC_DIR)/neural_network.c \
-    $(SRC_DIR)/ui.c \
     $(SRC_DIR)/line_detection.c, \
     $(SRC_FILES))
 
@@ -41,7 +37,6 @@ CORE_OBJ          = $(filter-out $(BUILD_DIR)/image_main.o, \
                     $(BUILD_DIR)/dataset.o \
                     $(BUILD_DIR)/solver.o \
                     $(BUILD_DIR)/neural_network.o
-UI_OBJ            = $(CORE_OBJ) build/ui.o build/ui_solve_grid.o build/line_detection_testing.o
 IMG_OBJ           = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 PIPELINE_OBJ      = $(BUILD_DIR)/grid_cutting.o
 PIPELINE_IMG_OBJ  = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
@@ -80,12 +75,6 @@ $(TARGET): $(MAIN_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(filter-out $(BUILD_DIR)
 	@echo "Linking Main..."
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-# ---------- UI ----------
-$(UI_BIN): $(UI_OBJ)
-	@mkdir -p $(BUILD_DIR)
-	@echo "Linking UI..."
-	@$(CC) -DTESTING -o $@ $^ $(LDFLAGS)
-
 $(BUILD_DIR)/%.o: $(UI_SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
@@ -103,16 +92,15 @@ $(PIPELINE_BIN): $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_
 	@echo "Linking Pipeline..."
 	@$(CC) -o $@ $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(LDFLAGS)
 
-$(BUILD_DIR)/line_detection.o: $(SRC_DIR)/line_detection.c
+$(BUILD_DIR)/grid_cutting.o: $(SRC_DIR)/grid_cutting.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/line_detection_testing.o: $(SRC_DIR)/line_detection.c
+$(BUILD_DIR)/grid_cutting_testing.o: $(SRC_DIR)/grid_cutting.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $< for UI/tests..."
 	@$(CC) $(CFLAGS) -DTESTING -c $< -o $@
-
 
 # ===================== Generic Compilation =====================
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c

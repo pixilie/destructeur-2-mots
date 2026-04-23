@@ -22,6 +22,7 @@
 #define COLOR_GREEN "\033[32m"
 #define COLOR_YELLOW "\033[33m"
 
+char **filename = NULL;
 NeuralNetwork *neural = NULL;
 int is_processed = 0; // 0 = not processed, 1 = processed
 
@@ -233,6 +234,20 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     }
 }
 
+
+PipelineResult *load_pipeline(char *filename, NeuralNetwork *nn)
+{
+    char *exe_dir = get_executable_dir();
+    char grid_path[512];
+    char letters_path[512];
+    snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
+             exe_dir);
+    snprintf(letters_path, sizeof(letters_path),
+             "%s/tests/results/ui_output/letters", exe_dir);
+
+    return pipeline(filename, nn);
+}
+
 /*
  * solver:
  * Placeholder for future solve action.
@@ -246,7 +261,10 @@ void solver(GtkButton *button, gpointer user_data)
     {
         return;
     }
-
+    
+    free_pipeline(data->pipelineResult);
+    
+    data->pipelineResult = load_pipeline(*filename, neural);
     double rotation_angle = data->pipelineResult->rotation_angle;
     if (rotation_angle != 0.0)
     {
@@ -312,24 +330,11 @@ void solver(GtkButton *button, gpointer user_data)
     data->rotation_angle = rotation_angle;
 }
 
-PipelineResult *load_pipeline(char *filename, NeuralNetwork *nn)
-{
-    char *exe_dir = get_executable_dir();
-    char grid_path[512];
-    char letters_path[512];
-    snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
-             exe_dir);
-    snprintf(letters_path, sizeof(letters_path),
-             "%s/tests/results/ui_output/letters", exe_dir);
-
-    return pipeline(filename, nn);
-}
-
 /*
  * change_image:
  * Load image from filename and update AppData buffers.
  */
-void change_image(const char *filename, gpointer user_data)
+void change_image(const char *file, gpointer user_data)
 {
     AppData *data = user_data;
     is_processed = 0;
@@ -344,22 +349,24 @@ void change_image(const char *filename, gpointer user_data)
         g_printerr("Error: image widget not initialized\n");
         return;
     }
-    if (!filename || filename[0] == '\0')
+    if (!file || file[0] == '\0')
     {
         g_printerr("Error: invalid image path\n");
         return;
     }
 
     GError *error = NULL;
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(filename, &error);
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(file, &error);
     if (!pixbuf)
     {
-        g_printerr("Failed to load image '%s': %s\n", filename,
+        g_printerr("Failed to load image '%s': %s\n", file,
                    error ? error->message : "unknown");
         if (error)
             g_error_free(error);
         return;
     }
+
+    filename = (char**)file;
 
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), pixbuf);
 
@@ -395,13 +402,7 @@ void change_image(const char *filename, gpointer user_data)
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
     gtk_widget_queue_draw(data->image);
 
-    // Free old pipelineResult fully
-    free_pipeline(data->pipelineResult);
-    data->pipelineResult = NULL;
-
-    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Image changée: %s\n", filename);
-
-    data->pipelineResult = load_pipeline((char *)filename, neural);
+    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Image changed: %s\n", file);
 }
 
 /*
@@ -632,7 +633,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *btn_reset;
     GtkWidget *btn_save_image;
 
-    char **filename = (char **)user_data;
+    filename = (char **)user_data;
 
     const char *image_path = get_image_path(*filename);
     if (!image_path)
