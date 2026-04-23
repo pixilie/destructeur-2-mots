@@ -228,7 +228,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
         median_filter_3x3(data->transformed);
         convert_to_black_and_white(data->transformed);
         GdkPixbuf *rotated = rotate_image_automatic(data->transformed);
-        // g_object_unref(data->transformed);
+        g_object_unref(data->transformed);
         data->transformed = rotated;
 
         apply_transformations(data);
@@ -276,36 +276,40 @@ void solver(GtkButton *button, gpointer user_data)
     }
         
     data->pipelineResult = load_pipeline(filename, neural);
+
+    g_object_unref(data->transformed);
+    data->transformed = gdk_pixbuf_copy(data->original);
+    
     double rotation_angle = data->pipelineResult->rotation_angle;
-    if (rotation_angle != 0.0)
+    if (rotation_angle < -0.1 || rotation_angle > 0.1)
     {
         GdkPixbuf *rotated = rotate_image(data->transformed, rotation_angle);
         g_object_unref(data->transformed);
         data->transformed = rotated;
-        data->rotation_angle = rotation_angle;
     }
-
-    apply_transformations(data);
 
     Words *words = &data->pipelineResult->words;
     if (!words->solved_words_image_coos)
     {
-        printf(COLOR_RED "[ERREUR] " COLOR_RESET
-                         "Les coordonnées des mots n'ont pas été trouvées dans "
-                         "le solver pour dessiner autour des mots!\n");
+        printf(COLOR_RED "[ERROR] " COLOR_RESET
+                         "Solved words image coordinates have not been found in the solver "
+                         "to draw solved words!\n");
         return;
     }
 
     if (words->detected_words_count == 0)
     {
-        printf(COLOR_RED "[ERREUR] " COLOR_RESET
-                         "Aucun mot n'a été détecté dans la grille!\n");
+        printf(COLOR_RED "[ERROR] " COLOR_RESET
+                         "No words have been detected!\n");
         return;
     }
 
     int thickness = 3;
     int is_drawn = 0;
 
+    GdkPixbuf *display = gdk_pixbuf_copy(data->transformed);
+
+    printf("Found %i detected words\n", words->detected_words_count);
     for (int i = 0; i < words->detected_words_count; i++)
     {
         int x1 = words->solved_words_image_coos[i][0];
@@ -320,25 +324,33 @@ void solver(GtkButton *button, gpointer user_data)
         if (x1 > 0 && y1 > 0 && x2 > 0 && y2 > 0 && x3 > 0 && y3 > 0 &&
             x4 > 0 && y4 > 0)
         {
-            draw_rectangle(data->transformed, x1, y1, x2, y2, x3, y3, x4, y4,
+            draw_rectangle(display, x1, y1, x2, y2, x3, y3, x4, y4,
                            thickness);
             is_drawn = 1;
-            printf("Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
+            printf("Word %i: Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
                    "with thickness %i\n",
-                   x1, y1, x2, y2, x3, y3, x4, y4, thickness);
+                   i + 1, x1, y1, x2, y2, x3, y3, x4, y4, thickness);
+        }
+        else
+        {
+            printf("Word %i: Couldn't draw rectangle at (%i, %i) (%i, %i) (%i, %i) (%i, %i)\n",
+                    i + 1, x1, y1, x2, y2, x3, y3, x4, y4);
         }
     }
 
-    if (is_drawn == 0)
+    if (!is_drawn)
     {
         printf(COLOR_RED
-               "[ERREUR] " COLOR_RESET
-               "Aucun mot n'a été marqué comme résolu dans la grille\n");
+               "[ERROR] " COLOR_RESET
+               "No words have been marked as solved in the grid\n");
     }
 
-    data->rotation_angle = 0;
-    apply_transformations(data);
-    data->rotation_angle = rotation_angle;
+    if (data->current)
+    {
+        g_object_unref(data->current);
+    }
+    data->current = display;
+    update_image(data);
 }
 
 /*
