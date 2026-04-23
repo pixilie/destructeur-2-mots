@@ -2,24 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/**
+/*
  * slice_from:
- * Split a pixbuf into two subpixbufs by cutting either horizontally or
- * vertically.
+ * Split a pixbuf into two subpixbufs using a horizontal or vertical cut.
  *
  * Parameters:
  *  - pixbuf   : source GdkPixbuf to slice (must not be NULL).
- *  - x        : x coordinate of the vertical cut (used when direction != 1).
- *  - y        : y coordinate of the horizontal cut (used when direction == 1).
- *  - direction: if 1 perform a horizontal cut at row y (top/bottom),
- *               otherwise perform a vertical cut at column x (left/right).
+ *  - x        : x coordinate for vertical cut.
+ *  - y        : y coordinate for horizontal cut.
+ *  - direction: 1 = horizontal (top/bottom), otherwise vertical (left/right).
  *
  * Returns:
- *  - On success returns a newly-allocated array of two GdkPixbuf* containing
- *    the two subpixbufs (caller must g_object_unref() each and free() the
- * array).
- *  - Returns NULL on error (invalid arguments, allocation failure or cut out of
- * bounds).
+ *  - Newly-allocated array of two GdkPixbuf* on success (caller must
+ *    g_object_unref() each pixbuf and free() the array), or NULL on error.
  */
 GdkPixbuf **slice_from(GdkPixbuf *pixbuf, int x, int y, int direction)
 {
@@ -63,19 +58,17 @@ GdkPixbuf **slice_from(GdkPixbuf *pixbuf, int x, int y, int direction)
     return result;
 }
 
-/**
+/*
  * slice_in_n:
- * Divide a pixbuf into n_slice x n_slice equal tiles.
+ * Split a pixbuf into a grid of equal tiles (n_slice x n_slice).
  *
  * Parameters:
- *  - pixbuf  : source GdkPixbuf to tile (must not be NULL).
+ *  - pixbuf  : source GdkPixbuf (must not be NULL).
  *  - n_slice : number of slices per row/column (must be > 0).
  *
  * Returns:
- *  - On success returns a newly-allocated array of n_slice*n_slice GdkPixbuf*
- *    tiles in row-major order. Caller must g_object_unref() each tile and
- * free() the array.
- *  - Returns NULL on error (invalid arguments or allocation failure).
+ *  - Array of n_slice*n_slice GdkPixbuf* in row-major order on success
+ *    (caller must g_object_unref() each tile and free() the array), or NULL.
  */
 GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
 {
@@ -109,20 +102,18 @@ GdkPixbuf **slice_in_n(GdkPixbuf *pixbuf, int n_slice) // FIX
     return tiles;
 }
 
-/**
+/*
  * crop:
- * Create a subpixbuf representing the rectangular region defined by
- * (x1,y1)-(x2,y2).
+ * Return a subpixbuf for the rectangular region defined by (x1,y1)-(x2,y2).
  *
  * Parameters:
  *  - pixbuf : source GdkPixbuf (must not be NULL).
- *  - x1,y1 : coordinates of one corner of the crop rectangle.
- *  - x2,y2 : coordinates of the opposite corner of the crop rectangle.
+ *  - x1,y1  : coordinates of one corner of the crop rectangle.
+ *  - x2,y2  : coordinates of the opposite corner.
  *
  * Returns:
- *  - A GdkPixbuf* representing the cropped area (caller must g_object_unref()
- * it).
- *  - NULL on error (coordinates out of bounds).
+ *  - GdkPixbuf* for the cropped region (caller must g_object_unref()), or NULL
+ *    on error (invalid/out-of-bounds coordinates).
  */
 GdkPixbuf *crop(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2)
 {
@@ -147,15 +138,14 @@ GdkPixbuf *crop(GdkPixbuf *pixbuf, int x1, int y1, int x2, int y2)
     x2 = CLAMP(x2, 0, image_width - 1);
     y2 = CLAMP(y2, 0, image_height - 1);
 
-    
     int width = x2 - x1;
     int height = y2 - y1;
-   
+
     if (width <= 0 || height <= 0)
     {
         printf("[FAIL] Coordinates are outside of source pixbuf\n");
         return NULL;
     }
-  
+
     return gdk_pixbuf_new_subpixbuf(pixbuf, x1, y1, width, height);
 }

@@ -7,37 +7,34 @@
 #include <stdlib.h>
 #include <string.h>
 
-/**
- * Convert a character to its corresponding index (0-25).
- *
+/*
+ * char_to_index:
+ * Convert an ASCII letter to an index in [0,25].
  * Parameters:
- * - c : the character to convert (A-Z or a-z)
- *
+ *  - c: letter (A-Z or a-z)
  * Returns:
- * - index between 0 and 25
+ *  - index for the letter (A -> 0, B -> 1, ..., Z -> 25)
  */
 int char_to_index(char c) { return toupper(c) - 'A'; }
 
-/**
- * Convert an index back to an uppercase character.
- *
+/*
+ * index_to_char:
+ * Convert an index in [0,25] back to an uppercase ASCII letter.
  * Parameters:
- * - index : integer between 0 and 25
- *
+ *  - index: integer between 0 and 25
  * Returns:
- * - corresponding uppercase character (A-Z)
+ *  - corresponding uppercase character ('A' + index)
  */
 char index_to_char(int index) { return 'A' + index; }
 
-/**
- * Create a one-hot encoded vector for a given label.
- *
+/*
+ * one_hot:
+ * Create a one-hot vector of length 26 for a given class label.
  * Parameters:
- * - label : the index of the correct class (0-25)
- *
+ *  - label: class index in [0,25]
  * Returns:
- * - pointer to a double array of size 26 where arr[label] is 1.0 and others are
- * 0.0
+ *  - pointer to malloc'd double[26] with 1.0 at position label and 0.0
+ * elsewhere. Caller is responsible for freeing the returned array.
  */
 double *one_hot(int label)
 {
@@ -46,18 +43,15 @@ double *one_hot(int label)
     return v;
 }
 
-/**
- * Load, process, and normalize an image from a file.
- * The image is converted to grayscale, scaled to 28x28, and normalized
- * (0.0-1.0).
- *
+/*
+ * load_letter_image:
+ * Load an image file, convert to grayscale, scale to 28x28 and normalize.
  * Parameters:
- * - filename   : path to the image file
- * - input_size : pointer to store the total number of pixels (w * h)
- *
+ *  - filename: path to image file
+ *  - input_size: out parameter receiving number of pixels (width * height)
  * Returns:
- * - pointer to a double array containing normalized pixel values, or NULL on
- * error
+ *  - malloc'd double array of normalized pixels (values in [0.0,1.0]),
+ *    or NULL on failure. Caller must free the returned array.
  */
 double *load_letter_image(const char *filename, int *input_size)
 {
@@ -95,15 +89,24 @@ double *load_letter_image(const char *filename, int *input_size)
     return vec;
 }
 
-/**
- * Load the entire dataset from a directory structure.
- * Expected structure: path/A/image.png, path/B/image.png, etc.
+/*
+ * load_dataset:
+ * Load a dataset stored in a directory tree where each subdirectory is named
+ * by a letter and contains .png images for that class.
+ *
+ * Expected layout:
+ *   path/A/image1.png
+ *   path/A/image2.png
+ *   path/B/image1.png
+ *   ...
  *
  * Parameters:
- * - path : root directory of the dataset
+ *  - path: root directory of the dataset
  *
  * Returns:
- * - a Dataset structure containing inputs, targets, and labels
+ *  - Dataset structure with arrays of inputs, targets, labels and counts.
+ *    The inputs and targets arrays contain malloc'd pointers that the caller
+ *    must free using free_dataset().
  */
 Dataset load_dataset(const char *path)
 {
@@ -150,7 +153,8 @@ Dataset load_dataset(const char *path)
             }
 
             char file_path[4096];
-            snprintf(file_path, sizeof(file_path), "%s/%s", letter_path, img->d_name);
+            snprintf(file_path, sizeof(file_path), "%s/%s", letter_path,
+                     img->d_name);
 
             int size;
             double *vec = load_letter_image(file_path, &size);
@@ -186,11 +190,11 @@ Dataset load_dataset(const char *path)
     return d;
 }
 
-/**
- * Free all memory allocated for the dataset.
- *
+/*
+ * free_dataset:
+ * Free memory allocated for a Dataset returned by load_dataset.
  * Parameters:
- * - d : pointer to the Dataset to free
+ *  - d: pointer to Dataset to free
  */
 void free_dataset(Dataset *d)
 {

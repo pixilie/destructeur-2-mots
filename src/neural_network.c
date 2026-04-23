@@ -7,15 +7,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-/**
- * ReLU (Rectified Linear Unit) activation function.
- * Used for the hidden layers to introduce non-linearity.
- *
- * Parameters:
- * - x : input value
- *
- * Returns:
- * - x if x > 0, else 0
+/*
+ * relu:
+ * Rectified Linear Unit activation. Returns x if x > 0, else 0.
  */
 double relu(double x)
 {
@@ -29,15 +23,9 @@ double relu(double x)
     }
 }
 
-/**
- * Derivative of the ReLU activation function.
- * Used during backpropagation to calculate gradients.
- *
- * Parameters:
- * - x : the raw input (pre-activation sum) stored during forward pass
- *
- * Returns:
- * - 1 if x > 0, else 0
+/*
+ * relu_derivative:
+ * Derivative of ReLU. Returns 1 if x > 0, else 0.
  */
 double relu_derivative(double x)
 {
@@ -51,19 +39,15 @@ double relu_derivative(double x)
     }
 }
 
-/**
- * Softmax activation function (stable version).
- * Converts raw logits into a probability distribution.
- * Subtracts the max value to improve numerical stability against large
- * exponentials.
- *
+/*
+ * softmax:
+ * Compute softmax of input logits into output array (numerically stable).
  * Parameters:
- * - input  : array of raw logits (size = size)
- * - output : array that will receive calculated probabilities (size = size)
- * - size   : number of elements in the layer
- *
+ *  - input: logits array
+ *  - output: array to receive probabilities
+ *  - size: number of elements
  * Returns:
- * - normalization factor (sum of exponentials)
+ *  - sum of exponentials (normalization factor)
  */
 double softmax(double *input, double *output, int size)
 {
@@ -92,16 +76,13 @@ double softmax(double *input, double *output, int size)
     return sum;
 }
 
-/**
- * Initialize weights using He (Kaiming) Initialization.
- * Best suited for layers using ReLU activation.
- * Formula: Uniform distribution between [-limit, limit]
- * where limit = sqrt(6 / fan_in).
- *
+/*
+ * init_weights_he:
+ * Initialize weights with He (Kaiming) uniform initialization.
  * Parameters:
- * - weights : pointer to the weight array to initialize
- * - size    : total number of weights in the array
- * - fan_in  : number of input neurons feeding into this layer
+ *  - weights: array to fill
+ *  - size: number of weights
+ *  - fan_in: number of input units
  */
 void init_weights_he(double *weights, int size, int fan_in)
 {
@@ -114,17 +95,10 @@ void init_weights_he(double *weights, int size, int fan_in)
     }
 }
 
-/**
- * Allocate and initialize a new neural network structure.
- * Uses He initialization for weights and sets biases to 0.0.
- *
- * Parameters:
- * - input_size  : number of input neurons (e.g., 784 for 28x28 images)
- * - hidden_size : number of neurons in the hidden layer
- * - output_size : number of output neurons (e.g., 26 for A-Z)
- *
- * Returns:
- * - pointer to the allocated NeuralNetwork struct
+/*
+ * create_network:
+ * Allocate and initialize a NeuralNetwork with given sizes.
+ * Weights are initialized and biases set to zero.
  */
 NeuralNetwork *create_network(int input_size, int hidden_size, int output_size)
 {
@@ -161,11 +135,9 @@ NeuralNetwork *create_network(int input_size, int hidden_size, int output_size)
     return nn;
 }
 
-/**
- * Free all memory allocated for a neural network.
- *
- * Parameters:
- * - nn : pointer to the NeuralNetwork to destroy
+/*
+ * free_network:
+ * Free memory of a NeuralNetwork instance.
  */
 void free_network(NeuralNetwork *nn)
 {
@@ -179,13 +151,9 @@ void free_network(NeuralNetwork *nn)
     free(nn);
 }
 
-/**
- * Save the neural network model to a binary file.
- * Saves topology (sizes), weights, and biases.
- *
- * Parameters:
- * - nn       : pointer to the neural network
- * - filename : path where the file will be saved
+/*
+ * save_network:
+ * Save network sizes, weights and biases to a binary file.
  */
 void save_network(NeuralNetwork *nn, const char *filename)
 {
@@ -212,14 +180,10 @@ void save_network(NeuralNetwork *nn, const char *filename)
     fclose(f);
 }
 
-/**
- * Load a neural network from a binary file.
- *
- * Parameters:
- * - filename : path to the saved model file
- *
- * Returns:
- * - pointer to the loaded NeuralNetwork, or NULL on error
+/*
+ * load_network:
+ * Load a network saved with save_network. Returns allocated NeuralNetwork or
+ * NULL.
  */
 NeuralNetwork *load_network(const char *filename)
 {
@@ -280,14 +244,10 @@ NeuralNetwork *load_network(const char *filename)
     return nn;
 }
 
-/**
- * Perform a forward pass through the network.
- * Computes hidden layer (Linear -> ReLU) and output layer (Linear -> Softmax).
- * Results are stored in nn->hidden and nn->output.
- *
- * Parameters:
- * - nn     : pointer to the neural network
- * - inputs : input array of size nn->input_size
+/*
+ * forward:
+ * Run a forward pass: input -> hidden (linear + ReLU) -> output (linear +
+ * softmax). Stores results in nn->hidden and nn->output.
  */
 void forward(NeuralNetwork *nn, double *inputs)
 {
@@ -326,25 +286,26 @@ void forward(NeuralNetwork *nn, double *inputs)
     free(logits);
 }
 
-/**
- * Train the network using Stochastic Gradient Descent (SGD).
- * Performs forward pass, calculates Cross-Entropy loss, performs
- * backpropagation, and updates weights/biases.
- *
+/*
+ * train:
+ * Train network using SGD over provided samples (no batching).
  * Parameters:
- * - nn      : pointer to neural network
- * - inputs  : array of input vectors (training data)
- * - targets : array of target vectors (one-hot encoded)
- * - samples : number of training samples
- * - lr      : learning rate (e.g., 0.01)
- * - epochs  : number of times to iterate over the entire dataset
+ *  - nn: network
+ *  - inputs: array of input vectors
+ *  - targets: array of one-hot target vectors
+ *  - samples: number of samples
+ *  - lr: learning rate
+ *  - epochs: number of epochs
  */
 void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
-           double lr, int epochs)
+           double lr, int epochs, ProgressCallback cb, void *user_data)
 {
     for (int epoch = 0; epoch < epochs; epoch++)
     {
-        double total_loss = 0.0;
+        if (cb != NULL)
+        {
+            cb(epoch + 1, epochs, user_data);
+        }
 
         for (int s = 0; s < samples; s++)
         {
@@ -353,16 +314,6 @@ void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
             double *output_deltas = malloc(sizeof(double) * nn->output_size);
             double *hidden_deltas = malloc(sizeof(double) * nn->hidden_size);
 
-            // Calculate Loss (Cross-Entropy)
-            for (int o = 0; o < nn->output_size; o++)
-            {
-                if (targets[s][o] == 1.0)
-                {
-                    total_loss += -log(nn->output[o] + 1e-12);
-                }
-            }
-
-            // Output Layer Deltas (Softmax + Cross-Entropy Derivative = O - T)
             for (int o = 0; o < nn->output_size; o++)
             {
                 output_deltas[o] = nn->output[o] - targets[s][o];
@@ -412,24 +363,12 @@ void train(NeuralNetwork *nn, double **inputs, double **targets, int samples,
             free(output_deltas);
             free(hidden_deltas);
         }
-
-        if (epoch % 100 == 0)
-        {
-            printf("Epoch %d - Loss: %.6f\n", epoch, total_loss);
-        }
     }
 }
 
-/**
- * Predict a character (A-Z) from an image.
- * Wraps image preprocessing and network inference.
- *
- * Parameters:
- * - nn     : pointer to the trained neural network
- * - pixbuf : input image (GdkPixbuf)
- *
- * Returns:
- * - predicted character (uppercase char)
+/*
+ * predict_letter:
+ * Predict a single letter (A-Z) from a GdkPixbuf image. Returns uppercase char.
  */
 char predict_letter(NeuralNetwork *nn, GdkPixbuf *pixbuf)
 {

@@ -1,6 +1,12 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <string.h>
 
-// Removes tiny black pixels
+/*
+ * erode_3x3:
+ * Simple 3x3 erosion on a grayscale/binary image (in-place).
+ * Parameters:
+ *  - pixbuf: image to modify.
+ */
 void erode_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -51,7 +57,12 @@ void erode_3x3(GdkPixbuf *pixbuf)
     g_free(copy);
 }
 
-// Restore black pixels
+/*
+ * dilate_3x3:
+ * Simple 3x3 dilation on a grayscale/binary image (in-place).
+ * Parameters:
+ *  - pixbuf: image to modify.
+ */
 void dilate_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
@@ -100,7 +111,10 @@ void dilate_3x3(GdkPixbuf *pixbuf)
     g_free(copy);
 }
 
-// Returns the index of the minimum element of the 3x3 neighboring pixels array
+/*
+ * find_minimum_index:
+ * Return index of minimum value in neighborhood starting at start_index.
+ */
 int find_minimum_index(int start_index, guchar *neighborhood)
 {
     int min_index = start_index;
@@ -114,8 +128,10 @@ int find_minimum_index(int start_index, guchar *neighborhood)
     return min_index;
 }
 
-// Simple selection sort to sort the array of the 3x3 neighboring pixels to
-// calculate the median of the array
+/*
+ * selection_sort:
+ * Simple selection sort for a 9-element array (used for median).
+ */
 void selection_sort(guchar *neighborhood)
 {
     for (int i = 0; i < 9; i++)
@@ -127,13 +143,19 @@ void selection_sort(guchar *neighborhood)
     }
 }
 
-// Filter a 3x3 neighborhood
-void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
+/*
+ * filter_neighborhood_3x3:
+ * Replace pixel at (x,y) with median of its 3x3 neighborhood.
+ * Parameters: pixbuf (target), copy (source pixels), x, y, width, height,
+ * rowstride, n_channels.
+ */
+void filter_neighborhood_3x3(GdkPixbuf *pixbuf, GdkPixbuf *copy, int x, int y,
                              int width, int height, int rowstride,
                              int n_channels)
 {
     guchar neighborhood[9]; // The 9 neighboring pixels array
     int neighborhood_count = 0;
+    guchar *copy_pixels = gdk_pixbuf_get_pixels(copy);
 
     for (int dy = -1; dy <= 1; dy++)
     {
@@ -159,7 +181,7 @@ void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
                 new_y = height - 1;
             }
 
-            guchar *p = copy + new_y * rowstride + new_x * n_channels;
+            guchar *p = copy_pixels + new_y * rowstride + new_x * n_channels;
 
             neighborhood[neighborhood_count] = p[0];
             neighborhood_count++;
@@ -176,17 +198,21 @@ void filter_neighborhood_3x3(GdkPixbuf *pixbuf, guchar *copy, int x, int y,
     dst[0] = dst[1] = dst[2] = median;
 }
 
+/*
+ * median_filter_3x3:
+ * Apply a 3x3 median filter over the entire image (in-place).
+ * Parameters:
+ *  - pixbuf: image to filter.
+ */
 void median_filter_3x3(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
-    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
     // Copy pixbuf to get the raw pixels before applying the median filter
-    guchar *copy = g_malloc(rowstride * height);
-    memcpy(copy, pixels, rowstride * height);
+    GdkPixbuf *copy = gdk_pixbuf_copy(pixbuf);
 
     // Filter every pixel in a 3x3 neighborhood
     for (int y = 0; y < height; y++)
@@ -198,5 +224,5 @@ void median_filter_3x3(GdkPixbuf *pixbuf)
         }
     }
 
-    g_free(copy);
+    g_object_unref(copy);
 }
