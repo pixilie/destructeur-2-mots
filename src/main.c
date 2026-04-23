@@ -69,7 +69,7 @@ void update_progress_ui(int current_epoch, int total_epochs, void *user_data)
 {
     GtkProgressBar *bar = GTK_PROGRESS_BAR(user_data);
 
-    double fraction = (double)current_epoch / total_epochs;
+    double fraction = (double) current_epoch / total_epochs;
     gtk_progress_bar_set_fraction(bar, fraction);
 
     char text[32];
@@ -193,7 +193,10 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
     if (data->transformed)
         g_object_unref(data->transformed);
 
-    free_pipeline(data->pipelineResult);
+    if (data->pipelineResult)
+    {
+        free_pipeline(data->pipelineResult);
+    }
     g_free(data);
 }
 
@@ -204,6 +207,9 @@ void free_app_data(GtkWidget *widget __attribute__((unused)),
 void pop_up_treated()
 {
     GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
+    gtk_window_set_default_size(GTK_WINDOW(window), 300, 100);
+    gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+    
     GtkWidget *label = gtk_label_new("L'image a déja été traitée");
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), box);
@@ -212,10 +218,10 @@ void pop_up_treated()
 }
 
 /*
- * automatic_treatement:
+ * automatic_processing:
  * Apply grayscale, binarize, median filter and automatic rotation.
  */
-void automatic_treatement(GtkButton *button, gpointer user_data)
+void automatic_processing(GtkButton *button, gpointer user_data)
 {
     (void)button;
     AppData *data = user_data;
@@ -228,8 +234,11 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
         median_filter_3x3(data->transformed);
         convert_to_black_and_white(data->transformed);
         GdkPixbuf *rotated = rotate_image_automatic(data->transformed);
-        g_object_unref(data->transformed);
-        data->transformed = rotated;
+        if (rotated && rotated != data->transformed)
+        {
+            g_object_unref(data->transformed);
+            data->transformed = rotated;
+        }
 
         apply_transformations(data);
         is_processed = 1;
@@ -242,17 +251,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
 
 
 PipelineResult *load_pipeline(char *filename, NeuralNetwork *nn)
-{
-    /*
-    char *exe_dir = get_executable_dir();
-    char grid_path[512];
-    char letters_path[512];
-    snprintf(grid_path, sizeof(grid_path), "%s/tests/results/ui_output/grid",
-             exe_dir);
-    snprintf(letters_path, sizeof(letters_path),
-             "%s/tests/results/ui_output/letters", exe_dir);
-    */
-    
+{    
     return pipeline(filename, nn);
 }
 
@@ -645,8 +644,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *vertical_box;
     GtkWidget *horizontal_center_box;
     GtkWidget *image_container_box;
-    GtkWidget *sidebar_box;
-    GtkWidget *bottom_box;
 
     GtkWidget *logo_image;
     GtkWidget *title;
@@ -654,12 +651,14 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *image;
     GtkWidget *scrolled;
 
+    GtkWidget *neural_network_box;
     GtkWidget *lbl_neural;
     GtkWidget *btn_load_img_sidebar;
     GtkWidget *btn_training;
     GtkWidget *btn_load_neural;
     GtkWidget *btn_save_neural;
 
+    GtkWidget *image_box;
     GtkWidget *lbl_image;
     GtkWidget *btn_process;
     GtkWidget *btn_solve;
@@ -726,7 +725,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *space = gtk_label_new(NULL);
     gtk_box_pack_start(GTK_BOX(top_bar), space, TRUE, TRUE, 0);
 
-    close_button = gtk_button_new_with_label("Quitter");
+    close_button = gtk_button_new_with_label("Quit");
     GtkStyleContext *ctx = gtk_widget_get_style_context(close_button);
     gtk_style_context_add_class(ctx, "quit-btn");
     g_signal_connect_swapped(close_button, "clicked",
@@ -753,16 +752,31 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     image = gtk_image_new_from_pixbuf(scaled);
     gtk_container_add(GTK_CONTAINER(scrolled), image);
 
-    sidebar_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 15);
-    gtk_widget_set_size_request(sidebar_box, 300, -1);
-    gtk_box_pack_start(GTK_BOX(horizontal_center_box), sidebar_box, FALSE,
+    // Neural network buttons
+    neural_network_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 15);
+    gtk_widget_set_size_request(neural_network_box, 300, -1);
+    gtk_box_pack_start(GTK_BOX(horizontal_center_box), neural_network_box, FALSE,
                        FALSE, 0);
 
-    lbl_neural = gtk_label_new("Réseau de neurones");
+    lbl_neural = gtk_label_new("Neural network:");
     ctx = gtk_widget_get_style_context(lbl_neural);
     gtk_style_context_add_class(ctx, "bold-label");
-    gtk_box_pack_start(GTK_BOX(sidebar_box), lbl_neural, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(neural_network_box), lbl_neural, FALSE, FALSE, 5);
 
+    btn_training = gtk_button_new_with_label("Train");
+    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_training, FALSE, FALSE, 5);
+    g_signal_connect(btn_training, "clicked", G_CALLBACK(get_neural_train_path),
+                     NULL);
+
+    btn_load_neural = gtk_button_new_with_label("Load");
+    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_load_neural, FALSE, FALSE, 5);
+    g_signal_connect(btn_load_neural, "clicked",
+                     G_CALLBACK(get_neural_load_path), NULL);
+
+    btn_save_neural = gtk_button_new_with_label("Save");
+    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_save_neural, FALSE, FALSE, 5);
+    g_signal_connect(btn_save_neural, "clicked", G_CALLBACK(save_neural), NULL);
+    
     AppData *data = g_new0(AppData, 1);
     data->image = image;
     data->original = pixbuf;
@@ -771,49 +785,36 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->rotation_angle = 0.0;
     data->save_index = 1;
 
-    btn_load_img_sidebar = gtk_button_new_with_label("Charger une image");
-    gtk_box_pack_start(GTK_BOX(sidebar_box), btn_load_img_sidebar, FALSE, FALSE,
-                       5);
-    g_signal_connect(btn_load_img_sidebar, "clicked",
-                     G_CALLBACK(get_path_image), data);
-
-    btn_training = gtk_button_new_with_label("Entrainement");
-    gtk_box_pack_start(GTK_BOX(sidebar_box), btn_training, FALSE, FALSE, 5);
-    g_signal_connect(btn_training, "clicked", G_CALLBACK(get_neural_train_path),
-                     NULL);
-
-    btn_load_neural = gtk_button_new_with_label("Charger");
-    gtk_box_pack_start(GTK_BOX(sidebar_box), btn_load_neural, FALSE, FALSE, 5);
-    g_signal_connect(btn_load_neural, "clicked",
-                     G_CALLBACK(get_neural_load_path), NULL);
-
-    btn_save_neural = gtk_button_new_with_label("Sauvegarder");
-    gtk_box_pack_start(GTK_BOX(sidebar_box), btn_save_neural, FALSE, FALSE, 5);
-    g_signal_connect(btn_save_neural, "clicked", G_CALLBACK(save_neural), NULL);
-
-    bottom_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 15);
-    gtk_box_pack_start(GTK_BOX(vertical_box), bottom_box, FALSE, FALSE, 10);
+    // Image buttons
+    image_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 15);
+    gtk_box_pack_start(GTK_BOX(vertical_box), image_box, FALSE, FALSE, 10);
 
     lbl_image = gtk_label_new("Image :");
     ctx = gtk_widget_get_style_context(lbl_image);
     gtk_style_context_add_class(ctx, "bold-label");
-    gtk_box_pack_start(GTK_BOX(bottom_box), lbl_image, FALSE, FALSE, 10);
+    gtk_box_pack_start(GTK_BOX(image_box), lbl_image, FALSE, FALSE, 10);
 
-    btn_process = gtk_button_new_with_label("Traiter");
-    gtk_box_pack_start(GTK_BOX(bottom_box), btn_process, TRUE, TRUE, 0);
-    g_signal_connect(btn_process, "clicked", G_CALLBACK(automatic_treatement),
+    btn_load_img_sidebar = gtk_button_new_with_label("Load image");
+    gtk_box_pack_start(GTK_BOX(image_box), btn_load_img_sidebar, TRUE, TRUE,
+                       0);
+    g_signal_connect(btn_load_img_sidebar, "clicked",
+                     G_CALLBACK(get_path_image), data);
+    
+    btn_process = gtk_button_new_with_label("Process");
+    gtk_box_pack_start(GTK_BOX(image_box), btn_process, TRUE, TRUE, 0);
+    g_signal_connect(btn_process, "clicked", G_CALLBACK(automatic_processing),
                      data);
 
-    btn_solve = gtk_button_new_with_label("Résoudre");
-    gtk_box_pack_start(GTK_BOX(bottom_box), btn_solve, TRUE, TRUE, 0);
+    btn_solve = gtk_button_new_with_label("Solve");
+    gtk_box_pack_start(GTK_BOX(image_box), btn_solve, TRUE, TRUE, 0);
     g_signal_connect(btn_solve, "clicked", G_CALLBACK(solver), data);
 
-    btn_reset = gtk_button_new_with_label("Réinitialiser");
-    gtk_box_pack_start(GTK_BOX(bottom_box), btn_reset, TRUE, TRUE, 0);
+    btn_reset = gtk_button_new_with_label("Reset");
+    gtk_box_pack_start(GTK_BOX(image_box), btn_reset, TRUE, TRUE, 0);
     g_signal_connect(btn_reset, "clicked", G_CALLBACK(on_reset_clicked), data);
 
-    btn_save_image = gtk_button_new_with_label("Sauvegarder");
-    gtk_box_pack_start(GTK_BOX(bottom_box), btn_save_image, TRUE, TRUE, 0);
+    btn_save_image = gtk_button_new_with_label("Save");
+    gtk_box_pack_start(GTK_BOX(image_box), btn_save_image, TRUE, TRUE, 0);
     g_signal_connect(btn_save_image, "clicked", G_CALLBACK(on_save_clicked),
                      data);
 
@@ -856,7 +857,7 @@ int main(int argc, char *argv[])
     char *exe_dir = get_executable_dir();
     snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
              DEFAULT_MODEL_PATH);
-    printf("Default neural netwotk path loaded: %s\n", neural_path);
+    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Default neural netwotk path loaded: %s\n", neural_path);
     neural = load_network(neural_path);
 
     if (argc > 1)
