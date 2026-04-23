@@ -22,7 +22,7 @@
 #define COLOR_GREEN "\033[32m"
 #define COLOR_YELLOW "\033[33m"
 
-char **filename = NULL;
+char *filename = NULL;
 NeuralNetwork *neural = NULL;
 int is_processed = 0; // 0 = not processed, 1 = processed
 
@@ -122,6 +122,12 @@ void on_reset_clicked(GtkButton *button, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(data->original);
     data->current = gdk_pixbuf_copy(data->original);
     update_image(data);
+
+    if (data->pipelineResult)
+    {
+        free_pipeline(data->pipelineResult);
+        data->pipelineResult = NULL;
+    }
 }
 
 /*
@@ -220,7 +226,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
     {
         convert_to_grayscale(data->transformed);
         median_filter_3x3(data->transformed);
-        (void)convert_to_black_and_white(data->transformed);
+        convert_to_black_and_white(data->transformed);
         GdkPixbuf *rotated = rotate_image_automatic(data->transformed);
         // g_object_unref(data->transformed);
         data->transformed = rotated;
@@ -237,6 +243,7 @@ void automatic_treatement(GtkButton *button, gpointer user_data)
 
 PipelineResult *load_pipeline(char *filename, NeuralNetwork *nn)
 {
+    /*
     char *exe_dir = get_executable_dir();
     char grid_path[512];
     char letters_path[512];
@@ -244,7 +251,8 @@ PipelineResult *load_pipeline(char *filename, NeuralNetwork *nn)
              exe_dir);
     snprintf(letters_path, sizeof(letters_path),
              "%s/tests/results/ui_output/letters", exe_dir);
-
+    */
+    
     return pipeline(filename, nn);
 }
 
@@ -261,10 +269,13 @@ void solver(GtkButton *button, gpointer user_data)
     {
         return;
     }
-    
-    free_pipeline(data->pipelineResult);
-    
-    data->pipelineResult = load_pipeline(*filename, neural);
+
+    if (data->pipelineResult)
+    {
+        free_pipeline(data->pipelineResult);
+    }
+        
+    data->pipelineResult = load_pipeline(filename, neural);
     double rotation_angle = data->pipelineResult->rotation_angle;
     if (rotation_angle != 0.0)
     {
@@ -366,7 +377,11 @@ void change_image(const char *file, gpointer user_data)
         return;
     }
 
-    filename = (char**)file;
+    if (filename)
+    {
+        g_free(filename);
+    }
+    filename = g_strdup(file);
 
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), pixbuf);
 
@@ -398,6 +413,12 @@ void change_image(const char *file, gpointer user_data)
     data->rotation_angle = 0.0;
     data->save_index = 1;
     is_processed = 0;
+
+    if (data->pipelineResult)
+    {
+        free_pipeline(data->pipelineResult);
+        data->pipelineResult = NULL;
+    }
 
     gtk_image_set_from_pixbuf(GTK_IMAGE(data->image), data->current);
     gtk_widget_queue_draw(data->image);
@@ -633,12 +654,12 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *btn_reset;
     GtkWidget *btn_save_image;
 
-    filename = (char **)user_data;
+    filename = (char *) user_data;
 
-    const char *image_path = get_image_path(*filename);
+    const char *image_path = get_image_path(filename);
     if (!image_path)
     {
-        g_printerr("Could not resolve image path for '%s'\n", *filename);
+        g_printerr("Could not resolve image path for '%s'\n", filename);
         return;
     }
 
@@ -737,7 +758,6 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     data->transformed = gdk_pixbuf_copy(pixbuf);
     data->rotation_angle = 0.0;
     data->save_index = 1;
-    data->pipelineResult = load_pipeline(*filename, neural);
 
     btn_load_img_sidebar = gtk_button_new_with_label("Charger une image");
     gtk_box_pack_start(GTK_BOX(sidebar_box), btn_load_img_sidebar, FALSE, FALSE,
@@ -835,10 +855,10 @@ int main(int argc, char *argv[])
     app = gtk_application_new("com.example.GtkApplication",
                               G_APPLICATION_HANDLES_COMMAND_LINE);
     g_signal_connect(app, "command-line", G_CALLBACK(on_command_line), NULL);
-    g_signal_connect(app, "activate", G_CALLBACK(on_activate), &filename);
+    g_signal_connect(app, "activate", G_CALLBACK(on_activate), filename);
     status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
-    g_free(filename);
+    //g_free(filename);
     //FcFini();
 
     return status;
