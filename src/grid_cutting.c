@@ -81,7 +81,7 @@ void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
 
         guchar *p = pixels + y * rowstride + x * n_channels;
 
-        if (p[0] < 200 || is_visited[y * width + x])
+        if (is_visited[y * width + x] || p[0] < 200)
         {
             continue;
         }
@@ -101,7 +101,7 @@ void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
         {
             int nx = x + directions[i][0];
             int ny = y + directions[i][1];
-            if (nx >= 0 && ny >= 0 && nx < width && ny < height)
+            if (!is_visited[ny * width + nx] && nx >= 0 && ny >= 0 && nx < width && ny < height)
             {
                 queue[back] = (Point){nx, ny};
                 back++;
@@ -519,7 +519,7 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     }
 
     GdkPixbuf *pixbuf = load_image(filename);
-    GdkPixbuf *pixbuf_to_slice = load_image(filename);
+    GdkPixbuf *pixbuf_to_slice = gdk_pixbuf_copy(pixbuf);
 
     convert_to_grayscale(pixbuf);
 
