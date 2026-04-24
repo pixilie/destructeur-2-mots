@@ -69,7 +69,7 @@ void update_progress_ui(int current_epoch, int total_epochs, void *user_data)
 {
     GtkProgressBar *bar = GTK_PROGRESS_BAR(user_data);
 
-    double fraction = (double) current_epoch / total_epochs;
+    double fraction = (double)current_epoch / total_epochs;
     gtk_progress_bar_set_fraction(bar, fraction);
 
     char text[32];
@@ -209,7 +209,7 @@ void pop_up_treated()
     GtkWidget *window = gtk_window_new(GTK_WINDOW_POPUP);
     gtk_window_set_default_size(GTK_WINDOW(window), 300, 100);
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-    
+
     GtkWidget *label = gtk_label_new("L'image a déja été traitée");
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window), box);
@@ -249,9 +249,8 @@ void automatic_processing(GtkButton *button, gpointer user_data)
     }
 }
 
-
 PipelineResult *load_pipeline(char *filename, NeuralNetwork *nn)
-{    
+{
     return pipeline(filename, nn);
 }
 
@@ -269,87 +268,132 @@ void solver(GtkButton *button, gpointer user_data)
         return;
     }
 
-    if (data->pipelineResult)
-    {
-        free_pipeline(data->pipelineResult);
-    }
-        
-    data->pipelineResult = load_pipeline(filename, neural);
-
-    g_object_unref(data->transformed);
-    data->transformed = gdk_pixbuf_copy(data->original);
+    // The maximum number of pipeline attempts to try to solve the grid
+    const int MAX_PIPELINE_ATTEMPTS = 20;
     
-    double rotation_angle = data->pipelineResult->rotation_angle;
-    if (rotation_angle < -0.1 || rotation_angle > 0.1)
+    // The miniumum number of words to solve to assert solving was successful
+    const int MIN_WORDS_SOLVED = 9;
+    
+    int pipeline_attempt = 1;
+    int isPipelineSuccess = 0;
+
+    // Runs the pipeline until all words have been solved correctly
+    while (!isPipelineSuccess && pipeline_attempt <= MAX_PIPELINE_ATTEMPTS)
     {
-        GdkPixbuf *rotated = rotate_image(data->transformed, rotation_angle);
-        g_object_unref(data->transformed);
-        data->transformed = rotated;
-    }
+        printf(COLOR_YELLOW "[SOLVER] " COLOR_RESET "Pipeline attempt %i...\n",
+               pipeline_attempt);
+        pipeline_attempt++;
 
-    Words *words = &data->pipelineResult->words;
-    if (!words->solved_words_image_coos)
-    {
-        printf(COLOR_RED "[ERROR] " COLOR_RESET
-                         "Solved words image coordinates have not been found in the solver "
-                         "to draw solved words!\n");
-        return;
-    }
-
-    if (words->detected_words_count == 0)
-    {
-        printf(COLOR_RED "[ERROR] " COLOR_RESET
-                         "No words have been detected!\n");
-        return;
-    }
-
-    int thickness = 3;
-    int is_drawn = 0;
-
-    GdkPixbuf *display = gdk_pixbuf_copy(data->transformed);
-
-    printf("Found %i detected words\n", words->detected_words_count);
-    for (int i = 0; i < words->detected_words_count; i++)
-    {
-        int x1 = words->solved_words_image_coos[i][0];
-        int y1 = words->solved_words_image_coos[i][1];
-        int x2 = words->solved_words_image_coos[i][2];
-        int y2 = words->solved_words_image_coos[i][3];
-        int x3 = words->solved_words_image_coos[i][4];
-        int y3 = words->solved_words_image_coos[i][5];
-        int x4 = words->solved_words_image_coos[i][6];
-        int y4 = words->solved_words_image_coos[i][7];
-
-        if (x1 > 0 && y1 > 0 && x2 > 0 && y2 > 0 && x3 > 0 && y3 > 0 &&
-            x4 > 0 && y4 > 0)
+        if (data->pipelineResult)
         {
-            draw_rectangle(display, x1, y1, x2, y2, x3, y3, x4, y4,
-                           thickness);
-            is_drawn = 1;
-            printf("Word %i: Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) (%i, %i) "
-                   "with thickness %i\n",
-                   i + 1, x1, y1, x2, y2, x3, y3, x4, y4, thickness);
+            free_pipeline(data->pipelineResult);
+        }
+
+        data->pipelineResult = load_pipeline(filename, neural);
+
+        g_object_unref(data->transformed);
+        data->transformed = gdk_pixbuf_copy(data->original);
+
+        double rotation_angle = data->pipelineResult->rotation_angle;
+        if (rotation_angle < -0.1 || rotation_angle > 0.1)
+        {
+            GdkPixbuf *rotated =
+                rotate_image(data->transformed, rotation_angle);
+            g_object_unref(data->transformed);
+            data->transformed = rotated;
+        }
+
+        Words *words = &data->pipelineResult->words;
+        if (!words->solved_words_image_coos)
+        {
+            printf(COLOR_RED "[ERROR] " COLOR_RESET
+                             "Solved words image coordinates have not been "
+                             "found in the solver "
+                             "to draw solved words!\n");
+            continue;
+        }
+
+        if (words->detected_words_count == 0)
+        {
+            printf(COLOR_RED "[ERROR] " COLOR_RESET
+                             "No words have been detected!\n");
+            continue;
+        }
+
+        int thickness = 3;
+        int is_drawn = 0;
+
+        GdkPixbuf *display = gdk_pixbuf_copy(data->transformed);
+
+        printf("Found %i detected words\n", words->detected_words_count);
+        int is_draw_success = 1;
+        int solved_words = 0;
+        for (int i = 0; i < words->detected_words_count; i++)
+        {
+            int x1 = words->solved_words_image_coos[i][0];
+            int y1 = words->solved_words_image_coos[i][1];
+            int x2 = words->solved_words_image_coos[i][2];
+            int y2 = words->solved_words_image_coos[i][3];
+            int x3 = words->solved_words_image_coos[i][4];
+            int y3 = words->solved_words_image_coos[i][5];
+            int x4 = words->solved_words_image_coos[i][6];
+            int y4 = words->solved_words_image_coos[i][7];
+
+            if (x1 > 0 && y1 > 0 && x2 > 0 && y2 > 0 && x3 > 0 && y3 > 0 &&
+                x4 > 0 && y4 > 0)
+            {
+                draw_rectangle(display, x1, y1, x2, y2, x3, y3, x4, y4,
+                               thickness);
+                is_drawn = 1;
+                solved_words++;
+                printf(COLOR_GREEN "[SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Word %i: %s: Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) "
+                       "(%i, %i)\n",
+                       i + 1, words->words[i], x1, y1, x2, y2, x3, y3, x4, y4);
+            }
+            else
+            {
+                printf(COLOR_RED "[ERROR]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Word %i: %s: Couldn't draw rectangle at (%i, %i) (%i, %i) "
+                       "(%i, %i) (%i, %i)\n",
+                       i + 1, words->words[i], x1, y1, x2, y2, x3, y3, x4, y4);
+                is_draw_success = 0;
+            }
+        }
+
+        if (!is_drawn)
+        {
+            printf(COLOR_RED
+                   "[ERROR] " COLOR_RESET
+                   "No words have been marked as solved in the grid!\n");
+            continue;
+        }
+
+        if (data->current)
+        {
+            g_object_unref(data->current);
+        }
+        data->current = display;
+        update_image(data);
+
+        if (is_drawn && is_draw_success &&
+            solved_words >= MIN_WORDS_SOLVED)
+        {
+            printf(
+                COLOR_GREEN
+                "[SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET
+                "Solved %i words from the image, finished solving the grid\n", solved_words);
+            isPipelineSuccess = 1;
+            break;
         }
         else
         {
-            printf("Word %i: Couldn't draw rectangle at (%i, %i) (%i, %i) (%i, %i) (%i, %i)\n",
-                    i + 1, x1, y1, x2, y2, x3, y3, x4, y4);
+            if (pipeline_attempt + 1 < MAX_PIPELINE_ATTEMPTS)
+            {
+                printf(COLOR_RED "[ERROR]" COLOR_YELLOW "[SOLVER] " COLOR_RESET
+                                 "Couldn't solve enough words from the image, expected at least %i but got only %i."
+                                 "Trying to solve the image again...\n", MIN_WORDS_SOLVED, solved_words);
+            }
         }
     }
-
-    if (!is_drawn)
-    {
-        printf(COLOR_RED
-               "[ERROR] " COLOR_RESET
-               "No words have been marked as solved in the grid\n");
-    }
-
-    if (data->current)
-    {
-        g_object_unref(data->current);
-    }
-    data->current = display;
-    update_image(data);
 }
 
 /*
@@ -665,7 +709,7 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     GtkWidget *btn_reset;
     GtkWidget *btn_save_image;
 
-    filename = (char *) user_data;
+    filename = (char *)user_data;
 
     const char *image_path = get_image_path(filename);
     if (!image_path)
@@ -755,28 +799,32 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     // Neural network buttons
     neural_network_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 15);
     gtk_widget_set_size_request(neural_network_box, 300, -1);
-    gtk_box_pack_start(GTK_BOX(horizontal_center_box), neural_network_box, FALSE,
-                       FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(horizontal_center_box), neural_network_box,
+                       FALSE, FALSE, 0);
 
     lbl_neural = gtk_label_new("Neural network:");
     ctx = gtk_widget_get_style_context(lbl_neural);
     gtk_style_context_add_class(ctx, "bold-label");
-    gtk_box_pack_start(GTK_BOX(neural_network_box), lbl_neural, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(neural_network_box), lbl_neural, FALSE, FALSE,
+                       5);
 
     btn_training = gtk_button_new_with_label("Train");
-    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_training, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_training, FALSE, FALSE,
+                       5);
     g_signal_connect(btn_training, "clicked", G_CALLBACK(get_neural_train_path),
                      NULL);
 
     btn_load_neural = gtk_button_new_with_label("Load");
-    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_load_neural, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_load_neural, FALSE,
+                       FALSE, 5);
     g_signal_connect(btn_load_neural, "clicked",
                      G_CALLBACK(get_neural_load_path), NULL);
 
     btn_save_neural = gtk_button_new_with_label("Save");
-    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_save_neural, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(neural_network_box), btn_save_neural, FALSE,
+                       FALSE, 5);
     g_signal_connect(btn_save_neural, "clicked", G_CALLBACK(save_neural), NULL);
-    
+
     AppData *data = g_new0(AppData, 1);
     data->image = image;
     data->original = pixbuf;
@@ -795,11 +843,10 @@ static void on_activate(GtkApplication *app, gpointer user_data)
     gtk_box_pack_start(GTK_BOX(image_box), lbl_image, FALSE, FALSE, 10);
 
     btn_load_img_sidebar = gtk_button_new_with_label("Load image");
-    gtk_box_pack_start(GTK_BOX(image_box), btn_load_img_sidebar, TRUE, TRUE,
-                       0);
+    gtk_box_pack_start(GTK_BOX(image_box), btn_load_img_sidebar, TRUE, TRUE, 0);
     g_signal_connect(btn_load_img_sidebar, "clicked",
                      G_CALLBACK(get_path_image), data);
-    
+
     btn_process = gtk_button_new_with_label("Process");
     gtk_box_pack_start(GTK_BOX(image_box), btn_process, TRUE, TRUE, 0);
     g_signal_connect(btn_process, "clicked", G_CALLBACK(automatic_processing),
@@ -857,7 +904,9 @@ int main(int argc, char *argv[])
     char *exe_dir = get_executable_dir();
     snprintf(neural_path, sizeof(neural_path), "%s/../%s", exe_dir,
              DEFAULT_MODEL_PATH);
-    printf(COLOR_YELLOW "[APP] " COLOR_RESET "Default neural netwotk path loaded: %s\n", neural_path);
+    printf(COLOR_YELLOW "[APP] " COLOR_RESET
+                        "Default neural netwotk path loaded: %s\n",
+           neural_path);
     neural = load_network(neural_path);
 
     if (argc > 1)
@@ -871,8 +920,8 @@ int main(int argc, char *argv[])
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), filename);
     status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
-    //g_free(filename);
-    //FcFini();
+    // g_free(filename);
+    // FcFini();
 
     return status;
 }

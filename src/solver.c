@@ -132,19 +132,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
     // Sort letters by Y
     Letter *sorted = malloc(nb_letters * sizeof(Letter));
     memcpy(sorted, grid_letters, nb_letters * sizeof(Letter));
-
-    for (int i = 0; i < nb_letters - 1; i++)
-    {
-        for (int j = i + 1; j < nb_letters; j++)
-        {
-            if (center_y(&sorted[i]) > center_y(&sorted[j])) // Swap
-            {
-                Letter temp = sorted[i];
-                sorted[i] = sorted[j];
-                sorted[j] = temp;
-            }
-        }
-    }
+    qsort(sorted, nb_letters, sizeof(Letter), compare_y);
 
     int *diffs = calloc(nb_letters - 1, sizeof(int));
     int diff_count = 0;
@@ -200,7 +188,7 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
 
     free(diffs);
 
-    printf("Row threshold: %i\n", row_threshold);
+    printf(COLOR_YELLOW "[SOLVER] " COLOR_RESET "Grid row threshold: %i\n", row_threshold);
 
     int *row_center_y = calloc(max_rows, sizeof(int));
 
@@ -268,22 +256,12 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
         }
     }
 
+    free(row_center_y);
+
     // Sort each row by X
     for (int row = 0; row < row_count_total; row++)
     {
-        for (int i = 0; i < row_sizes[row]; i++)
-        {
-            for (int j = i + 1; j < row_sizes[row]; j++)
-            {
-                // Swap letters of the same row
-                if (center_x(&rows[row][i]) > center_x(&rows[row][j]))
-                {
-                    Letter temp_letter = rows[row][i];
-                    rows[row][i] = rows[row][j];
-                    rows[row][j] = temp_letter;
-                }
-            }
-        }
+        qsort(rows[row], row_sizes[row], sizeof(Letter), compare_x);
     }
 
     free(row_sum_y);
@@ -577,6 +555,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
         free(temp_rows[i]);
     }
     free(temp_rows);
+    free(row_sum_y);
     free(row_center_y);
     free(words_letters);
 
