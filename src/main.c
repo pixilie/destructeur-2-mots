@@ -3,6 +3,7 @@
 #include "../include/neural_network.h"
 #include "../include/ui.h"
 #include "image/image.h"
+#include "../include/timer.h"
 
 #include <fontconfig/fontconfig.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -284,6 +285,8 @@ void solver(GtkButton *button, gpointer user_data)
                pipeline_attempt);
         pipeline_attempt++;
 
+        clock_t timer = start_timer();
+        
         if (data->pipelineResult)
         {
             free_pipeline(data->pipelineResult);
@@ -359,6 +362,8 @@ void solver(GtkButton *button, gpointer user_data)
             }
         }
 
+        float time = get_timer(timer);
+
         if (!is_drawn)
         {
             printf(COLOR_RED
@@ -380,7 +385,7 @@ void solver(GtkButton *button, gpointer user_data)
             printf(
                 COLOR_GREEN
                 "[SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET
-                "Solved %i words from the image, finished solving the grid\n", solved_words);
+                "Solved %i words from the image, finished solving the grid [%.2f s]\n", solved_words, time);
             isPipelineSuccess = 1;
             break;
         }
@@ -390,7 +395,7 @@ void solver(GtkButton *button, gpointer user_data)
             {
                 printf(COLOR_RED "[ERROR]" COLOR_YELLOW "[SOLVER] " COLOR_RESET
                                  "Couldn't solve enough words from the image, expected at least %i but got only %i."
-                                 "Trying to solve the image again...\n", MIN_WORDS_SOLVED, solved_words);
+                                 "Trying to solve the image again... [%.2f s]\n", MIN_WORDS_SOLVED, solved_words, time);
             }
         }
     }
