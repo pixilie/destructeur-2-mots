@@ -1,6 +1,6 @@
+#include "solver.h"
 #include "../include/image/image.h"
 #include "../include/neural_network.h"
-#include "solver.h"
 
 #include <ctype.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -122,53 +122,176 @@ int compare_y(const void *letter_1, const void *letter_2)
 Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
                                int *rows_out, int *cols_out)
 {
-    if (nb_letters <= 0)
+    if (nb_letters <= 0 || !grid_letters)
     {
         printf("No letters were detected while trying to build the grid array "
                "!\n");
         return NULL;
     }
 
-    // Sort letters by y value
-    qsort(grid_letters, nb_letters, sizeof(Letter), compare_y);
+    // Sort letters by Y
+    Letter *sorted = malloc(nb_letters * sizeof(Letter));
+    memcpy(sorted, grid_letters, nb_letters * sizeof(Letter));
 
-    int row_threshold = 30; // The tolerance between 2 y letter values to group
-                            // them in the same row
-    Letter **temp_rows = calloc(nb_letters, sizeof(Letter *));
-    int *row_sizes = calloc(nb_letters, sizeof(int));
-
-    temp_rows[0] = calloc(nb_letters, sizeof(Letter));
-    temp_rows[0][0] = grid_letters[0];
-    row_sizes[0] = 1;
-    int row_count = 1; // The number of rows in the grid
-    int col_count = 1; // The number of columns in the grid
-
-    int first_letter_in_row = 0;
-    for (int i = 1; i < nb_letters; i++)
+    for (int i = 0; i < nb_letters - 1; i++)
     {
-        int center_y_prev = center_y(&grid_letters[first_letter_in_row]);
-        int center_y_current = center_y(&grid_letters[i]);
-
-        // Same row
-        if (abs(center_y_current - center_y_prev) <= row_threshold)
+        for (int j = i + 1; j < nb_letters; j++)
         {
-            temp_rows[row_count - 1][row_sizes[row_count - 1]] =
-                grid_letters[i];
-            row_sizes[row_count - 1]++;
-        }
-        // Start new row
-        else
-        {
-            row_count++;
-            first_letter_in_row = i;
-            temp_rows[row_count - 1] = calloc(nb_letters, sizeof(Letter));
-            temp_rows[row_count - 1][0] = grid_letters[i];
-            row_sizes[row_count - 1] = 1;
+            if (center_y(&sorted[i]) > center_y(&sorted[j])) // Swap
+            {
+                Letter temp = sorted[i];
+                sorted[i] = sorted[j];
+                sorted[j] = temp;
+            }
         }
     }
 
-    // Number of columns = Row with the maximum number of letters
-    for (int row = 0; row < row_count; row++)
+    int *diffs = calloc(nb_letters - 1, sizeof(int));
+    int diff_count = 0;
+
+    for (int i = 1; i < nb_letters; i++)
+    {
+        int diff = center_y(&sorted[i]) - center_y(&sorted[i - 1]);
+        if (diff > 2 && diff < 200) // Filter noise
+        {
+            diffs[diff_count] = diff;
+            diff_count++;
+        }
+    }
+
+    for (int i = 0; i < diff_count - 1; i++)
+    {
+        for (int j = i + 1; j < diff_count; j++)
+        {
+            if (diffs[i] > diffs[j])
+            {
+                int temp = diffs[i];
+                diffs[i] = diffs[j];
+                diffs[j] = temp;
+            }
+        }
+    }
+
+    // Build dynamic rows
+    int max_rows = nb_letters;
+    Letter **rows = calloc(max_rows, sizeof(Letter *));
+    int *row_sizes = calloc(max_rows, sizeof(int));
+    int *row_sum_y = calloc(max_rows, sizeof(int));
+    int *row_count = calloc(max_rows, sizeof(int));
+
+    int row_count_total = 0;
+
+    // Adaptative threshold
+    int row_threshold = 25;
+
+    if (diff_count > 0)
+    {
+        row_threshold = diffs[diff_count / 2];
+
+        if (row_threshold < 15)
+        {
+            row_threshold = 15;
+        }
+        if (row_threshold > 35)
+        {
+            row_threshold = 35;
+        }
+    }
+
+    free(diffs);
+
+    printf("Row threshold: %i\n", row_threshold);
+
+    int *row_center_y = calloc(max_rows, sizeof(int));
+
+    for (int i = 0; i < nb_letters; i++)
+    {
+        int y = center_y(&sorted[i]);
+
+        int best_row = -1;
+        int best_distance = 10000;
+
+        // Find closest row
+        for (int row = 0; row < row_count_total; row++)
+        {
+            int row_y = row_sum_y[row] / row_count[row];
+            int distance = abs(y - row_y);
+
+            if (distance < best_distance && distance < row_threshold)
+            {
+                best_distance = distance;
+                best_row = row;
+            }
+        }
+
+        // New row
+        if (best_row == -1)
+        {
+            best_row = row_count_total;
+            row_count_total++;
+            rows[best_row] = calloc(nb_letters, sizeof(Letter));
+            row_sizes[best_row] = 0;
+            row_sum_y[best_row] = 0;
+            row_count[best_row] = 0;
+        }
+
+        // Insert letter
+        int row_letter_index = row_sizes[best_row];
+        rows[best_row][row_letter_index] = sorted[i];
+        row_sizes[best_row]++;
+        row_sum_y[best_row] += y;
+        row_center_y[best_row] += y;
+        row_count[best_row]++;
+    }
+
+    free(sorted);
+
+    // Sort rows by Y position
+    for (int i = 0; i < row_count_total; i++)
+    {
+        for (int j = i + 1; j < row_count_total; j++)
+        {
+            int y_i = row_center_y[i] / row_count[i];
+            int y_j = row_center_y[j] / row_count[j];
+
+            // Swap rows
+            if (y_i > y_j)
+            {
+                Letter *temp = rows[i];
+                rows[i] = rows[j];
+                rows[j] = temp;
+
+                int temp_row_size = row_sizes[i];
+                row_sizes[i] = row_sizes[j];
+                row_sizes[j] = temp_row_size;
+            }
+        }
+    }
+
+    // Sort each row by X
+    for (int row = 0; row < row_count_total; row++)
+    {
+        for (int i = 0; i < row_sizes[row]; i++)
+        {
+            for (int j = i + 1; j < row_sizes[row]; j++)
+            {
+                // Swap letters of the same row
+                if (center_x(&rows[row][i]) > center_x(&rows[row][j]))
+                {
+                    Letter temp_letter = rows[row][i];
+                    rows[row][i] = rows[row][j];
+                    rows[row][j] = temp_letter;
+                }
+            }
+        }
+    }
+
+    free(row_sum_y);
+    free(row_count);
+
+    // Compute max columns
+    int col_count = 0;
+    for (int row = 0; row < row_count_total; row++)
     {
         if (row_sizes[row] > col_count)
         {
@@ -176,37 +299,35 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
         }
     }
 
-    // Sort every row by x value
-    for (int row = 0; row < row_count; row++)
-    {
-        qsort(temp_rows[row], row_sizes[row], sizeof(Letter), compare_x);
-    }
-
-    // Create the sorted grid
-    Letter **grid = calloc(row_count, sizeof(Letter *));
-    for (int row = 0; row < row_count; row++)
+    // Build final grid
+    Letter **grid = calloc(row_count_total, sizeof(Letter *));
+    for (int row = 0; row < row_count_total; row++)
     {
         grid[row] = calloc(col_count, sizeof(Letter));
-        memcpy(grid[row], temp_rows[row], row_sizes[row] * sizeof(Letter));
 
-        for (int col = row_sizes[row]; col < col_count; col++)
+        for (int col = 0; col < col_count; col++)
         {
-            grid[row][col].x1 = 0;
-            grid[row][col].y1 = 0;
-            grid[row][col].x2 = 0;
-            grid[row][col].y2 = 0;
+            if (col < row_sizes[row])
+            {
+                grid[row][col] = rows[row][col];
+            }
+            else
+            {
+                grid[row][col] = (Letter){-1, -1, -1, -1};
+            }
         }
     }
 
-    for (int i = 0; i < row_count; i++)
+    for (int row = 0; row < row_count_total; row++)
     {
-        free(temp_rows[i]);
+        free(rows[row]);
     }
-    free(temp_rows);
+
+    free(rows);
     free(row_sizes);
     free(grid_letters);
 
-    *rows_out = row_count;
+    *rows_out = row_count_total;
     *cols_out = col_count;
 
     return grid;
@@ -250,9 +371,19 @@ char **build_grid_array(NeuralNetwork *nn, GdkPixbuf *pixbuf,
             {
                 continue;
             }
+            int x1 = grid_letter.x1 - os;
+            int y1 = grid_letter.y1 - os;
+            if (x1 < 0)
+            {
+                x1 = 0;
+            }
+            if (y1 < 0)
+            {
+                y1 = 0;
+            }
+
             GdkPixbuf *letter =
-                crop(pixbuf, grid_letter.x1 - os, grid_letter.y1 - os,
-                     grid_letter.x2 + os, grid_letter.y2 + os);
+                crop(pixbuf, x1, y1, grid_letter.x2 + os, grid_letter.y2 + os);
 
             median_filter_3x3(letter);
 
@@ -382,50 +513,51 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
 
     int row_threshold = 10; // The tolerance between 2 y letter values to group
                             // them in the same row
+
     Letter **temp_rows = calloc(nb_letters, sizeof(Letter *));
     int *row_sizes = calloc(nb_letters, sizeof(int));
+    int *row_center_y = calloc(nb_letters, sizeof(int));
+    int *row_sum_y = calloc(nb_letters, sizeof(int));
 
-    temp_rows[0] = calloc(nb_letters, sizeof(Letter));
-    temp_rows[0][0] = words_letters[0];
-    row_sizes[0] = 1;
-    int words_count = 1; // The number of rows in the grid
-    int first_letter_in_row = 0;
+    int words_count = 0; // The number of rows in the grid
 
-    for (int i = 1; i < nb_letters; i++)
+    for (int i = 0; i < nb_letters; i++)
     {
-        int center_y_prev = center_y(&words_letters[first_letter_in_row]);
-        int center_y_current = center_y(&words_letters[i]);
+        int y = center_y(&words_letters[i]);
+        int best_row = -1;
+        int best_distance = 10000;
 
-        // Same row
-        if (abs(center_y_current - center_y_prev) <= row_threshold)
+        // Find closest row based on row center Y
+        for (int row = 0; row < words_count; row++)
         {
-            temp_rows[words_count - 1][row_sizes[words_count - 1]] =
-                words_letters[i];
-            row_sizes[words_count - 1]++;
-        }
-        // Start new row
-        else
-        {
-            first_letter_in_row = i;
-            words_count++;
+            int distance = abs(y - row_center_y[row]);
 
-            if (words_count > nb_letters)
+            if (distance < best_distance && distance < row_threshold)
             {
-                words_count = nb_letters;
-                break;
+                best_distance = distance;
+                best_row = row;
             }
-            temp_rows[words_count - 1] = calloc(nb_letters, sizeof(Letter));
-            temp_rows[words_count - 1][0] = words_letters[i];
-            row_sizes[words_count - 1] = 1;
         }
+
+        if (best_row == -1)
+        {
+            best_row = words_count;
+            temp_rows[best_row] = calloc(nb_letters, sizeof(Letter));
+            row_sizes[best_row] = 0;
+            row_center_y[best_row] = y;
+
+            words_count++;
+        }
+
+        // Insert letter in best row
+        int row_letter_index = row_sizes[best_row];
+        temp_rows[best_row][row_letter_index] = words_letters[i];
+        row_sizes[best_row]++;
+        row_sum_y[best_row] += y;
+        row_center_y[best_row] = row_sum_y[best_row] / row_sizes[best_row];
     }
 
-    if (words_count > nb_letters)
-    {
-        words_count = nb_letters;
-    }
-
-    // Sort every row by x value
+    // Sort every row by X
     for (int row = 0; row < words_count; row++)
     {
         qsort(temp_rows[row], row_sizes[row], sizeof(Letter), compare_x);
@@ -444,6 +576,9 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
     {
         free(temp_rows[i]);
     }
+    free(temp_rows);
+    free(row_center_y);
+    free(words_letters);
 
     *words_size_out = calloc(words_count, sizeof(int));
     for (int i = 0; i < words_count; i++)
@@ -451,9 +586,7 @@ Letter **build_words_list_from_image(Letter *words_letters, int nb_letters,
         (*words_size_out)[i] = row_sizes[i];
     }
 
-    free(temp_rows);
     free(row_sizes);
-    free(words_letters);
 
     *words_count_out = words_count;
 
@@ -480,7 +613,7 @@ char **build_words_list(NeuralNetwork *nn, GdkPixbuf *pixbuf,
         printf("No words were detected !\n");
         return NULL;
     }
-    if (!*words_letters)
+    if (!words_letters || !*words_letters)
     {
         printf("No word letters detected !\n");
         return NULL;
@@ -556,7 +689,7 @@ char **build_words_list(NeuralNetwork *nn, GdkPixbuf *pixbuf,
            nb_words);
     for (int word = 0; word < nb_words; word++)
     {
-        printf("Mot %i : %s\n", word + 1, words_list[word]);
+        printf("Word %i : %s\n", word + 1, words_list[word]);
     }
 
     return words_list;
