@@ -1,108 +1,73 @@
 # ===================== Compiler & Flags =====================
 CC       = gcc
-CFLAGS   = -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -Iinclude $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0) -O3 -march=native -flto -fsanitize=address -g
-LDFLAGS  = -lm $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0) -fsanitize=address -g
+CFLAGS   = -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -Iinclude \
+           $(shell pkg-config --cflags gtk+-3.0 gdk-pixbuf-2.0) \
+           -O3 -march=native -flto -fsanitize=address -g
+
+LDFLAGS  = -lm \
+           $(shell pkg-config --libs gtk+-3.0 gdk-pixbuf-2.0) \
+           -fsanitize=address -g
 
 # ===================== Directories =====================
-SRC_DIR      = src
-IMG_DIR      = $(SRC_DIR)/image
-INCLUDE_DIR  = include
-TEST_DIR     = tests
-BUILD_DIR    = build
-RESULTS_DIR  = $(TEST_DIR)/results
+SRC_DIR    = src
+IMG_DIR    = $(SRC_DIR)/image
+TEST_DIR   = tests
+BUILD_DIR  = build
 
-# ===================== Target Binaries =====================
+# ===================== Targets =====================
 TARGET       = $(BUILD_DIR)/main
 IMAGE_BIN    = $(BUILD_DIR)/image
 PIPELINE_BIN = $(BUILD_DIR)/pipeline
 
-# ===================== Source Files =====================
-SRC_FILES    = $(wildcard $(SRC_DIR)/*.c)
-IMG_FILES    = $(wildcard $(IMG_DIR)/*.c)
-TEST_FILES   = $(filter-out $(TEST_DIR)/test_helpers.c, $(wildcard $(TEST_DIR)/*.c))
+# ===================== Sources =====================
+SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
 
+# Exclude image/main.c
+IMG_FILES = $(filter-out $(IMG_DIR)/main.c, $(wildcard $(IMG_DIR)/*.c))
+
+# Remove unwanted files from main build
 MAIN_SRC = $(filter-out \
     $(SRC_DIR)/solver.c \
     $(SRC_DIR)/neural_network.c \
-    $(SRC_DIR)/line_detection.c, \
+    $(SRC_DIR)/grid_cutting.c, \
     $(SRC_FILES))
 
-IMG_UI_SRC   = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
-IMG_PIPE_SRC = $(filter-out $(IMG_DIR)/main.c,$(IMG_FILES))
+# ===================== Objects =====================
+MAIN_OBJ   = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+IMG_OBJ    = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
 
-# ===================== Object Files =====================
-MAIN_OBJ          = $(MAIN_SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-CORE_OBJ          = $(filter-out $(BUILD_DIR)/image_main.o, \
-                    $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)) \
-                    $(BUILD_DIR)/dataset.o \
-                    $(BUILD_DIR)/solver.o \
-                    $(BUILD_DIR)/neural_network.o
-IMG_OBJ           = $(IMG_FILES:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
-PIPELINE_OBJ      = $(BUILD_DIR)/grid_cutting.o
-PIPELINE_IMG_OBJ  = $(IMG_PIPE_SRC:$(IMG_DIR)/%.c=$(BUILD_DIR)/image_%.o)
-SOLVER_OBJ        = $(BUILD_DIR)/solver.o
-NEURAL_NET_OBJ    = $(BUILD_DIR)/neural_network.o
+SOLVER_OBJ = $(BUILD_DIR)/solver.o
+NEURAL_OBJ = $(BUILD_DIR)/neural_network.o
+GRID_OBJ   = $(BUILD_DIR)/grid_cutting.o
 
-# ===================== Main Rules =====================
-all: $(TARGET)
-	@echo "Starting the app..."
+COMMON_OBJ = $(SOLVER_OBJ) $(NEURAL_OBJ) $(GRID_OBJ) $(IMG_OBJ)
+
+# ===================== Build Rules =====================
+all: run
+
+run: $(TARGET)
+	@echo "Starting app..."
 	@LSAN_OPTIONS=suppressions=lsan.supp ./$(TARGET)
 
-$(TARGET): $(MAIN_OBJ) $(ALL_OBJS)
-	@mkdir -p $(BUILD_DIR)
-	@echo "Linking $@"
-	@$(CC) -o $@ $^ $(LDFLAGS)
-
-# ===================== Compilation Rules =====================
-$(BUILD_DIR)/main.o: $(SRC_DIR)/main.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-# ---------- Main Program ----------
-$(TARGET): $(MAIN_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(filter-out $(BUILD_DIR)/image_main.o, $(IMG_OBJ))
+# ---------- Main ----------
+$(TARGET): $(MAIN_OBJ) $(COMMON_OBJ)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking Main..."
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/%.o: $(UI_SRC_DIR)/%.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-# ---------- Image Program ----------
+# ---------- Image tool ----------
 $(IMAGE_BIN): $(IMG_OBJ)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking Image tool..."
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
-# ---------- Pipeline Program ----------
-$(PIPELINE_BIN): $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ)
+# ---------- Pipeline ----------
+$(PIPELINE_BIN): $(GRID_OBJ) $(IMG_OBJ) $(SOLVER_OBJ) $(NEURAL_OBJ)
 	@mkdir -p $(BUILD_DIR)
 	@echo "Linking Pipeline..."
-	@$(CC) -o $@ $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(LDFLAGS)
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/grid_cutting.o: $(SRC_DIR)/grid_cutting.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/grid_cutting_testing.o: $(SRC_DIR)/grid_cutting.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling $< for UI/tests..."
-	@$(CC) $(CFLAGS) -DTESTING -c $< -o $@
-
-# ===================== Generic Compilation =====================
+# ===================== Compilation =====================
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling $<..."
@@ -113,83 +78,38 @@ $(BUILD_DIR)/image_%.o: $(IMG_DIR)/%.c
 	@echo "Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(NN_OBJ): $(SRC_DIR)/neural_network.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) -c $< -o $@
+# ===================== Tests =====================
+TEST_FILES = $(filter-out $(TEST_DIR)/test_helpers.c, $(wildcard $(TEST_DIR)/*.c))
+TEST_BINS  = $(TEST_FILES:$(TEST_DIR)/%.c=$(BUILD_DIR)/test_%)
 
-$(SOLVER_OBJ): $(SRC_DIR)/solver.c
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) -c $(SRC_DIR)/solver.c -o $(SOLVER_OBJ)
-
-# ===================== Tests Compilation =====================
-TEST_OBJ = $(filter-out $(BUILD_DIR)/main.o,$(MAIN_OBJ)) $(SOLVER_OBJ) $(NEURAL_NET_OBJ)
-TEST_BINS = $(TEST_FILES:$(TEST_DIR)/%.c=$(BUILD_DIR)/test_%)
-LINE_DET_TEST      = $(BUILD_DIR)/test_line_detection_tests
-LINE_DET_TEST_SRC  = $(TEST_DIR)/line_detection_tests.c
-LINE_DET_HELPERS   = $(TEST_DIR)/test_helpers.c
-LINE_DET_OBJ       = $(BUILD_DIR)/test_line_detection.o
+TEST_HELPERS_OBJ = $(BUILD_DIR)/test_helpers.o
 
 tests: $(TEST_BINS)
-	@echo "All tests built successfully."
 	@echo "Running tests..."
 	@for t in $(TEST_BINS); do ./$$t; done
 
-$(BUILD_DIR)/test_helpers.o: $(TEST_DIR)/test_helpers.c
+# Compile helpers separately
+$(TEST_HELPERS_OBJ): $(TEST_DIR)/test_helpers.c
 	@mkdir -p $(BUILD_DIR)
 	@echo "Compiling test_helpers.c..."
 	@$(CC) $(CFLAGS) -DTESTING -c $< -o $@
 
-
-$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(BUILD_DIR)/test_helpers.o $(TEST_OBJ) $(PIPELINE_IMG_OBJ)
+# Build each test
+$(BUILD_DIR)/test_%: $(TEST_DIR)/%.c $(COMMON_OBJ) $(TEST_HELPERS_OBJ)
 	@mkdir -p $(BUILD_DIR)
-	@echo "Building test: $@"
-	@$(CC) $(CFLAGS) -DTESTING -c $< -o $(BUILD_DIR)/$*_test.o
-	@$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line_detection.c -o $(BUILD_DIR)/line_detection.o
-	@$(CC) -o $@ $(BUILD_DIR)/$*_test.o $(BUILD_DIR)/line_detection.o $(BUILD_DIR)/test_helpers.o $(TEST_OBJ) $(PIPELINE_IMG_OBJ) $(LDFLAGS)
-
-$(BUILD_DIR)/test_solver_tests: $(TEST_DIR)/solver_tests.c $(TEST_DIR)/test_helpers.c \
-                                $(SOLVER_OBJ) $(NEURAL_NET_OBJ) $(PIPELINE_OBJ) $(PIPELINE_IMG_OBJ)
-	@mkdir -p $(BUILD_DIR)
-	@echo "Building test: $@"
-	@$(CC) $(CFLAGS) -DTESTING -c $(TEST_DIR)/test_helpers.c -o $(BUILD_DIR)/test_helpers.o
-	@$(CC) $(CFLAGS) -DTESTING -c $(TEST_DIR)/solver_tests.c -o $(BUILD_DIR)/solver_tests.o
-	@$(CC) $(CFLAGS) -DTESTING -o $@ \
-	    $(BUILD_DIR)/solver_tests.o \
-	    $(BUILD_DIR)/test_helpers.o \
-	    $(SOLVER_OBJ) \
-	    $(NEURAL_NET_OBJ) \
-	    $(PIPELINE_OBJ) \
-	    $(PIPELINE_IMG_OBJ) \
-	    $(LDFLAGS)
-
-$(BUILD_DIR)/test_line_detection_tests: $(LINE_DET_TEST_SRC) $(LINE_DET_HELPERS) $(PIPELINE_IMG_OBJ) $(SOLVER_OBJ) $(NEURAL_NET_OBJ)
-	@mkdir -p $(BUILD_DIR)
-	@echo "Building test: $@"
-	@$(CC) $(CFLAGS) -DTESTING -c $(LINE_DET_HELPERS) -o $(BUILD_DIR)/test_helpers.o
-	@$(CC) $(CFLAGS) -DTESTING -c $(LINE_DET_TEST_SRC) -o $(BUILD_DIR)/test_line_detection_tests.o
-	@$(CC) $(CFLAGS) -DTESTING -c $(SRC_DIR)/line_detection.c -o $(BUILD_DIR)/line_detection.o
-	@$(CC) $(CFLAGS) -DTESTING -o $@ \
-	    $(BUILD_DIR)/test_line_detection_tests.o \
-	    $(BUILD_DIR)/test_helpers.o \
-	    $(BUILD_DIR)/line_detection.o \
-	    $(SOLVER_OBJ) \
-	    $(NEURAL_NET_OBJ) \
-	    $(PIPELINE_IMG_OBJ) \
+	@echo "Building test $@..."
+	@$(CC) $(CFLAGS) -DTESTING \
+	    $< \
+	    $(COMMON_OBJ) \
+	    $(TEST_HELPERS_OBJ) \
+	    -o $@ \
 	    $(LDFLAGS)
 
 # ===================== Clean =====================
 clean:
 	@echo "Cleaning build files..."
-	@find $(BUILD_DIR) -mindepth 1 ! -name ".__afs*" -exec rm -rf {} + 2>/dev/null || true
-	@rm -rf $(RESULTS_DIR) 2>/dev/null || true
-	#@rm -f tests/model
-	@rm -rf tests/results/solver_output/
-	@rm -rf tests/results/pipeline_output/
-	@rm -rf helpers/generate_dataset/fonts helpers/generate_dataset/dataset
-	@rm -rf tests/model
-	@rm -rf helpers/generate_dataset/fonts helpers/generate_dataset/dataset
+	@rm -rf $(BUILD_DIR)
+	@rm -rf tests/results
 	@echo "Clean complete."
 
-.PHONY: all clean tests
+.PHONY: all run clean tests
