@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "timer.h"
+
 // Terminal colors
 #define COLOR_RESET "\033[0m"
 #define COLOR_RED "\033[31m"
@@ -53,7 +55,7 @@ void invert_color(GdkPixbuf *pixbuf)
  * [xmin,ymin,xmax,ymax].
  */
 void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
-                              int *is_visited, int index_coo, int **coo)
+                              int *is_visited, int index_coo, int **coo, Point *queue)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
@@ -61,7 +63,6 @@ void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
-    Point *queue = malloc(width * height * sizeof(Point));
     int front = 0;
     int back = 0;
 
@@ -108,8 +109,6 @@ void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
             }
         }
     }
-
-    free(queue);
 }
 
 /**
@@ -143,6 +142,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     int *is_visited =
         malloc(width * height * sizeof(int)); // 0 if False 1 if True
     memset(is_visited, 0, width * height * sizeof(int));
+    Point *queue = malloc(width * height *sizeof(Point));
 
     int index_coo = 0;
 
@@ -159,7 +159,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
                     coo[index_coo][0] = coo[index_coo][2] = x;
                     coo[index_coo][1] = coo[index_coo][3] = y;
                     find_black_pixels_around(pixbuf, x, y, is_visited,
-                                             index_coo, coo);
+                                             index_coo, coo, queue);
 
                     // Skip small black pixels (NOT letters)
                     if (coo[index_coo][0] < coo[index_coo][2] &&
@@ -181,6 +181,7 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
         }
     }
 
+    free(queue);
     free(is_visited);
     return nb_letter;
 }
@@ -505,8 +506,9 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
 {
     if (!nn)
     {
-        printf(COLOR_RED "[ERREUR] " COLOR_RESET
-                         "Le réseau de neurones n'a pas pu être chargé\n");
+        printf(COLOR_RED "✘ [ERROR] " COLOR_RESET
+                         "Failed to load neural network\n");
+        return NULL;
     }
 
     int nb_words = 50; // Max number of words in the words list
@@ -514,16 +516,28 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     PipelineResult *pipelineResult = calloc(1, sizeof(PipelineResult));
     if (!pipelineResult)
     {
-        printf("Failed to allocate pipelineResult\n");
+        printf(COLOR_RED "✘ [ERROR] " COLOR_RESET "Failed to allocate pipeline result\n");
         return NULL;
     }
 
+    clock_t timer = start_timer();
+
     GdkPixbuf *pixbuf = load_image(filename);
     GdkPixbuf *pixbuf_to_slice = gdk_pixbuf_copy(pixbuf);
+    float pixbuf_load_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Loaded pixbufs from file %s", filename);
+    print_time(pixbuf_load_time);
 
     convert_to_grayscale(pixbuf);
+    float grayscale_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Converted pixbuf to grayscale", filename);
+    print_time(grayscale_time);
 
     double best_angle = detect_best_angle(pixbuf);
+    float best_angle_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Detected best rotation angle : %.2f°", best_angle);
+    print_time(best_angle_time);
+
     pipelineResult->rotation_angle = best_angle;
     if (best_angle != 0)
     {
@@ -534,10 +548,21 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
         GdkPixbuf *rotated_slice = rotate_image(pixbuf_to_slice, best_angle);
         g_object_unref(pixbuf_to_slice);
         pixbuf_to_slice = rotated_slice;
+
+        float rotation_time = get_timer(timer);
+        printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Rotated images by %.2f degrees", best_angle);
+        print_time(rotation_time);
     }
 
     convert_to_black_and_white(pixbuf);
+    float black_and_white_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Converted pixbuf to black and white");
+    print_time(black_and_white_time);
+
     invert_color(pixbuf);
+    float invert_color_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Inverted pixbuf colors");
+    print_time(invert_color_time);
 
     int *grid_coo = calloc(4, sizeof(int));
     int *words_coo = calloc(4, sizeof(int));
@@ -554,8 +579,30 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     int nb_letter =
         find_letter(pixbuf, coo); // Number of letters in the grid + words list
     pipelineResult->nb_letters = nb_letter;
+    float find_letter_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found %i letters", pipelineResult->nb_letters);
+    print_time(find_letter_time);
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
+    float find_grid_and_words_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Cut grid and words coordinates");
+    print_time(find_grid_and_words_time);
+    for (int i = 0; i < 4; i++)
+    {
+      pipelineResult->grid_coo[i] = grid_coo[i];
+    }
+    for (int i = 0; i < 4; i++)
+    {
+      pipelineResult->words_coo[i] = words_coo[i];
+    }
+    printf(COLOR_GREEN "✔ [SUCCESS]" COLOR_RESET
+                        " Detected grid coordinates : (%i, %i)(%i, %i)\n",
+           grid_coo[0], grid_coo[1],
+           grid_coo[2], grid_coo[3]);
+    printf(COLOR_GREEN "✔ [SUCCESS]" COLOR_RESET
+                        " Detected words list coordinates : (%i, %i)(%i, %i)\n",
+           words_coo[0], words_coo[1],
+           words_coo[2], words_coo[3]);
 
     int nb_rows;
     int nb_cols;
@@ -565,31 +612,42 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     Letter *words_letters = NULL;
     generate_letter(grid_coo, words_coo, coo, nb_letter, &nb_letters_grid,
                     &nb_letters_words, &grid_letters, &words_letters);
-
     pipelineResult->nb_letters_grid = nb_letters_grid;
     pipelineResult->nb_letters_words = nb_letters_words;
+    float generate_letters_time = get_timer(timer);
+    if (pipelineResult->nb_letters_grid + pipelineResult->nb_letters_words
+      != pipelineResult->nb_letters)
+    {
+      printf(COLOR_RED "✘ [ERROR] " COLOR_RESET "Found %i letters in the grid,"
+        " %i letters in the words list. Expected total of %i, but got %i",
+        pipelineResult->nb_letters_grid, pipelineResult->nb_letters_words,
+        pipelineResult->nb_letters,
+        pipelineResult->nb_letters_grid + pipelineResult->nb_letters_words);
+    }
+    else
+    {
+      printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found %i letters in the "
+        "grid, %i letters in the words list",
+        pipelineResult->nb_letters_grid, pipelineResult->nb_letters_words);
+    }
+    print_time(generate_letters_time);
 
     Letter **grid_letters_array = build_grid_from_image(
         grid_letters, nb_letters_grid, &nb_rows, &nb_cols);
-
-    int *words_size = NULL;
-    int detected_words_count = 0;
-
-    Letter **words_letters_final = build_words_list_from_image(
-        words_letters, nb_letters_words, &words_size, &detected_words_count);
-    char **words_letters_list = build_words_list(
-        nn, pixbuf, words_letters_final, detected_words_count, words_size);
-
-    pipelineResult->words.detected_words_count = detected_words_count;
-    pipelineResult->words.words = words_letters_list;
+    float build_grid_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Grid detected: %i rows and %i columns", nb_rows, nb_cols);
+    print_time(build_grid_time);
 
     int rows;
     int cols;
     char **grid_array = build_grid_array(nn, pixbuf, grid_letters_array,
                                          nb_rows, nb_cols, &rows, &cols);
+    float build_grid_array_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Predicted letters in grid with %i rows and %i columns", nb_rows, nb_cols);
+    print_time(build_grid_array_time);
     for (int i = 0; i < nb_rows; i++)
     {
-        free(grid_letters_array[i]);
+      free(grid_letters_array[i]);
     }
     free(grid_letters_array);
 
@@ -599,12 +657,36 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     final_grid.nb_cols = cols;
     pipelineResult->grid = final_grid;
 
+    int *words_size = NULL;
+    int detected_words_count = 0;
+
+    Letter **words_letters_final = build_words_list_from_image(
+        words_letters, nb_letters_words, &words_size, &detected_words_count);
+    pipelineResult->words.detected_words_count = detected_words_count;
+    float build_words_list_from_image_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Words list detected: %i words", pipelineResult->words.detected_words_count);
+    print_time(build_words_list_from_image_time);
+
+    char **words_letters_list = build_words_list(
+        nn, pixbuf, words_letters_final, detected_words_count, words_size);
+    pipelineResult->words.words = words_letters_list;
+    float build_words_list_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Predicted letters in words list : %i words", pipelineResult->words.detected_words_count);
+    print_time(build_words_list_time);
+
     int **solved_words_grid_coos = get_solved_words_grid_coos(
         words_letters_list, detected_words_count, grid_array, rows, cols);
     pipelineResult->words.solved_words_grid_coos = solved_words_grid_coos;
+    float solved_words_grid_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Got solved words grid coordinates");
+    print_time(solved_words_grid_time);
+
     int **solved_words_image_coos = get_solved_words_image_coos_drawing(
         solved_words_grid_coos, detected_words_count, grid_coo, rows, cols);
     pipelineResult->words.solved_words_image_coos = solved_words_image_coos;
+    float solved_words_image_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Got solved words image coordinates for drawing");
+    print_time(solved_words_image_time);
 
     int **word_list = calloc(nb_words, sizeof(int *));
     for (int i = 0; i < nb_words; i++)
@@ -615,52 +697,9 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     int nb_detected_words =
         find_word_by_word(coo, word_list, words_coo, nb_letter, nb_words);
     pipelineResult->nb_words = nb_detected_words;
-
-    for (int i = 0; i < 4; i++)
-    {
-        pipelineResult->grid_coo[i] = grid_coo[i];
-    }
-    GdkPixbuf *grid = crop(pixbuf_to_slice, grid_coo[0], grid_coo[1],
-                           grid_coo[2], grid_coo[3]);
-    g_object_unref(grid);
-
-    for (int i = 0; i < 4; i++)
-    {
-        pipelineResult->words_coo[i] = words_coo[i];
-    }
-    GdkPixbuf *words = crop(pixbuf_to_slice, words_coo[0], words_coo[1],
-                            words_coo[2], words_coo[3]);
-    g_object_unref(words);
-
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET " Best rotation angle : %.2f°\n",
-           best_angle);
-
-    printf(COLOR_YELLOW "[INFO][SOLVER]" COLOR_RESET
-                        " Built grid with %i rows and %i columns\n",
-           pipelineResult->grid.nb_rows, pipelineResult->grid.nb_cols);
-    printf(COLOR_YELLOW "[INFO][SOLVER]" COLOR_RESET
-                        " Built words list with %i words detected\n",
-           pipelineResult->words.detected_words_count);
-
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
-                        " Detected grid coordinates : (%i, %i)(%i, %i)\n",
-           pipelineResult->grid_coo[0], pipelineResult->grid_coo[1],
-           pipelineResult->grid_coo[2], pipelineResult->grid_coo[3]);
-
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
-                        " Detected words list coordinates : (%i, %i)(%i, %i)\n",
-           pipelineResult->words_coo[0], pipelineResult->words_coo[1],
-           pipelineResult->words_coo[2], pipelineResult->words_coo[3]);
-
-    printf(COLOR_YELLOW "[INFO]" COLOR_RESET
-                        " Number of letters detected : %i (In the grid : %i, "
-                        "in the words list : %i)\n",
-           pipelineResult->nb_letters, pipelineResult->nb_letters_grid,
-           pipelineResult->nb_letters_words);
-    printf(COLOR_YELLOW
-           "[INFO]" COLOR_RESET
-           " Number of words detected in the words list of the grid : %i\n",
-           pipelineResult->nb_words);
+    float find_word_by_word_time = get_timer(timer);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found %i words in the words list", pipelineResult->nb_words);
+    print_time(find_word_by_word_time);
 
     for (int i = 0; i < magic_nb_letter; i++)
     {

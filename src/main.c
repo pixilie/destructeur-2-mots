@@ -293,6 +293,9 @@ void solver(GtkButton *button, gpointer user_data)
         }
 
         data->pipelineResult = load_pipeline(filename, neural);
+        float pipeline_time = get_timer(timer);
+        printf(COLOR_GREEN "✔ [SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Finished pipeline");
+        print_time(pipeline_time);
 
         g_object_unref(data->transformed);
         data->transformed = gdk_pixbuf_copy(data->original);
@@ -309,7 +312,7 @@ void solver(GtkButton *button, gpointer user_data)
         Words *words = &data->pipelineResult->words;
         if (!words->solved_words_image_coos)
         {
-            printf(COLOR_RED "[ERROR] " COLOR_RESET
+            printf(COLOR_RED "✘ [ERROR] " COLOR_RESET
                              "Solved words image coordinates have not been "
                              "found in the solver "
                              "to draw solved words!\n");
@@ -318,7 +321,7 @@ void solver(GtkButton *button, gpointer user_data)
 
         if (words->detected_words_count == 0)
         {
-            printf(COLOR_RED "[ERROR] " COLOR_RESET
+            printf(COLOR_RED "✘ [ERROR] " COLOR_RESET
                              "No words have been detected!\n");
             continue;
         }
@@ -349,13 +352,13 @@ void solver(GtkButton *button, gpointer user_data)
                                thickness);
                 is_drawn = 1;
                 solved_words++;
-                printf(COLOR_GREEN "[SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Word %i: %s: Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) "
+                printf(COLOR_GREEN "✔ [SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Word %i: %s: Rectangle drawn at (%i, %i) (%i, %i) (%i, %i) "
                        "(%i, %i)\n",
                        i + 1, words->words[i], x1, y1, x2, y2, x3, y3, x4, y4);
             }
             else
             {
-                printf(COLOR_RED "[ERROR]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Word %i: %s: Couldn't draw rectangle at (%i, %i) (%i, %i) "
+                printf(COLOR_RED "✘ [ERROR]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Word %i: %s: Couldn't draw rectangle at (%i, %i) (%i, %i) "
                        "(%i, %i) (%i, %i)\n",
                        i + 1, words->words[i], x1, y1, x2, y2, x3, y3, x4, y4);
                 is_draw_success = 0;
@@ -367,7 +370,7 @@ void solver(GtkButton *button, gpointer user_data)
         if (!is_drawn)
         {
             printf(COLOR_RED
-                   "[ERROR] " COLOR_RESET
+                   "✘ [ERROR] " COLOR_RESET
                    "No words have been marked as solved in the grid!\n");
             continue;
         }
@@ -384,8 +387,9 @@ void solver(GtkButton *button, gpointer user_data)
         {
             printf(
                 COLOR_GREEN
-                "[SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET
-                "Solved %i words from the image, finished solving the grid [%.2f s]\n", solved_words, time);
+                "✔ [SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET
+                "Solved %i words from the image, finished solving the grid", solved_words);
+            print_time(time);
             isPipelineSuccess = 1;
             break;
         }
@@ -393,9 +397,10 @@ void solver(GtkButton *button, gpointer user_data)
         {
             if (pipeline_attempt + 1 < MAX_PIPELINE_ATTEMPTS)
             {
-                printf(COLOR_RED "[ERROR]" COLOR_YELLOW "[SOLVER] " COLOR_RESET
+                printf(COLOR_RED "✘ [ERROR]" COLOR_YELLOW "[SOLVER] " COLOR_RESET
                                  "Couldn't solve enough words from the image, expected at least %i but got only %i."
-                                 "Trying to solve the image again... [%.2f s]\n", MIN_WORDS_SOLVED, solved_words, time);
+                                 "Trying to solve the image again...", MIN_WORDS_SOLVED, solved_words);
+                print_time(time);
             }
         }
     }

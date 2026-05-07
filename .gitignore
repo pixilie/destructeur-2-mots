@@ -58,6 +58,7 @@ dkms.conf
 
 # IDE / Editor
 .vscode/
+.idea/
 *.swp
 *.log
 
