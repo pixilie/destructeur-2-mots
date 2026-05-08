@@ -188,8 +188,6 @@ Letter **build_grid_from_image(Letter *grid_letters, int nb_letters,
 
     free(diffs);
 
-    printf(COLOR_YELLOW "[SOLVER] " COLOR_RESET "Grid row threshold: %i\n", row_threshold);
-
     int *row_center_y = calloc(max_rows, sizeof(int));
 
     for (int i = 0; i < nb_letters; i++)
@@ -449,23 +447,6 @@ char **build_grid_array(NeuralNetwork *nn, GdkPixbuf *pixbuf,
     }
     free(grid_array);
 
-    printf(COLOR_YELLOW "[INFO] " COLOR_RESET
-                        "Grid detected: %i rows, %i columns\n",
-           row_count, col_count);
-    for (int row = 0; row < row_count; row++)
-    {
-        printf("[");
-        for (int col = 0; col < col_count; col++)
-        {
-            printf("%c", new_grid_array[row][col]);
-            if (col < col_count - 1)
-            {
-                printf(" ");
-            }
-        }
-        printf("]\n");
-    }
-
     return new_grid_array;
 }
 
@@ -662,14 +643,6 @@ char **build_words_list(NeuralNetwork *nn, GdkPixbuf *pixbuf,
     }
     free(words_letters);
     free(words_size);
-
-    printf(COLOR_YELLOW "[INFO] " COLOR_RESET
-                        "Words detected in words list: %i\n",
-           nb_words);
-    for (int word = 0; word < nb_words; word++)
-    {
-        printf("Word %i : %s\n", word + 1, words_list[word]);
-    }
 
     return words_list;
 }

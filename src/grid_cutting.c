@@ -15,6 +15,7 @@
 #define COLOR_RED "\033[31m"
 #define COLOR_GREEN "\033[32m"
 #define COLOR_YELLOW "\033[33m"
+#define COLOR_LIGHT_BLUE "\033[36m"
 
 /**
  * invert_color:
@@ -55,7 +56,7 @@ void invert_color(GdkPixbuf *pixbuf)
  * [xmin,ymin,xmax,ymax].
  */
 void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
-                              int *is_visited, int index_coo, int **coo, Point *queue)
+                              __uint8_t *is_visited, int index_coo, int **coo, Point *queue)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
@@ -63,11 +64,13 @@ void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
     int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
+    const int QUEUE_THRESHOLD = 200;
     int front = 0;
     int back = 0;
 
-    queue[back] = (Point){start_x, start_y};
-    back++;
+    // Visit first pixel and expand the queue to the neighboring pixels
+    is_visited[start_y * width + start_x] = 1;
+    queue[back++] = (Point){start_x, start_y};
 
     int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
                             {0, 1},   {1, -1}, {1, 0},  {1, 1}};
@@ -82,12 +85,10 @@ void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
 
         guchar *p = pixels + y * rowstride + x * n_channels;
 
-        if (is_visited[y * width + x] || p[0] < 200)
+        if (p[0] < QUEUE_THRESHOLD)
         {
-            continue;
+          continue;
         }
-
-        is_visited[y * width + x] = 1;
 
         if (x < coo[index_coo][0])
             coo[index_coo][0] = x;
@@ -102,10 +103,21 @@ void find_black_pixels_around(GdkPixbuf *pixbuf, int start_x, int start_y,
         {
             int nx = x + directions[i][0];
             int ny = y + directions[i][1];
-            if (!is_visited[ny * width + nx] && nx >= 0 && ny >= 0 && nx < width && ny < height)
+            if (nx >= 0 && ny >= 0 && nx < width && ny < height && !is_visited[ny * width + nx])
             {
-                queue[back] = (Point){nx, ny};
-                back++;
+                if (back >= width * height)
+                {
+                  break;
+                }
+
+                guchar *np = pixels + ny * rowstride + nx * n_channels;
+                if (np[0] < QUEUE_THRESHOLD)
+                {
+                  continue;
+                }
+
+                is_visited[ny * width + nx] = 1;
+                queue[back++] = (Point){nx, ny};
             }
         }
     }
@@ -139,9 +151,9 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     int max_letter_width = 70;
     int max_letter_height = 70;
 
-    int *is_visited =
-        malloc(width * height * sizeof(int)); // 0 if False 1 if True
-    memset(is_visited, 0, width * height * sizeof(int));
+    __uint8_t *is_visited =
+        malloc(width * height * sizeof(__uint8_t)); // 0 if False 1 if True
+    memset(is_visited, 0, width * height * sizeof(__uint8_t));
     Point *queue = malloc(width * height *sizeof(Point));
 
     int index_coo = 0;
@@ -150,32 +162,34 @@ int find_letter(GdkPixbuf *pixbuf, int **coo)
     {
         for (int x = 0; x < width; x++)
         {
-            if (is_visited[y * width + x] == 0)
+            if (is_visited[y * width + x] == 1)
             {
-                guchar *p = pixels + y * rowstride + x * n_channels;
+              continue;
+            }
 
-                if (p[0] > 200)
+            guchar *p = pixels + y * rowstride + x * n_channels;
+
+            if (index_coo < 1000 && p[0] > 200)
+            {
+                coo[index_coo][0] = coo[index_coo][2] = x;
+                coo[index_coo][1] = coo[index_coo][3] = y;
+                find_black_pixels_around(pixbuf, x, y, is_visited,
+                                         index_coo, coo, queue);
+
+                // Skip small black pixels (NOT letters)
+                if (coo[index_coo][0] < coo[index_coo][2] &&
+                    coo[index_coo][1] < coo[index_coo][3] &&
+                    coo[index_coo][2] - coo[index_coo][0] >=
+                        min_letter_width &&
+                    coo[index_coo][3] - coo[index_coo][1] >=
+                        min_letter_height &&
+                    coo[index_coo][2] - coo[index_coo][0] <=
+                        max_letter_width &&
+                    coo[index_coo][3] - coo[index_coo][1] <=
+                        max_letter_height)
                 {
-                    coo[index_coo][0] = coo[index_coo][2] = x;
-                    coo[index_coo][1] = coo[index_coo][3] = y;
-                    find_black_pixels_around(pixbuf, x, y, is_visited,
-                                             index_coo, coo, queue);
-
-                    // Skip small black pixels (NOT letters)
-                    if (coo[index_coo][0] < coo[index_coo][2] &&
-                        coo[index_coo][1] < coo[index_coo][3] &&
-                        coo[index_coo][2] - coo[index_coo][0] >=
-                            min_letter_width &&
-                        coo[index_coo][3] - coo[index_coo][1] >=
-                            min_letter_height &&
-                        coo[index_coo][2] - coo[index_coo][0] <=
-                            max_letter_width &&
-                        coo[index_coo][3] - coo[index_coo][1] <=
-                            max_letter_height)
-                    {
-                        index_coo++;
-                        nb_letter++;
-                    }
+                    index_coo++;
+                    nb_letter++;
                 }
             }
         }
@@ -219,7 +233,7 @@ void generate_letter(int *grid_coo, int *words_coo, int **coo, int nb_letters,
             if (coo[index_coo][0] >= grid_coo[0] &&
                 coo[index_coo][1] >= grid_coo[1] &&
                 coo[index_coo][2] <= grid_coo[2] &&
-                coo[index_coo][3] <= grid_coo[3])
+                coo[index_coo][3] <= grid_coo[3] && letter_grid_count < nb_letters)
             {
                 Letter grid_letter;
                 grid_letter.x1 = coo[index_coo][0];
@@ -235,7 +249,7 @@ void generate_letter(int *grid_coo, int *words_coo, int **coo, int nb_letters,
             else if (coo[index_coo][0] >= words_coo[0] &&
                      coo[index_coo][1] >= words_coo[1] &&
                      coo[index_coo][2] <= words_coo[2] &&
-                     coo[index_coo][3] <= words_coo[3])
+                     coo[index_coo][3] <= words_coo[3] && letter_word_count < nb_letters)
             {
                 Letter word_letter;
                 word_letter.x1 = coo[index_coo][0];
@@ -523,19 +537,27 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     clock_t timer = start_timer();
 
     GdkPixbuf *pixbuf = load_image(filename);
+    if (!pixbuf)
+    {
+      float pixbuf_time = get_timer(timer);
+      printf(COLOR_RED "✘ [ERROR] " COLOR_RESET "Couldn't load pixbufs from file " COLOR_YELLOW "%s" COLOR_RESET, filename);
+      print_time(pixbuf_time);
+      free(pipelineResult);
+      return NULL;
+    }
     GdkPixbuf *pixbuf_to_slice = gdk_pixbuf_copy(pixbuf);
     float pixbuf_load_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Loaded pixbufs from file %s", filename);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Loaded pixbufs from file " COLOR_YELLOW "%s" COLOR_RESET, filename);
     print_time(pixbuf_load_time);
 
     convert_to_grayscale(pixbuf);
     float grayscale_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Converted pixbuf to grayscale", filename);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Converted pixbuf to grayscale");
     print_time(grayscale_time);
 
     double best_angle = detect_best_angle(pixbuf);
     float best_angle_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Detected best rotation angle : %.2f°", best_angle);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Detected best rotation angle : " COLOR_YELLOW "%.2f°" COLOR_RESET, best_angle);
     print_time(best_angle_time);
 
     pipelineResult->rotation_angle = best_angle;
@@ -550,7 +572,7 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
         pixbuf_to_slice = rotated_slice;
 
         float rotation_time = get_timer(timer);
-        printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Rotated images by %.2f degrees", best_angle);
+        printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Rotated images by " COLOR_YELLOW "%.2f " COLOR_RESET "degrees", best_angle);
         print_time(rotation_time);
     }
 
@@ -580,7 +602,7 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
         find_letter(pixbuf, coo); // Number of letters in the grid + words list
     pipelineResult->nb_letters = nb_letter;
     float find_letter_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found %i letters", pipelineResult->nb_letters);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found " COLOR_YELLOW "%i " COLOR_RESET "letters", pipelineResult->nb_letters);
     print_time(find_letter_time);
 
     find_grid_and_words(grid_coo, words_coo, coo, nb_letter);
@@ -596,11 +618,11 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
       pipelineResult->words_coo[i] = words_coo[i];
     }
     printf(COLOR_GREEN "✔ [SUCCESS]" COLOR_RESET
-                        " Detected grid coordinates : (%i, %i)(%i, %i)\n",
+                        " Detected grid coordinates : " COLOR_YELLOW "(%i, %i)(%i, %i)" COLOR_RESET"\n",
            grid_coo[0], grid_coo[1],
            grid_coo[2], grid_coo[3]);
     printf(COLOR_GREEN "✔ [SUCCESS]" COLOR_RESET
-                        " Detected words list coordinates : (%i, %i)(%i, %i)\n",
+                        " Detected words list coordinates : " COLOR_YELLOW "(%i, %i)(%i, %i)" COLOR_RESET "\n",
            words_coo[0], words_coo[1],
            words_coo[2], words_coo[3]);
 
@@ -618,16 +640,16 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     if (pipelineResult->nb_letters_grid + pipelineResult->nb_letters_words
       != pipelineResult->nb_letters)
     {
-      printf(COLOR_RED "✘ [ERROR] " COLOR_RESET "Found %i letters in the grid,"
-        " %i letters in the words list. Expected total of %i, but got %i",
+      printf(COLOR_RED "✘ [ERROR] " COLOR_RESET "Found " COLOR_YELLOW "%i " COLOR_RESET "letters in the grid,"
+        COLOR_YELLOW " %i " COLOR_RESET "letters in the words list. Expected total of " COLOR_YELLOW "%i" COLOR_RESET", but got " COLOR_YELLOW "%i" COLOR_RESET,
         pipelineResult->nb_letters_grid, pipelineResult->nb_letters_words,
         pipelineResult->nb_letters,
         pipelineResult->nb_letters_grid + pipelineResult->nb_letters_words);
     }
     else
     {
-      printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found %i letters in the "
-        "grid, %i letters in the words list",
+      printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found " COLOR_YELLOW "%i " COLOR_RESET "letters in the "
+        "grid, " COLOR_YELLOW "%i " COLOR_RESET "letters in the words list",
         pipelineResult->nb_letters_grid, pipelineResult->nb_letters_words);
     }
     print_time(generate_letters_time);
@@ -635,7 +657,7 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     Letter **grid_letters_array = build_grid_from_image(
         grid_letters, nb_letters_grid, &nb_rows, &nb_cols);
     float build_grid_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Grid detected: %i rows and %i columns", nb_rows, nb_cols);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Grid detected: " COLOR_YELLOW "%i " COLOR_RESET "rows and " COLOR_YELLOW "%i " COLOR_RESET "columns", nb_rows, nb_cols);
     print_time(build_grid_time);
 
     int rows;
@@ -643,8 +665,29 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     char **grid_array = build_grid_array(nn, pixbuf, grid_letters_array,
                                          nb_rows, nb_cols, &rows, &cols);
     float build_grid_array_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Predicted letters in grid with %i rows and %i columns", nb_rows, nb_cols);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Predicted letters in grid with " COLOR_YELLOW "%i " COLOR_RESET "rows and " COLOR_YELLOW "%i " COLOR_RESET "columns", nb_rows, nb_cols);
     print_time(build_grid_array_time);
+    for (int row = 0; row < rows; row++)
+    {
+      printf(COLOR_LIGHT_BLUE "[");
+      for (int col = 0; col < cols; col++)
+      {
+        if (grid_array[row][col] < 'A' || grid_array[row][col] > 'Z')
+        {
+          printf(COLOR_RED "?" COLOR_RESET);
+        }
+        else
+        {
+          printf(COLOR_LIGHT_BLUE "%c" COLOR_RESET, grid_array[row][col]);
+        }
+        if (col < cols - 1)
+        {
+          printf(COLOR_LIGHT_BLUE " " COLOR_RESET);
+        }
+      }
+      printf(COLOR_LIGHT_BLUE "]\n" COLOR_RESET);
+    }
+
     for (int i = 0; i < nb_rows; i++)
     {
       free(grid_letters_array[i]);
@@ -664,15 +707,33 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
         words_letters, nb_letters_words, &words_size, &detected_words_count);
     pipelineResult->words.detected_words_count = detected_words_count;
     float build_words_list_from_image_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Words list detected: %i words", pipelineResult->words.detected_words_count);
+    if (pipelineResult->words.detected_words_count > 0)
+    {
+      printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Words list detected: " COLOR_YELLOW "%i " COLOR_RESET "words", pipelineResult->words.detected_words_count);
+    }
+    else
+    {
+      printf(COLOR_RED "✘ [ERROR] " COLOR_RESET "No words were detected while trying to build the words list !");
+    }
     print_time(build_words_list_from_image_time);
 
     char **words_letters_list = build_words_list(
         nn, pixbuf, words_letters_final, detected_words_count, words_size);
     pipelineResult->words.words = words_letters_list;
     float build_words_list_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Predicted letters in words list : %i words", pipelineResult->words.detected_words_count);
+    if (pipelineResult->words.detected_words_count > 0)
+    {
+      printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Predicted letters in words list of " COLOR_YELLOW "%i " COLOR_RESET "words", pipelineResult->words.detected_words_count);
+    }
+    else
+    {
+      printf(COLOR_RED "✘ [ERROR] " COLOR_RESET "No words were detected !");
+    }
     print_time(build_words_list_time);
+    for (int word = 0; word < detected_words_count; word++)
+    {
+      printf("Word %i : " COLOR_LIGHT_BLUE "%s\n" COLOR_RESET, word + 1, pipelineResult->words.words[word]);
+    }
 
     int **solved_words_grid_coos = get_solved_words_grid_coos(
         words_letters_list, detected_words_count, grid_array, rows, cols);
@@ -680,6 +741,15 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     float solved_words_grid_time = get_timer(timer);
     printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Got solved words grid coordinates");
     print_time(solved_words_grid_time);
+    for (int word = 0; word < pipelineResult->words.detected_words_count; word++)
+    {
+      printf("Word %i : " COLOR_LIGHT_BLUE "%s " COLOR_YELLOW "(%i, %i) → (%i, %i)\n" COLOR_RESET, word + 1,
+        pipelineResult->words.words[word],
+        pipelineResult->words.solved_words_grid_coos[word][0],
+        pipelineResult->words.solved_words_grid_coos[word][1],
+        pipelineResult->words.solved_words_grid_coos[word][2],
+        pipelineResult->words.solved_words_grid_coos[word][3]);
+    }
 
     int **solved_words_image_coos = get_solved_words_image_coos_drawing(
         solved_words_grid_coos, detected_words_count, grid_coo, rows, cols);
@@ -687,6 +757,19 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
     float solved_words_image_time = get_timer(timer);
     printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Got solved words image coordinates for drawing");
     print_time(solved_words_image_time);
+    for (int word = 0; word < pipelineResult->words.detected_words_count; word++)
+    {
+      printf("Word %i : " COLOR_LIGHT_BLUE "%s " COLOR_YELLOW "(%i, %i) (%i, %i) (%i, %i) (%i, %i)\n" COLOR_RESET, word + 1,
+        pipelineResult->words.words[word],
+        pipelineResult->words.solved_words_image_coos[word][0],
+        pipelineResult->words.solved_words_image_coos[word][1],
+        pipelineResult->words.solved_words_image_coos[word][2],
+        pipelineResult->words.solved_words_image_coos[word][3],
+        pipelineResult->words.solved_words_image_coos[word][4],
+        pipelineResult->words.solved_words_image_coos[word][5],
+        pipelineResult->words.solved_words_image_coos[word][6],
+        pipelineResult->words.solved_words_image_coos[word][7]);
+    }
 
     int **word_list = calloc(nb_words, sizeof(int *));
     for (int i = 0; i < nb_words; i++)
@@ -698,7 +781,7 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
         find_word_by_word(coo, word_list, words_coo, nb_letter, nb_words);
     pipelineResult->nb_words = nb_detected_words;
     float find_word_by_word_time = get_timer(timer);
-    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found %i words in the words list", pipelineResult->nb_words);
+    printf(COLOR_GREEN "✔ [SUCCESS] " COLOR_RESET "Found " COLOR_YELLOW "%i " COLOR_RESET "words in the words list", pipelineResult->nb_words);
     print_time(find_word_by_word_time);
 
     for (int i = 0; i < magic_nb_letter; i++)
@@ -723,15 +806,18 @@ PipelineResult *pipeline(char *filename, NeuralNetwork *nn)
 void free_pipeline(PipelineResult *pipelineResult)
 {
     Words words_pipeline = pipelineResult->words;
-    for (int i = 0; i < words_pipeline.detected_words_count; i++)
+    if (words_pipeline.solved_words_grid_coos && words_pipeline.solved_words_image_coos && words_pipeline.words)
     {
+      for (int i = 0; i < words_pipeline.detected_words_count; i++)
+      {
         free(words_pipeline.solved_words_grid_coos[i]);
         free(words_pipeline.solved_words_image_coos[i]);
         free(words_pipeline.words[i]);
+      }
+      free(words_pipeline.solved_words_grid_coos);
+      free(words_pipeline.solved_words_image_coos);
+      free(words_pipeline.words);
     }
-    free(words_pipeline.solved_words_grid_coos);
-    free(words_pipeline.solved_words_image_coos);
-    free(words_pipeline.words);
 
     for (int i = 0; i < pipelineResult->grid.nb_rows; i++)
     {

@@ -47,7 +47,7 @@ void generate_letter(int *grid_coo, int *words_coo, int **coo, int nb_letters,
 
 void invert_color(GdkPixbuf *pixbuf);
 
-void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y, int *is_visited,
+void find_black_pixels_around(GdkPixbuf *pixbuf, int x, int y, __uint8_t *is_visited,
                               int index_coo, int **coo, Point *queue);
 
 int find_letter(GdkPixbuf *pixbuf, int **coo);

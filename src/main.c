@@ -278,23 +278,32 @@ void solver(GtkButton *button, gpointer user_data)
     int pipeline_attempt = 1;
     int isPipelineSuccess = 0;
 
+    clock_t timer = start_timer();
+
     // Runs the pipeline until all words have been solved correctly
     while (!isPipelineSuccess && pipeline_attempt <= MAX_PIPELINE_ATTEMPTS)
     {
-        printf(COLOR_YELLOW "[SOLVER] " COLOR_RESET "Pipeline attempt %i...\n",
+        printf(COLOR_YELLOW "\n→ [SOLVER] " COLOR_RESET "Pipeline attempt " COLOR_YELLOW "%i" COLOR_RESET "...\n",
                pipeline_attempt);
         pipeline_attempt++;
-
-        clock_t timer = start_timer();
         
         if (data->pipelineResult)
         {
             free_pipeline(data->pipelineResult);
+            data->pipelineResult = NULL;
         }
 
         data->pipelineResult = load_pipeline(filename, neural);
+        if (!data->pipelineResult)
+        {
+          printf(COLOR_RED
+                   "✘ [ERROR] " COLOR_RESET
+                   "Couldn't load pipeline!\n");
+          continue;
+        }
+
         float pipeline_time = get_timer(timer);
-        printf(COLOR_GREEN "✔ [SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Finished pipeline");
+        printf(COLOR_GREEN "✔ [SUCCESS]" COLOR_YELLOW "[SOLVER] " COLOR_RESET "Finished pipeline attampt %i", pipeline_attempt - 1);
         print_time(pipeline_time);
 
         g_object_unref(data->transformed);

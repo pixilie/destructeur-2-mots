@@ -80,15 +80,12 @@ GdkPixbuf *load_image(char *filename)
 
     if (!path)
     {
-        printf("[FAIL] Failed to load image\n");
         return 0;
     }
 
     GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path, &error);
-
-    if (pixbuf == NULL)
+    if (!pixbuf)
     {
-        printf("[FAIL] Failed to load image : %s\n", error->message);
         if (error)
         {
             g_error_free(error);
